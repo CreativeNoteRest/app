@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Creative Note REST — WunderKeys Login</title>
+  <style>
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:       #DB6E2B;
+      --orange-light: #FFF3E8;
+      --orange-dark:  #B85A20;
+      --grey:         #F2F2F2;
+      --grey-mid:     #CCCCCC;
+      --grey-dark:    #666666;
+      --black:        #1F1F1F;
+      --white:        #FFFFFF;
+      --red:          #8B1A1A;
+      --red-light:    #FBF0F0;
+      --green:        #1A5C2C;
+      --font:         'Arial', sans-serif;
+      --radius:       10px;
+      --shadow:       0 2px 12px rgba(0,0,0,0.10);
+      --tap:          48px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--white);
+      border-bottom: 3px solid var(--orange);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--orange);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--orange);
+      line-height: 1.1;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--grey-dark);
+      margin-top: 2px;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+
+    /* ── LOGIN CARD ── */
+    .login-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--grey-mid);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .login-heading {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--black);
+      text-align: center;
+    }
+
+    .login-subheading {
+      font-size: 14px;
+      color: var(--grey-dark);
+      text-align: center;
+      margin-top: -12px;
+      line-height: 1.5;
+    }
+
+    /* ── STATUS BOX ── */
+    .status-box {
+      background: var(--orange-light);
+      border-left: 4px solid var(--orange);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--orange-dark);
+      line-height: 1.5;
+      display: none;
+    }
+
+    .status-box.visible { display: block; }
+    .status-box.success { background: #EEF8F1; border-color: var(--green); color: var(--green); }
+    .status-box.error   { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+    /* ── INSTRUCTION TEXT ── */
+    .instruction {
+      font-size: 14px;
+      color: var(--grey-dark);
+      line-height: 1.6;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .instruction strong {
+      color: var(--black);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--grey-mid);
+      margin: 0;
+    }
+
+    /* ── FOOTER NOTE ── */
+    .footer-note {
+      font-size: 12px;
+      color: var(--grey-mid);
+      text-align: center;
+      padding: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── BOTPRESS WIDGET OVERRIDES ── */
+    /* Keep widget hidden visually but functional */
+    #bp-widget-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+
+    @media (min-width: 600px) {
+      .login-card { padding: 40px 36px; }
+      .login-heading { font-size: 22px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="header-logo">CN</div>
+    <div>
+      <div class="header-title">Creative Note REST</div>
+      <div class="header-subtitle">WunderKeys Teacher Login</div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="login-card">
+
+      <div class="login-heading">Welcome back</div>
+      <div class="login-subheading">Sign in to your WunderKeys teacher account</div>
+
+      <hr class="divider">
+
+      <!-- Status box -- shown/hidden by JS -->
+      <div class="status-box visible" id="statusBox">
+        Opening the Creative Note assistant to sign you in...
+      </div>
+
+      <!-- Instruction shown while bot handles auth -->
+      <div class="instruction" id="instructionText">
+        <strong>Check the chat widget</strong> in the bottom-right corner
+        and follow the prompts to receive your sign-in code by email.
+      </div>
+
+      <hr class="divider">
+
+      <div class="footer-note" style="padding: 0; font-size: 13px; color: var(--grey-dark);">
+        New to Creative Note REST?
+        Contact your curriculum provider to get set up.
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer-note">
+    Creative Note REST &mdash; WunderKeys &mdash; &copy; 2026
+  </footer>
+
+
+  <!-- ── BOTPRESS WIDGET ── -->
+  <script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"></script>
+  <script src="https://files.bpcontent.cloud/2026/03/15/13/20260315134724-0XEAYKX2.js" defer></script>
+
+
+  <!-- ── PAGE LOGIC ── -->
+<!-- ── PAGE LOGIC ── -->
+  <script>
+
+    // Series context -- hardcoded per WDN-015
+    const SERIES_SLUG = 'wunderkeys';
+
+    // Step 1 -- open the widget as soon as it is initialized
+    window.botpress.on('webchat:initialized', () => {
+      window.botpress.open();
+    });
+
+    // Step 2 -- once open and ready, send trigger to start Authentication Flow
+    window.botpress.on('webchat:ready', () => {
+      window.botpress.sendMessage('start');
+    });
+
+    // Listen for auth_success custom event from Botpress
+    window.botpress.on('customEvent', (event) => {
+      if (event.action === 'auth_success') {
+
+        // Write session context to sessionStorage per WDN-015
+        sessionStorage.setItem('teacher_id',  event.teacher_id);
+        sessionStorage.setItem('series_id',   event.series_id);
+        sessionStorage.setItem('series_slug', SERIES_SLUG);
+
+        // Flag onboarding if needed
+        if (event.onboarding === true) {
+          sessionStorage.setItem('show_onboarding', 'true');
+        } else {
+          sessionStorage.removeItem('show_onboarding');
+        }
+
+        // Show success message briefly before redirect
+        showStatus('Signed in successfully. Loading your dashboard...', 'success');
+
+        // Redirect to main menu after short delay
+        setTimeout(() => {
+          window.location.href = '/main_menu.html';
+        }, 1200);
+      }
+    });
+
+    // Status box helper
+    function showStatus(msg, type) {
+      const box = document.getElementById('statusBox');
+      box.textContent = msg;
+      box.className = 'status-box visible' + (type ? ' ' + type : '');
+    }
+
+  </script>
+
+</body>
+</html>
