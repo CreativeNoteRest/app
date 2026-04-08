@@ -1,3 +1,4 @@
 .wrangler
+.git
 wrangler.toml
 *.map

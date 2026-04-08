@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creative Note REST</title>
+  <style>
+    body {
+      font-family: Inter, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e9e9e9;
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 { color: #f47c20; margin: 0 0 12px; }
+    p { color: #666; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Login successful</h1>
+    <p>Main menu coming soon.</p>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabase = createClient(
+      'https://xaayekfrlphyyxenhcjl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw'
+    );
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      const slug = sessionStorage.getItem('series_slug') || 'wunderkeys';
+      window.location.href = '/' + slug + '/';
+    } else {
+      const teacherId = sessionStorage.getItem('teacher_id');
+      const seriesSlug = sessionStorage.getItem('series_slug');
+      document.querySelector('p').textContent = 
+        'Logged in as teacher ' + teacherId + ' (' + seriesSlug + ')';
+    }
+  </script>
+</body>
+</html>
