@@ -1,286 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Creative Note REST — WunderKeys Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WunderKeys -- Sign In</title>
+
   <style>
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --orange:       #DB6E2B;
-      --orange-light: #FFF3E8;
-      --orange-dark:  #B85A20;
-      --grey:         #F2F2F2;
-      --grey-mid:     #CCCCCC;
-      --grey-dark:    #666666;
-      --black:        #1F1F1F;
-      --white:        #FFFFFF;
-      --red:          #8B1A1A;
-      --red-light:    #FBF0F0;
-      --green:        #1A5C2C;
-      --font:         'Arial', sans-serif;
-      --radius:       10px;
-      --shadow:       0 2px 12px rgba(0,0,0,0.10);
-      --tap:          48px;
+      --color-accent: #f47c20;
+      --color-accent-hover: #de6e18;
+      --color-accent-soft: #fff3e8;
+      --color-text: #171717;
+      --color-muted: #666666;
+      --color-border: #e9e9e9;
+      --color-bg: #fafafa;
+      --font-display: Georgia, "Times New Roman", serif;
+      --font-body: Inter, Arial, Helvetica, sans-serif;
     }
 
-    html, body {
-      height: 100%;
-      font-family: var(--font);
-      background: var(--white);
-      color: var(--black);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
       -webkit-font-smoothing: antialiased;
     }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* ── HEADER ── */
-    .header {
-      background: var(--white);
-      border-bottom: 3px solid var(--orange);
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--shadow);
-      flex-shrink: 0;
-    }
-
-    .header-logo {
-      width: 36px;
-      height: 36px;
-      background: var(--orange);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-size: 18px;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .header-title {
-      font-size: 18px;
-      font-weight: bold;
-      color: var(--orange);
-      line-height: 1.1;
-    }
-
-    .header-subtitle {
-      font-size: 12px;
-      color: var(--grey-dark);
-      margin-top: 2px;
-    }
-
-    /* ── MAIN ── */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 20px;
-    }
-
-    /* ── LOGIN CARD ── */
     .login-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      border: 1px solid var(--grey-mid);
-      box-shadow: var(--shadow);
-      padding: 32px 28px;
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 48px 40px;
       width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
 
-    .login-heading {
-      font-size: 20px;
-      font-weight: bold;
-      color: var(--black);
+    .brand {
       text-align: center;
+      margin-bottom: 32px;
     }
 
-    .login-subheading {
-      font-size: 14px;
-      color: var(--grey-dark);
-      text-align: center;
-      margin-top: -12px;
-      line-height: 1.5;
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--color-accent);
     }
 
-    /* ── STATUS BOX ── */
-    .status-box {
-      background: var(--orange-light);
-      border-left: 4px solid var(--orange);
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: var(--orange-dark);
-      line-height: 1.5;
-      display: none;
+    .brand-sub {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin-top: 4px;
     }
 
-    .status-box.visible { display: block; }
-    .status-box.success { background: #EEF8F1; border-color: var(--green); color: var(--green); }
-    .status-box.error   { background: var(--red-light); border-color: var(--red); color: var(--red); }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
 
-    /* ── INSTRUCTION TEXT ── */
-    .instruction {
-      font-size: 14px;
-      color: var(--grey-dark);
+    .step-description {
+      font-size: 0.95rem;
+      color: var(--color-muted);
       line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--color-text);
+    }
+
+    input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 1rem;
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background: #fff;
+      transition: border-color 0.15s;
+      margin-bottom: 16px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--color-accent);
+    }
+
+    input.code-input {
+      font-size: 1.8rem;
+      letter-spacing: 10px;
       text-align: center;
-      padding: 8px 0;
+      font-family: var(--font-display);
     }
 
-    .instruction strong {
-      color: var(--black);
-    }
-
-    /* ── DIVIDER ── */
-    .divider {
+    .btn {
+      width: 100%;
+      height: 48px;
+      background: var(--color-accent);
+      color: #fff;
       border: none;
-      border-top: 1px solid var(--grey-mid);
-      margin: 0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: var(--font-body);
     }
 
-    /* ── FOOTER NOTE ── */
-    .footer-note {
-      font-size: 12px;
-      color: var(--grey-mid);
+    .btn:hover { background: var(--color-accent-hover); }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-box {
+      display: none;
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: #c0392b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .back-link {
+      display: block;
       text-align: center;
-      padding: 20px;
-      flex-shrink: 0;
+      margin-top: 16px;
+      font-size: 0.88rem;
+      color: var(--color-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      background: none;
+      border: none;
+      font-family: var(--font-body);
     }
 
-    /* ── BOTPRESS WIDGET OVERRIDES ── */
-    /* Keep widget hidden visually but functional */
-    #bp-widget-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 100;
-    }
+    .back-link:hover { color: var(--color-accent); }
 
-    @media (min-width: 600px) {
-      .login-card { padding: 40px 36px; }
-      .login-heading { font-size: 22px; }
+    .footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      text-align: center;
     }
-
   </style>
 </head>
 <body>
 
-  <!-- ── HEADER ── -->
-  <header class="header">
-    <div class="header-logo">CN</div>
-    <div>
-      <div class="header-title">Creative Note REST</div>
-      <div class="header-subtitle">WunderKeys Teacher Login</div>
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-name">WunderKeys</div>
+      <div class="brand-sub">Powered by Creative Note REST</div>
     </div>
-  </header>
 
-  <!-- ── MAIN ── -->
-  <main class="main">
-    <div class="login-card">
+    <!-- Step 1: Email entry -->
+    <div id="step-email">
+      <h1>Sign in to your account</h1>
+      <p class="step-description">Enter your email address and we will send you a 6-digit login code.</p>
 
-      <div class="login-heading">Welcome back</div>
-      <div class="login-subheading">Sign in to your WunderKeys teacher account</div>
+      <div id="error-email" class="error-box"></div>
 
-      <hr class="divider">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
 
-      <!-- Status box -- shown/hidden by JS -->
-      <div class="status-box visible" id="statusBox">
-        Opening the Creative Note assistant to sign you in...
-      </div>
-
-      <!-- Instruction shown while bot handles auth -->
-      <div class="instruction" id="instructionText">
-        <strong>Check the chat widget</strong> in the bottom-right corner
-        and follow the prompts to receive your sign-in code by email.
-      </div>
-
-      <hr class="divider">
-
-      <div class="footer-note" style="padding: 0; font-size: 13px; color: var(--grey-dark);">
-        New to Creative Note REST?
-        Contact your curriculum provider to get set up.
-      </div>
-
+      <button class="btn" id="btn-send">Send login code</button>
     </div>
-  </main>
 
-  <!-- ── FOOTER ── -->
-  <footer class="footer-note">
-    Creative Note REST &mdash; WunderKeys &mdash; &copy; 2026
-  </footer>
+    <!-- Step 2: Code entry -->
+    <div id="step-code" style="display:none;">
+      <h1>Enter your login code</h1>
+      <p class="step-description" id="code-description">We sent a 6-digit code to your email address. Enter it below. The code expires in 2 minutes.</p>
 
+      <div id="error-code" class="error-box"></div>
 
-  <!-- ── BOTPRESS WIDGET ── -->
-  <script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"></script>
-  <script src="https://files.bpcontent.cloud/2026/03/15/13/20260315134724-0XEAYKX2.js" defer></script>
+      <label for="code">Login code</label>
+      <input type="text" id="code" class="code-input" placeholder="------" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
 
+      <button class="btn" id="btn-verify">Sign in</button>
+      <button class="back-link" id="btn-back">Try a different email address</button>
+    </div>
+  </div>
 
-  <!-- ── PAGE LOGIC ── -->
-<!-- ── PAGE LOGIC ── -->
-  <script>
+  <div class="footer">Having trouble? Contact your series administrator.</div>
 
-    // Series context -- hardcoded per WDN-015
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
     const SERIES_SLUG = 'wunderkeys';
+    const SERIES_ID = '96c05aaa-0329-4582-a35c-51423afc21dd';
 
-    // Step 1 -- open the widget as soon as it is initialized
-    window.botpress.on('webchat:initialized', () => {
-      window.botpress.open();
-    });
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Step 2 -- once open and ready, send trigger to start Authentication Flow
-    window.botpress.on('webchat:ready', () => {
-      window.botpress.sendMessage('start');
-    });
+    // Elements
+    const stepEmail = document.getElementById('step-email');
+    const stepCode = document.getElementById('step-code');
+    const emailInput = document.getElementById('email');
+    const codeInput = document.getElementById('code');
+    const btnSend = document.getElementById('btn-send');
+    const btnVerify = document.getElementById('btn-verify');
+    const btnBack = document.getElementById('btn-back');
+    const errorEmail = document.getElementById('error-email');
+    const errorCode = document.getElementById('error-code');
+    const codeDescription = document.getElementById('code-description');
 
-    // Listen for auth_success custom event from Botpress
-    window.botpress.on('customEvent', (event) => {
-      if (event.action === 'auth_success') {
-
-        // Write session context to sessionStorage per WDN-015
-        sessionStorage.setItem('teacher_id',  event.teacher_id);
-        sessionStorage.setItem('series_id',   event.series_id);
-        sessionStorage.setItem('series_slug', SERIES_SLUG);
-
-        // Flag onboarding if needed
-        if (event.onboarding === true) {
-          sessionStorage.setItem('show_onboarding', 'true');
-        } else {
-          sessionStorage.removeItem('show_onboarding');
-        }
-
-        // Show success message briefly before redirect
-        showStatus('Signed in successfully. Loading your dashboard...', 'success');
-
-        // Redirect to main menu after short delay
-        setTimeout(() => {
-          window.location.href = '/main_menu.html';
-        }, 1200);
-      }
-    });
-
-    // Status box helper
-    function showStatus(msg, type) {
-      const box = document.getElementById('statusBox');
-      box.textContent = msg;
-      box.className = 'status-box visible' + (type ? ' ' + type : '');
+    function showError(el, message) {
+      el.textContent = message;
+      el.style.display = 'block';
     }
 
+    function clearError(el) {
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    // Step 1 -- Send OTP
+    btnSend.addEventListener('click', async () => {
+      clearError(errorEmail);
+      const email = emailInput.value.toLowerCase().trim();
+
+      if (!email || !email.includes('@')) {
+        showError(errorEmail, 'Please enter a valid email address.');
+        return;
+      }
+
+      btnSend.disabled = true;
+      btnSend.textContent = 'Sending...';
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false }
+      });
+
+      btnSend.disabled = false;
+      btnSend.textContent = 'Send login code';
+
+      if (error) {
+        // Supabase returns a generic error when shouldCreateUser: false
+        // and the email does not exist -- show a friendly no-account message
+        showError(errorEmail, 'No account was found for that email address. Please check your email or contact your series administrator.');
+        return;
+      }
+
+      // Advance to code step
+      codeDescription.textContent = 'We sent a 6-digit code to ' + email + '. Enter it below. The code expires in 2 minutes. If you do not receive it within a minute, wait before requesting again.';
+      stepEmail.style.display = 'none';
+      stepCode.style.display = 'block';
+      codeInput.focus();
+    });
+
+    // Step 2 -- Verify OTP
+    btnVerify.addEventListener('click', async () => {
+      clearError(errorCode);
+      const email = emailInput.value.toLowerCase().trim();
+      const token = codeInput.value.trim();
+
+      if (token.length !== 6) {
+        showError(errorCode, 'Please enter the full 6-digit code.');
+        return;
+      }
+
+      btnVerify.disabled = true;
+      btnVerify.textContent = 'Signing in...';
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'magiclink'
+      });
+
+      btnVerify.disabled = false;
+      btnVerify.textContent = 'Sign in';
+
+      if (error) {
+        showError(errorCode, 'That code is incorrect or has expired. Please check the code and try again.');
+        return;
+      }
+
+      // Session established -- write sessionStorage and redirect
+      const authUserId = data.session.user.id;
+
+      // Fetch teacher_id from Teachers table using auth_user_id
+      const { data: teacherRows, error: teacherError } = await supabase
+        .from('teachers')
+        .select('teacher_id')
+        .eq('auth_user_id', authUserId)
+        .limit(1);
+
+      if (teacherError || !teacherRows || teacherRows.length === 0) {
+        showError(errorCode, 'Your account was found but your teacher record could not be loaded. Please contact your series administrator.');
+        return;
+      }
+
+      const teacherId = teacherRows[0].teacher_id;
+
+      sessionStorage.setItem('series_slug', SERIES_SLUG);
+      sessionStorage.setItem('series_id', SERIES_ID);
+      sessionStorage.setItem('teacher_id', teacherId);
+
+      window.location.href = '/main_menu.html';
+    });
+
+    // Back link -- return to email step
+    btnBack.addEventListener('click', () => {
+      clearError(errorCode);
+      codeInput.value = '';
+      stepCode.style.display = 'none';
+      stepEmail.style.display = 'block';
+      emailInput.focus();
+    });
+
+    // Allow Enter key on inputs
+    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnSend.click(); });
+    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnVerify.click(); });
   </script>
 
 </body>
