@@ -546,10 +546,13 @@
 
     // ── Navigation stubs ─────────────────────────────────────────────
     window.openLesson = function() {
-      if (window.botpress) {
+     if (window.botpress) {
         window.botpress.open();
+        window.botpress.on('webchat:opened', () => {
+        window.botpress.sendMessage('open_lesson');
+       });
       } else {
-        showError('error-banner', 'Assistant is not ready yet. Please wait a moment and try again.');
+      showError('error-banner', 'Assistant is not ready yet. Please wait a moment and try again.');
       }
     };
 
