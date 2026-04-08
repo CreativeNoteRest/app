@@ -8,19 +8,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
+    /* ── Design tokens ─────────────────────────────────────────────── */
     :root {
-      --brand:       #E26B0A;
-      --brand-light: #FCE4D6;
-      --brand-dark:  #B85500;
-      --text:        #1A1A1A;
-      --text-mid:    #5A5A5A;
-      --text-light:  #9A9A9A;
-      --surface:     #FAFAF8;
-      --card:        #FFFFFF;
-      --border:      #E8E4DF;
-      --radius:      14px;
-      --shadow:      0 2px 16px rgba(0,0,0,0.07);
-      --shadow-lg:   0 8px 40px rgba(0,0,0,0.12);
+      --brand:        #E26B0A;
+      --brand-light:  #FCE4D6;
+      --text:         #1A1A1A;
+      --text-mid:     #5A5A5A;
+      --text-light:   #9A9A9A;
+      --surface:      #FAFAF8;
+      --card:         #FFFFFF;
+      --border:       #E8E4DF;
+      --radius:       14px;
+      --shadow:       0 2px 16px rgba(0,0,0,0.07);
+      --danger:       #DC2626;
+      --danger-light: #FEF2F2;
+      --danger-border:#FECACA;
+      --suspended:    #F59E0B;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,311 +37,281 @@
       flex-direction: column;
     }
 
+    /* ── Header ─────────────────────────────────────────────────────── */
     .app-header {
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
     }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
+    .header-brand { display: flex; align-items: center; gap: 10px; }
     .header-series-name {
       font-family: 'DM Serif Display', serif;
-      font-size: 1.15rem;
-      color: var(--brand);
-      letter-spacing: -0.01em;
+      font-size: 1.15rem; color: var(--brand); letter-spacing: -0.01em;
     }
-
-    .header-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--brand);
-      opacity: 0.35;
-    }
-
-    .header-app-name {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text-light);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .header-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-app-name { font-size: 0.8rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
     .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-mid);
-      transition: background 0.15s;
+      background: none; border: none; cursor: pointer;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-mid); transition: background 0.15s;
     }
     .btn-icon:hover { background: var(--brand-light); color: var(--brand); }
 
+    /* ── Main ───────────────────────────────────────────────────────── */
     .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      flex: 1; display: flex; flex-direction: column;
       padding: 28px 20px 32px;
-      max-width: 480px;
-      width: 100%;
-      margin: 0 auto;
+      max-width: 480px; width: 100%; margin: 0 auto;
     }
-
     .greeting { margin-bottom: 28px; }
-
-    .greeting-label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 4px;
-    }
-
-    .greeting-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.9rem;
-      line-height: 1.15;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-
+    .greeting-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .greeting-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; line-height: 1.15; color: var(--text); letter-spacing: -0.02em; }
     .greeting-title em { color: var(--brand); font-style: italic; }
 
+    /* ── Primary button ─────────────────────────────────────────────── */
     .action-primary {
-      background: var(--brand);
-      border-radius: var(--radius);
-      padding: 22px 22px 20px;
-      margin-bottom: 14px;
-      cursor: pointer;
-      border: none;
-      width: 100%;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      background: var(--brand); border-radius: var(--radius);
+      padding: 22px 22px 20px; margin-bottom: 14px;
+      cursor: pointer; border: none; width: 100%; text-align: left;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
       box-shadow: 0 4px 20px rgba(226,107,10,0.3);
       transition: transform 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
+    .action-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(226,107,10,0.38); }
+    .action-primary:active { transform: translateY(0); }
+    .action-primary-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 3px; }
+    .action-primary-title { font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: #fff; line-height: 1.1; }
+    .action-primary-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.18); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .action-primary-icon svg { width: 22px; height: 22px; fill: #fff; }
 
-    .action-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 28px rgba(226,107,10,0.38);
-    }
-
-    .action-primary:active {
-      transform: translateY(0);
-      box-shadow: 0 3px 14px rgba(226,107,10,0.28);
-    }
-
-    .action-primary-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.65);
-      margin-bottom: 3px;
-    }
-
-    .action-primary-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.45rem;
-      color: #FFFFFF;
-      line-height: 1.1;
-    }
-
-    .action-primary-icon {
-      width: 44px;
-      height: 44px;
-      background: rgba(255,255,255,0.18);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .action-primary-icon svg { width: 22px; height: 22px; fill: #FFFFFF; }
-
-    .action-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
+    /* ── Secondary grid ─────────────────────────────────────────────── */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
     .action-secondary {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 16px;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 16px;
+      cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 10px;
       transition: border-color 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-
-    .action-secondary:hover {
-      border-color: var(--brand);
-      box-shadow: var(--shadow);
-    }
-
-    .action-secondary-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--brand-light);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .action-secondary:hover { border-color: var(--brand); box-shadow: var(--shadow); }
+    .action-secondary-icon { width: 36px; height: 36px; background: var(--brand-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
     .action-secondary-icon svg { width: 18px; height: 18px; fill: var(--brand); }
+    .action-secondary-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); }
+    .action-secondary-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .stub-badge { display: inline-block; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; background: var(--brand-light); color: var(--brand); border-radius: 4px; padding: 2px 6px; margin-top: 2px; }
 
-    .action-secondary-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-light);
-    }
-
-    .action-secondary-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.2;
-    }
-
-    .stub-badge {
-      display: inline-block;
-      font-size: 0.6rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      background: var(--brand-light);
-      color: var(--brand);
-      border-radius: 4px;
-      padding: 2px 6px;
-      margin-top: 2px;
-    }
-
-    .status-strip {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #C5C5C5;
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-
-    .status-dot.ready { background: #4CAF50; }
-
+    /* ── Status strip ───────────────────────────────────────────────── */
+    .status-strip { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; flex-shrink: 0; }
     .status-text { font-size: 0.8rem; color: var(--text-mid); }
 
-    .bridge-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: var(--brand);
-      z-index: 9999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-    }
-
+    /* ── Bridging overlay ───────────────────────────────────────────── */
+    .bridge-overlay { display: none; position: fixed; inset: 0; background: var(--brand); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
     .bridge-overlay.active { display: flex; }
-
-    .bridge-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: #FFFFFF;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
+    .bridge-spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .bridge-text { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: #fff; }
+    .bridge-sub { font-size: 0.82rem; color: rgba(255,255,255,0.65); margin-top: -12px; }
 
-    .bridge-text {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.4rem;
-      color: #FFFFFF;
-      letter-spacing: -0.01em;
+    /* ══════════════════════════════════════════════════════════════════
+       BOTTOM SHEET
+    ══════════════════════════════════════════════════════════════════ */
+    .sheet-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
     }
+    .sheet-backdrop.active { display: block; }
 
-    .bridge-sub {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.65);
-      margin-top: -12px;
+    .bottom-sheet {
+      display: none; position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--card);
+      border-radius: 20px 20px 0 0;
+      z-index: 201; max-height: 85vh;
+      flex-direction: column;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
     }
+    .bottom-sheet.active {
+      display: flex;
+      animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-    #error-banner {
-      display: none;
-      background: #FEF2F2;
-      border: 1px solid #FECACA;
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      font-size: 0.82rem;
-      color: #DC2626;
+    .sheet-handle-row { padding: 12px 0 4px; display: flex; justify-content: center; flex-shrink: 0; }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; }
+
+    .sheet-header {
+      padding: 8px 20px 16px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-shrink: 0; border-bottom: 1px solid var(--border);
+    }
+    .sheet-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
+    .sheet-subtitle { font-size: 0.75rem; color: var(--suspended); font-weight: 600; margin-top: 3px; }
+    .sheet-close {
+      background: none; border: none; cursor: pointer;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-light); transition: background 0.15s; flex-shrink: 0;
+    }
+    .sheet-close:hover { background: var(--surface); }
+
+    .sheet-body { flex: 1; overflow-y: auto; padding: 16px 20px 32px; -webkit-overflow-scrolling: touch; }
+
+    /* Sheet states */
+    .sheet-state { display: none; }
+    .sheet-state.active { display: block; }
+
+    .sheet-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 14px; }
+    .sheet-spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .sheet-loading-text { font-size: 0.85rem; color: var(--text-light); }
+
+    .sheet-error-box { background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 10px; padding: 14px 16px; font-size: 0.82rem; color: var(--danger); margin-bottom: 14px; }
+
+    /* Student list */
+    .student-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .student-item {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      cursor: pointer; display: flex; align-items: center; gap: 14px;
+      transition: border-color 0.12s, background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%; text-align: left;
+    }
+    .student-item:hover { border-color: var(--brand); background: var(--card); }
+    .student-item:active { transform: scale(0.985); }
+    .student-item.suspended { border-color: var(--suspended); background: #FFFBF0; }
+    .student-item.suspended:hover { border-color: #D97706; }
+
+    .student-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--brand-light);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--brand);
+      flex-shrink: 0;
+    }
+    .student-item.suspended .student-avatar { background: #FEF3C7; color: #D97706; }
+
+    .student-info { flex: 1; min-width: 0; }
+    .student-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .student-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #D97706; margin-top: 2px; }
+
+    .student-chevron { color: var(--text-light); flex-shrink: 0; }
+    .student-item:hover .student-chevron { color: var(--brand); }
+    .student-item.suspended:hover .student-chevron { color: #D97706; }
+
+    .empty-state { text-align: center; padding: 32px 0; color: var(--text-light); font-size: 0.88rem; line-height: 1.6; }
+    .empty-state strong { display: block; font-size: 1rem; color: var(--text-mid); margin-bottom: 6px; }
+
+    /* Book picker */
+    .book-picker-hint { font-size: 0.78rem; color: var(--text-mid); margin-bottom: 14px; line-height: 1.5; }
+    .book-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .book-item {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      cursor: pointer; display: flex; align-items: center; gap: 14px;
+      transition: border-color 0.12s, background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%; text-align: left;
+    }
+    .book-item:hover { border-color: var(--brand); background: var(--card); }
+    .book-item:active { transform: scale(0.985); }
+
+    .book-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--brand-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .book-icon svg { width: 20px; height: 20px; fill: var(--brand); }
+    .book-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+
+    .sheet-back {
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 600; color: var(--brand);
+      margin-bottom: 16px; padding: 0;
+    }
+    .sheet-back svg { width: 16px; height: 16px; }
+
+    /* Retry button inside sheet */
+    .retry-btn {
+      background: var(--brand); color: #fff; border: none; border-radius: 10px;
+      padding: 12px 20px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; width: 100%; margin-top: 8px;
     }
   </style>
 </head>
 <body>
 
-  <div class="bridge-overlay" id="bridge-overlay" role="status" aria-live="polite">
+  <!-- Bridging overlay -->
+  <div class="bridge-overlay" id="bridge-overlay">
     <div class="bridge-spinner"></div>
     <div class="bridge-text">Starting lesson...</div>
     <div class="bridge-sub">Getting things ready</div>
   </div>
 
+  <!-- Sheet backdrop -->
+  <div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+
+  <!-- Bottom sheet -->
+  <div class="bottom-sheet" id="bottom-sheet" role="dialog" aria-modal="true" aria-label="Open Lesson">
+    <div class="sheet-handle-row"><div class="sheet-handle"></div></div>
+
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="sheet-title">Select a Student</div>
+        <div class="sheet-subtitle" id="sheet-subtitle"></div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sheet-body">
+
+      <!-- Loading -->
+      <div class="sheet-state active" id="state-loading">
+        <div class="sheet-loading">
+          <div class="sheet-spinner"></div>
+          <div class="sheet-loading-text">Loading students...</div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="sheet-state" id="state-error">
+        <div class="sheet-error-box" id="sheet-error-msg">Something went wrong. Please try again.</div>
+        <button class="retry-btn" onclick="loadSheet()">Try again</button>
+      </div>
+
+      <!-- Student list -->
+      <div class="sheet-state" id="state-students">
+        <div class="student-list" id="student-list"></div>
+      </div>
+
+      <!-- Book picker -->
+      <div class="sheet-state" id="state-books">
+        <button class="sheet-back" onclick="showStudentState()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Back to students
+        </button>
+        <div class="book-picker-hint">This student doesn't have a lesson book assigned yet. Please choose one to continue.</div>
+        <div class="book-list" id="book-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Header -->
   <header class="app-header">
     <div class="header-brand">
       <span class="header-series-name" id="series-name">Creative Note</span>
       <span class="header-dot"></span>
       <span class="header-app-name">Teacher</span>
     </div>
-    <div class="header-right">
+    <div>
       <button class="btn-icon" aria-label="Account" onclick="goAccount()">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="4"/>
@@ -348,34 +321,28 @@
     </div>
   </header>
 
+  <!-- Main content -->
   <main class="main">
-
-    <div id="error-banner"></div>
 
     <div class="greeting">
       <div class="greeting-label">Good to see you</div>
       <h1 class="greeting-title">Ready to teach<em>?</em></h1>
     </div>
 
-    <button class="action-primary" id="btn-open-lesson" onclick="openLesson()" aria-label="Open a lesson">
+    <button class="action-primary" onclick="openLesson()" aria-label="Open a lesson">
       <div>
         <div class="action-primary-label">Start your session</div>
         <div class="action-primary-title">Open Lesson</div>
       </div>
       <div class="action-primary-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 18V6l12-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-        </svg>
+        <svg viewBox="0 0 24 24"><path d="M9 18V6l12-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
       </div>
     </button>
 
     <div class="action-grid">
-
-      <button class="action-secondary" onclick="goStudents()" aria-label="Student management">
+      <button class="action-secondary" onclick="goStudents()">
         <div class="action-secondary-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div>
           <div class="action-secondary-label">Manage</div>
@@ -384,12 +351,9 @@
         </div>
       </button>
 
-      <button class="action-secondary" onclick="goAccount()" aria-label="Account management">
+      <button class="action-secondary" onclick="goAccount()">
         <div class="action-secondary-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </div>
         <div>
           <div class="action-secondary-label">Manage</div>
@@ -397,106 +361,403 @@
           <span class="stub-badge">Coming soon</span>
         </div>
       </button>
-
     </div>
 
     <div class="status-strip">
-      <div class="status-dot" id="status-dot"></div>
-      <div class="status-text" id="status-text">Connecting assistant...</div>
+      <div class="status-dot"></div>
+      <div class="status-text">Ready</div>
     </div>
 
   </main>
 
-  <!-- Botpress webchat v3 -->
-  <script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"></script>
-  <script src="https://files.bpcontent.cloud/2026/03/15/13/20260315134724-0XEAYKX2.js" defer></script>
-
   <script type="module">
-    import { requireAuth, applyBranding, showError } from '/assets/app.js';
+    import { supabase, requireAuth, applyBranding } from '/assets/app.js';
 
-    // ── Auth guard ──────────────────────────────────────────────────
+    // ── Auth + branding ──────────────────────────────────────────────
     await requireAuth();
-
-    // ── Apply series branding ────────────────────────────────────────
     applyBranding();
 
-    // ── Update series name in header ─────────────────────────────────
-    const seriesSlug = sessionStorage.getItem('series_slug') || '';
-    if (seriesSlug) {
-      const nameMap = { wunderkeys: 'WunderKeys' };
-      const el = document.getElementById('series-name');
-      if (el && nameMap[seriesSlug]) el.textContent = nameMap[seriesSlug];
-    }
+    // ── Series name in header ────────────────────────────────────────
+    const seriesSlug = sessionStorage.getItem('series_slug') || 'wunderkeys';
+    const nameMap = { wunderkeys: 'WunderKeys' };
+    const seriesEl = document.getElementById('series-name');
+    if (seriesEl && nameMap[seriesSlug]) seriesEl.textContent = nameMap[seriesSlug];
 
-    // ── Botpress ready handler ───────────────────────────────────────
-    const teacherId = sessionStorage.getItem('teacher_id') || '';
+    // ── Session context ──────────────────────────────────────────────
+    const TEACHER_ID = sessionStorage.getItem('teacher_id') || '';
+    const SERIES_ID  = sessionStorage.getItem('series_id')  || '';
 
-    function onBotpressReady() {
-      // Mark status indicator ready
-      const dot  = document.getElementById('status-dot');
-      const text = document.getElementById('status-text');
-      if (dot)  dot.classList.add('ready');
-      if (text) text.textContent = 'Assistant ready';
-
-      // Reset conversation on close so next open is always a clean slate
-      window.botpress.on('webchat:closed', () => {
-        window.botpress.restartConversation();
+    // ── UUID generator ───────────────────────────────────────────────
+    function genUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
       });
     }
 
-    if (window.botpress) {
-      window.botpress.on('webchat:initialized', () => {
-        setTimeout(onBotpressReady, 300);
-      });
+    // ── Today's date in teacher timezone ─────────────────────────────
+    let teacherTimezone = 'America/Toronto';
+
+    function todayDate() {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: teacherTimezone
+      }).format(new Date()); // YYYY-MM-DD
     }
 
-    // Fallback: if botpress loads after this module runs
-    window.addEventListener('load', () => {
-      if (window.botpress) {
-        window.botpress.on('webchat:initialized', () => {
-          setTimeout(onBotpressReady, 300);
-        });
-      }
-    });
+    // ── Working state ────────────────────────────────────────────────
+    let students        = [];    // enriched student list
+    let selectedStudent = null;  // student chosen by teacher
 
-    // ── Listen for session open event from Botpress ──────────────────
-    window.addEventListener('message', (event) => {
-      if (!event.data || event.data.action !== 'creative_note_session_open') return;
+    // ── Sheet UI helpers ─────────────────────────────────────────────
+    function showState(id) {
+      document.querySelectorAll('.sheet-state')
+        .forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
 
-      const overlay = document.getElementById('bridge-overlay');
-      if (overlay) overlay.classList.add('active');
+    function setHeader(title, subtitle = '') {
+      document.getElementById('sheet-title').textContent = title;
+      document.getElementById('sheet-subtitle').textContent = subtitle;
+    }
 
-      if (window.botpress) {
-        try { window.botpress.close(); } catch(e) { /* ignore */ }
-      }
+    function showError(msg) {
+      document.getElementById('sheet-error-msg').textContent = msg;
+      showState('state-error');
+    }
 
-      setTimeout(() => {
-        window.location.href = '/session_entry.html';
-      }, 600);
-    });
-
-    // ── Navigation ───────────────────────────────────────────────────
+    // ── Open / close ─────────────────────────────────────────────────
     window.openLesson = function() {
-      if (window.botpress) {
-        window.botpress.open();
-        window.botpress.on('webchat:opened', () => {
-          window.botpress.sendEvent({
-            action: 'open_lesson',
-            teacher_id: sessionStorage.getItem('teacher_id') || ''
-          });
-        });
-      } else {
-        showError('error-banner', 'Assistant is not ready yet. Please wait a moment and try again.');
+      document.getElementById('sheet-backdrop').classList.add('active');
+      document.getElementById('bottom-sheet').classList.add('active');
+      setHeader('Select a Student');
+      loadSheet();
+    };
+
+    window.closeSheet = function() {
+      document.getElementById('sheet-backdrop').classList.remove('active');
+      document.getElementById('bottom-sheet').classList.remove('active');
+      selectedStudent = null;
+    };
+
+    // ── Load: orphan fix then student list ───────────────────────────
+    async function loadSheet() {
+      showState('state-loading');
+      try {
+        await fixOrphans();
+        await loadStudents();
+      } catch (err) {
+        console.error('Sheet load error:', err);
+        showError('Could not load students. Please check your connection and try again.');
       }
+    }
+    window.loadSheet = loadSheet;
+
+    // ── Step 1: Fix orphans silently ─────────────────────────────────
+    // An orphan is an active Sessions row for this teacher with no
+    // corresponding Active_Sessions row. We write the missing row so
+    // the student appears as suspended in the list.
+    async function fixOrphans() {
+      const today = todayDate();
+
+      // Find any active sessions for this teacher today
+      const { data: activeSessions, error: sessErr } = await supabase
+        .from('sessions')
+        .select('session_id, student_id, series_id')
+        .eq('teacher_id', TEACHER_ID)
+        .eq('session_status', 'active')
+        .eq('session_date', today);
+
+      if (sessErr || !activeSessions || activeSessions.length === 0) return;
+
+      // Check what Active_Sessions row exists for this teacher
+      const { data: activeRow } = await supabase
+        .from('active_sessions')
+        .select('session_id')
+        .eq('teacher_id', TEACHER_ID)
+        .maybeSingle();
+
+      const activeSessionId = activeRow?.session_id;
+
+      for (const s of activeSessions) {
+        if (s.session_id !== activeSessionId) {
+          // Orphan -- write missing Active_Sessions row
+          const { error: upsertErr } = await supabase
+            .from('active_sessions')
+            .upsert({
+              teacher_id: TEACHER_ID,
+              session_id: s.session_id,
+              student_id: s.student_id,
+              series_id:  s.series_id || SERIES_ID
+            }, { onConflict: 'teacher_id' });
+
+          if (upsertErr) {
+            // Non-blocking -- log and continue
+            console.warn('Orphan fix failed for session', s.session_id, upsertErr.message);
+          }
+        }
+      }
+    }
+
+    // ── Step 2: Load students ────────────────────────────────────────
+    async function loadStudents() {
+
+      // Load teacher timezone (non-blocking -- use default if fails)
+      const { data: tData } = await supabase
+        .from('teachers')
+        .select('timezone')
+        .eq('teacher_id', TEACHER_ID)
+        .maybeSingle();
+
+      if (tData?.timezone) teacherTimezone = tData.timezone;
+
+      // Fetch active students for this teacher
+      const { data: rawStudents, error: stuErr } = await supabase
+        .from('students')
+        .select('student_id, safe_name, current_book')
+        .eq('teacher_id', TEACHER_ID)
+        .eq('student_status', 'active')
+        .order('safe_name', { ascending: true });
+
+      if (stuErr) throw new Error(stuErr.message);
+
+      if (!rawStudents || rawStudents.length === 0) {
+        students = [];
+        renderStudents();
+        return;
+      }
+
+      // Get suspended student_id from Active_Sessions (one row per teacher)
+      const { data: activeRow } = await supabase
+        .from('active_sessions')
+        .select('student_id')
+        .eq('teacher_id', TEACHER_ID)
+        .maybeSingle();
+
+      const suspendedStudentId = activeRow?.student_id || null;
+
+      // Mark suspended student and sort to top
+      students = rawStudents.map(s => ({
+        ...s,
+        suspended: s.student_id === suspendedStudentId
+      }));
+
+      students.sort((a, b) => {
+        if (a.suspended && !b.suspended) return -1;
+        if (!a.suspended && b.suspended) return 1;
+        return a.safe_name.localeCompare(b.safe_name);
+      });
+
+      renderStudents();
+    }
+
+    // ── Render student list ──────────────────────────────────────────
+    function renderStudents() {
+      const suspendedCount = students.filter(s => s.suspended).length;
+
+      setHeader(
+        'Select a Student',
+        suspendedCount > 0
+          ? `${suspendedCount} session${suspendedCount > 1 ? 's' : ''} in progress`
+          : ''
+      );
+
+      const list = document.getElementById('student-list');
+      list.innerHTML = '';
+
+      if (students.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <strong>No active students</strong>
+            Add students in the Students section before starting a lesson.
+          </div>`;
+        showState('state-students');
+        return;
+      }
+
+      students.forEach(s => {
+        const initial = s.safe_name.charAt(0).toUpperCase();
+        const btn = document.createElement('button');
+        btn.className = `student-item${s.suspended ? ' suspended' : ''}`;
+        btn.innerHTML = `
+          <div class="student-avatar">${initial}</div>
+          <div class="student-info">
+            <div class="student-name">${s.safe_name}</div>
+            ${s.suspended ? '<div class="student-tag">Session in progress</div>' : ''}
+          </div>
+          <svg class="student-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        `;
+        btn.addEventListener('click', () => onStudentSelected(s));
+        list.appendChild(btn);
+      });
+
+      showState('state-students');
+    }
+
+    window.showStudentState = function() {
+      renderStudents();
     };
 
-    window.goStudents = function() {
-      console.log('Students: not yet built');
-    };
+    // ── Student selected ─────────────────────────────────────────────
+    async function onStudentSelected(student) {
+      selectedStudent = student;
 
-    window.goAccount = function() {
-      console.log('Account: not yet built');
-    };
+      // Always check book -- even on resume, book may be null if
+      // the previous session was interrupted before book selection
+      if (!student.current_book) {
+        await showBookPicker(student);
+      } else {
+        await openSession(student, student.current_book, false);
+      }
+    }
+
+    // ── Book picker ──────────────────────────────────────────────────
+    async function showBookPicker(student) {
+      showState('state-loading');
+      setHeader(`${student.safe_name}`, 'Choose a lesson book');
+
+      const { data: books, error: bookErr } = await supabase
+        .from('books')
+        .select('book_id, full_display_name, edition')
+        .eq('series_id', SERIES_ID)
+        .eq('is_active', true)
+        .order('sequence_number', { ascending: true });
+
+      if (bookErr) {
+        showError('Could not load books. Please try again.');
+        return;
+      }
+
+      const list = document.getElementById('book-list');
+      list.innerHTML = '';
+
+      if (!books || books.length === 0) {
+        list.innerHTML = `<div class="empty-state"><strong>No books available</strong>Contact your series administrator.</div>`;
+      } else {
+        books.forEach(b => {
+          const btn = document.createElement('button');
+          btn.className = 'book-item';
+          btn.innerHTML = `
+            <div class="book-icon">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>
+            </div>
+            <div>
+              <div class="book-name">${b.full_display_name}</div>
+            </div>
+          `;
+          btn.addEventListener('click', () => openSession(selectedStudent, b.book_id, true));
+          list.appendChild(btn);
+        });
+      }
+
+      showState('state-books');
+    }
+
+    // ── Open session ─────────────────────────────────────────────────
+    async function openSession(student, bookId, bookJustSelected) {
+      showState('state-loading');
+      setHeader('Opening lesson...');
+
+      try {
+        const today = todayDate();
+        let sessionId;
+
+        if (student.suspended) {
+          // ── Resume path ──────────────────────────────────────────
+          // Active_Sessions row already exists -- just get session_id
+          const { data: activeRow, error: activeErr } = await supabase
+            .from('active_sessions')
+            .select('session_id')
+            .eq('teacher_id', TEACHER_ID)
+            .maybeSingle();
+
+          if (activeErr || !activeRow) throw new Error('Could not find active session to resume.');
+          sessionId = activeRow.session_id;
+
+          // If book was just selected, patch Sessions.lesson_book_id (non-blocking)
+          if (bookJustSelected && bookId) {
+            supabase
+              .from('sessions')
+              .update({ lesson_book_id: bookId })
+              .eq('session_id', sessionId)
+              .then(({ error }) => {
+                if (error) console.warn('lesson_book_id update failed (non-blocking):', error.message);
+              });
+
+            // Also write to Students.current_book (non-blocking)
+            supabase
+              .from('students')
+              .update({ current_book: bookId })
+              .eq('student_id', student.student_id)
+              .then(({ error }) => {
+                if (error) console.warn('current_book update failed (non-blocking):', error.message);
+              });
+          }
+
+        } else {
+          // ── New session path ─────────────────────────────────────
+          sessionId = genUUID();
+
+          // Write Sessions record
+          const { error: sessErr } = await supabase
+            .from('sessions')
+            .insert({
+              session_id:     sessionId,
+              series_id:      SERIES_ID,
+              teacher_id:     TEACHER_ID,
+              student_id:     student.student_id,
+              session_date:   today,
+              session_type:   'lesson',
+              session_status: 'active',
+              lesson_book_id: bookId || null
+            });
+
+          if (sessErr) throw new Error(`Session write failed: ${sessErr.message}`);
+
+          // Write Active_Sessions row
+          const { error: activeErr } = await supabase
+            .from('active_sessions')
+            .upsert({
+              teacher_id: TEACHER_ID,
+              session_id: sessionId,
+              student_id: student.student_id,
+              series_id:  SERIES_ID
+            }, { onConflict: 'teacher_id' });
+
+          if (activeErr) throw new Error(`Active session write failed: ${activeErr.message}`);
+
+          // If book was just selected, also update Students.current_book (non-blocking)
+          if (bookJustSelected && bookId) {
+            supabase
+              .from('students')
+              .update({ current_book: bookId })
+              .eq('student_id', student.student_id)
+              .then(({ error }) => {
+                if (error) console.warn('current_book update failed (non-blocking):', error.message);
+              });
+          }
+        }
+
+        // Store session context for session_entry.html
+        sessionStorage.setItem('session_id',   sessionId);
+        sessionStorage.setItem('student_id',   student.student_id);
+        sessionStorage.setItem('student_name', student.safe_name);
+
+        // Show bridging overlay then navigate
+        closeSheet();
+        document.getElementById('bridge-overlay').classList.add('active');
+        setTimeout(() => { window.location.href = '/session_entry.html'; }, 600);
+
+      } catch (err) {
+        console.error('Session open error:', err);
+        showError(`Could not open session: ${err.message}`);
+      }
+    }
+
+    // ── Stub navigation ──────────────────────────────────────────────
+    window.goStudents = () => console.log('Students: not yet built');
+    window.goAccount  = () => console.log('Account: not yet built');
 
   </script>
 
