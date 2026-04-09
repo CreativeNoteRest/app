@@ -544,7 +544,7 @@
 
     const isIgnored = text.startsWith('[IGNORE] ');
     const displayText = isIgnored ? text.slice(9) : text;
-    const seqLabel = sequence ? '#' + sequence + '  ' : '';
+    const seqLabel = sequence ? '#' + sequence + '    ' : '';
 
     const item = document.createElement('div');
     item.className = 'entry-item' + (isIgnored ? ' entry-ignored' : '');
