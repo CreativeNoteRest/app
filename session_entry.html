@@ -476,6 +476,9 @@
       : new Date(Date.now() + 26 * 3600000).toISOString(); // safe fallback
   }
 
+  // Entry log element -- declared here so loadExistingEntries() can use it
+  const entryLog = document.getElementById('entry-log');
+
   // 5. Entry sequence tracking
   let nextSequence = 1;
 
@@ -511,8 +514,6 @@
   }
 
   // 7. Entry log rendering
-  const entryLog = document.getElementById('entry-log');
-
   function appendEntryToLog(text, isoTimestamp) {
     const time = isoTimestamp
       ? new Date(isoTimestamp).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })
