@@ -7,15 +7,22 @@
 
   <style>
     :root {
-      --color-accent: #f47c20;
-      --color-accent-hover: #de6e18;
-      --color-accent-soft: #fff3e8;
-      --color-text: #171717;
-      --color-muted: #666666;
-      --color-border: #e9e9e9;
-      --color-bg: #fafafa;
+      --color-accent:        #f47c20;
+      --color-accent-hover:  #de6e18;
+      --color-accent-soft:   #fff3e8;
+      --color-text:          #171717;
+      --color-muted:         #666666;
+      --color-border:        #e9e9e9;
+      --color-bg:            #fafafa;
+      --color-danger:        #c0392b;
+      --color-danger-bg:     #fff0f0;
+      --color-danger-border: #ffcccc;
+      --color-warning-bg:    #fffbe6;
+      --color-warning-border:#ffe58f;
+      --color-warning-text:  #7d5a00;
+      --color-info:          #1a6fbf;
       --font-display: Georgia, "Times New Roman", serif;
-      --font-body: Inter, Arial, Helvetica, sans-serif;
+      --font-body:    Inter, Arial, Helvetica, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,7 +35,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px;
+      padding: 24px 16px 48px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -36,370 +43,896 @@
       background: #ffffff;
       border: 1px solid var(--color-border);
       border-radius: 16px;
-      padding: 32px 28px;
+      padding: 28px 24px;
       width: 100%;
       max-width: 480px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
 
     /* ── Header ── */
-    .page-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .back-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px;
-      color: var(--color-muted);
-      font-size: 1.2rem;
-      line-height: 1;
-      flex-shrink: 0;
+      background: none; border: none; cursor: pointer;
+      padding: 4px 8px 4px 0; color: var(--color-muted);
+      font-size: 1.2rem; line-height: 1; flex-shrink: 0;
     }
-
     .back-btn:hover { color: var(--color-accent); }
+    .page-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
 
-    .page-title {
-      font-family: var(--font-display);
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    /* ── Error box ── */
+    /* ── Message boxes ── */
     .error-box {
-      display: none;
-      background: #fff0f0;
-      border: 1px solid #ffcccc;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 0.9rem;
-      color: #c0392b;
-      margin-bottom: 16px;
-      line-height: 1.5;
+      display: none; background: var(--color-danger-bg);
+      border: 1px solid var(--color-danger-border); border-radius: 8px;
+      padding: 12px 14px; font-size: 0.9rem; color: var(--color-danger);
+      margin-bottom: 16px; line-height: 1.5;
+    }
+    .warning-box {
+      display: none; background: var(--color-warning-bg);
+      border: 1px solid var(--color-warning-border); border-radius: 8px;
+      padding: 12px 14px; font-size: 0.88rem; color: var(--color-warning-text);
+      margin-bottom: 16px; line-height: 1.5;
     }
 
-    /* ── Add New Student button ── */
+    /* ── Add button ── */
     .btn-add {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      height: 52px;
-      background: var(--color-accent);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-family: var(--font-body);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; height: 52px; background: var(--color-accent); color: #fff;
+      border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s; font-family: var(--font-body);
       margin-bottom: 16px;
     }
-
     .btn-add:hover { background: var(--color-accent-hover); }
 
-    .btn-add-icon {
-      font-size: 1.3rem;
-      line-height: 1;
-      font-weight: 400;
-    }
-
     /* ── Filter row ── */
-    .filter-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      padding: 0 2px;
-    }
-
-    .filter-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--color-accent);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .filter-row label {
-      font-size: 0.88rem;
-      color: var(--color-muted);
-      cursor: pointer;
-      user-select: none;
-    }
+    .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 0 2px; }
+    .filter-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-accent); cursor: pointer; flex-shrink: 0; }
+    .filter-row label { font-size: 0.88rem; color: var(--color-muted); cursor: pointer; user-select: none; }
 
     /* ── Student list ── */
-    .student-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
+    .student-list { display: flex; flex-direction: column; gap: 8px; }
     .student-row {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      background: #fff;
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      text-align: left;
+      display: flex; flex-direction: column; width: 100%;
+      background: #fff; border: 1px solid var(--color-border);
+      border-radius: 10px; padding: 14px 16px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s; text-align: left;
+    }
+    .student-row:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
+    .student-row.inactive { opacity: 0.45; }
+    .student-row.inactive:hover { opacity: 0.7; }
+    .student-name { font-size: 1rem; font-weight: 600; color: var(--color-text); line-height: 1.3; }
+    .student-status { font-size: 0.78rem; color: var(--color-muted); margin-top: 3px; text-transform: capitalize; }
+    .state-message { text-align: center; font-size: 0.92rem; color: var(--color-muted); padding: 28px 0; }
+
+    /* ── Edit view ── */
+    #view-edit { display: none; }
+
+    /* ── Form ── */
+    .field-group { margin-bottom: 18px; }
+    .field-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .field-label { font-size: 0.88rem; font-weight: 600; color: var(--color-text); }
+    .field-required { color: var(--color-danger); font-weight: 700; font-size: 0.9rem; }
+    .field-optional { font-size: 0.76rem; color: var(--color-muted); margin-left: 2px; }
+
+    .tooltip-btn {
+      background: var(--color-info); border: none; cursor: pointer;
+      width: 18px; height: 18px; border-radius: 50%; color: #fff;
+      font-size: 0.65rem; font-weight: 700; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0; padding: 0;
+    }
+    .tooltip-btn:hover { background: #155a9e; }
+
+    .tooltip-panel {
+      display: none; background: #eef4fb; border: 1px solid #b3d0ee;
+      border-radius: 8px; padding: 10px 12px; font-size: 0.82rem;
+      color: #1a3a5c; line-height: 1.5; margin-bottom: 8px;
+    }
+    .tooltip-panel.open { display: block; }
+
+    .field-input {
+      width: 100%; height: 46px; border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 0 12px; font-size: 0.95rem;
+      font-family: var(--font-body); color: var(--color-text); background: #fff;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus { outline: none; border-color: var(--color-accent); }
+    .field-input:disabled { background: #f5f5f5; color: var(--color-muted); cursor: not-allowed; }
+    .field-input.error { border-color: var(--color-danger); }
+
+    .field-hint { font-size: 0.76rem; color: var(--color-muted); margin-top: 5px; line-height: 1.4; }
+    .field-error { font-size: 0.78rem; color: var(--color-danger); margin-top: 4px; display: none; }
+
+    .field-select {
+      width: 100%; height: 46px; border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 0 12px; font-size: 0.95rem;
+      font-family: var(--font-body); color: var(--color-text); background: #fff;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .field-select:focus { outline: none; border-color: var(--color-accent); }
+    .field-select:disabled { background-color: #f5f5f5; color: var(--color-muted); cursor: not-allowed; }
+
+    .checkbox-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; background: var(--color-bg);
+      border: 1px solid var(--color-border); border-radius: 8px;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: 17px; height: 17px; accent-color: var(--color-accent);
+      cursor: pointer; flex-shrink: 0; margin-top: 1px;
+    }
+    .checkbox-row input[type="checkbox"]:disabled { cursor: not-allowed; }
+    .checkbox-label-wrap { flex: 1; }
+    .checkbox-label {
+      font-size: 0.9rem; font-weight: 600; color: var(--color-text);
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .checkbox-sub { font-size: 0.78rem; color: var(--color-muted); margin-top: 2px; line-height: 1.4; }
+
+    .section-divider { border: none; border-top: 1px solid var(--color-border); margin: 22px 0; }
+
+    /* ── Action buttons ── */
+    .btn-save {
+      width: 100%; height: 50px; background: var(--color-accent); color: #fff;
+      border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s; font-family: var(--font-body);
+      margin-bottom: 10px;
+    }
+    .btn-save:hover { background: var(--color-accent-hover); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary {
+      width: 100%; height: 46px; background: #fff; color: var(--color-accent);
+      border: 1.5px solid var(--color-accent); border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      transition: background 0.15s; font-family: var(--font-body); margin-bottom: 10px;
+    }
+    .btn-secondary:hover { background: var(--color-accent-soft); }
+    .btn-secondary:disabled {
+      opacity: 0.5; cursor: not-allowed;
+      border-color: var(--color-border); color: var(--color-muted);
     }
 
-    .student-row:hover {
-      border-color: var(--color-accent);
-      background: var(--color-accent-soft);
+    .btn-danger {
+      width: 100%; height: 46px; background: #fff; color: var(--color-danger);
+      border: 1.5px solid var(--color-danger-border); border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      transition: background 0.15s; font-family: var(--font-body);
+    }
+    .btn-danger:hover { background: var(--color-danger-bg); }
+
+    .btn-disabled-note {
+      font-size: 0.76rem; color: var(--color-muted); text-align: center;
+      margin-top: -4px; margin-bottom: 10px; line-height: 1.4;
     }
 
-    .student-row.inactive {
-      opacity: 0.45;
+    /* ── Confirm overlay ── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 500;
+      align-items: center; justify-content: center; padding: 24px;
     }
-
-    .student-row.inactive:hover {
-      opacity: 0.7;
+    .confirm-overlay.active { display: flex; }
+    .confirm-card {
+      background: #fff; border-radius: 16px; padding: 28px 24px;
+      width: 100%; max-width: 400px; box-shadow: 0 8px 40px rgba(0,0,0,0.18);
     }
-
-    .student-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--color-text);
-      line-height: 1.3;
+    .confirm-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+    .confirm-title.danger { color: var(--color-danger); }
+    .confirm-body { font-size: 0.9rem; color: var(--color-muted); line-height: 1.6; margin-bottom: 22px; }
+    .confirm-body strong { color: var(--color-text); }
+    .confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+    .confirm-btn-primary {
+      width: 100%; height: 46px; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: var(--font-body);
     }
-
-    .student-status {
-      font-size: 0.78rem;
-      color: var(--color-muted);
-      margin-top: 3px;
-      text-transform: capitalize;
+    .confirm-btn-primary.orange { background: var(--color-accent); color: #fff; }
+    .confirm-btn-primary.orange:hover { background: var(--color-accent-hover); }
+    .confirm-btn-primary.red { background: var(--color-danger); color: #fff; }
+    .confirm-btn-primary.red:hover { background: #a93226; }
+    .confirm-btn-cancel {
+      width: 100%; height: 46px; background: none;
+      border: 1.5px solid var(--color-border); border-radius: 10px;
+      font-size: 0.95rem; font-weight: 600; color: var(--color-muted);
+      cursor: pointer; font-family: var(--font-body);
     }
-
-    /* ── Loading / empty states ── */
-    .state-message {
-      text-align: center;
-      font-size: 0.92rem;
-      color: var(--color-muted);
-      padding: 28px 0;
-    }
-
-    /* ── Edit/Create view (stub) ── */
-    #view-edit {
-      display: none;
-    }
-
-    .edit-stub {
-      text-align: center;
-      padding: 32px 0;
-      color: var(--color-muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    .edit-stub strong {
-      display: block;
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      color: var(--color-text);
-      margin-bottom: 8px;
-    }
+    .confirm-btn-cancel:hover { background: var(--color-bg); }
   </style>
 </head>
 <body>
 
-  <div class="page-card">
+<div class="page-card">
 
-    <!-- ── VIEW 1: Student List ── -->
-    <div id="view-list">
+  <!-- ══════════════════════════════
+       VIEW 1 -- Student List
+  ══════════════════════════════ -->
+  <div id="view-list">
 
-      <div class="page-header">
-        <button class="back-btn" id="btn-back-menu" title="Back to menu">&#8592;</button>
-        <span class="page-title">Manage Students</span>
-      </div>
-
-      <div id="error-box" class="error-box"></div>
-
-      <button class="btn-add" id="btn-add-student">
-        <span class="btn-add-icon">+</span> Add New Student
-      </button>
-
-      <div class="filter-row">
-        <input type="checkbox" id="chk-active-only" checked />
-        <label for="chk-active-only">Show Active Only</label>
-      </div>
-
-      <div class="student-list" id="student-list">
-        <div class="state-message" id="list-state">Loading students...</div>
-      </div>
-
+    <div class="page-header">
+      <button class="back-btn" id="btn-back-menu">&#8592;</button>
+      <span class="page-title">Manage Students</span>
     </div>
 
-    <!-- ── VIEW 2: Edit / Create (stub) ── -->
-    <div id="view-edit">
+    <div id="list-error-box" class="error-box"></div>
 
-      <div class="page-header">
-        <button class="back-btn" id="btn-back-list" title="Back to students">&#8592;</button>
-        <span class="page-title" id="edit-title">Student</span>
-      </div>
+    <button class="btn-add" id="btn-add-student">
+      <span style="font-size:1.3rem;font-weight:400;line-height:1;">+</span> Add New Student
+    </button>
 
-      <div class="edit-stub">
-        <strong id="edit-stub-name"></strong>
-        Edit / Create screen coming next.
-      </div>
-
+    <div class="filter-row">
+      <input type="checkbox" id="chk-active-only" checked />
+      <label for="chk-active-only">Show Active Only</label>
     </div>
 
-  </div><!-- end page-card -->
+    <div class="student-list" id="student-list">
+      <div class="state-message" id="list-state">Loading students...</div>
+    </div>
 
-  <script type="module">
-    import { supabase } from '/assets/app.js';
+  </div>
 
-    // ── Auth guard ──
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      window.location.href = '/wunderkeys/';
-      throw new Error('Not authenticated');
+  <!-- ══════════════════════════════
+       VIEW 2 -- Edit / Create
+  ══════════════════════════════ -->
+  <div id="view-edit">
+
+    <div class="page-header">
+      <button class="back-btn" id="btn-back-list">&#8592;</button>
+      <span class="page-title" id="edit-title">Student</span>
+    </div>
+
+    <div id="edit-error-box" class="error-box"></div>
+    <div id="edit-warning-box" class="warning-box"></div>
+
+    <!-- Student Name -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Student Name</span>
+        <span class="field-required">*</span>
+        <button class="tooltip-btn" data-tooltip="tip-safename">?</button>
+      </div>
+      <div class="tooltip-panel" id="tip-safename">
+        Use a short name your student would recognise, but that protects their privacy -- for example, Tommy J. or Alex B. This name appears in your lesson notes and AI summaries. Avoid full last names.
+      </div>
+      <input type="text" class="field-input" id="field-safename"
+             placeholder="e.g. Tommy J" maxlength="20" autocomplete="off" />
+      <div class="field-hint">First name and last initial only. Max 20 characters. Use extra letters to distinguish students with the same name -- e.g. Tommy Jo, Tommy Ja.</div>
+      <div class="field-error" id="err-safename"></div>
+    </div>
+
+    <!-- Primary Email -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Primary Email</span>
+        <span class="field-required">*</span>
+      </div>
+      <input type="email" class="field-input" id="field-email-primary"
+             placeholder="parent@example.com" autocomplete="off" />
+      <div class="field-error" id="err-email-primary"></div>
+    </div>
+
+    <!-- Parental Consent -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Parental Consent</span>
+        <span class="field-required">*</span>
+        <button class="tooltip-btn" data-tooltip="tip-consent">?</button>
+      </div>
+      <div class="tooltip-panel" id="tip-consent">
+        For students under 13, parental or guardian consent is required before collecting or storing any personal information. Check this box only after you have obtained consent directly from a parent or guardian.
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="field-consent" />
+        <div class="checkbox-label-wrap">
+          <label class="checkbox-label" for="field-consent">Parental consent obtained</label>
+          <div class="checkbox-sub" id="consent-date-display"></div>
+        </div>
+      </div>
+      <div class="field-error" id="err-consent"></div>
+    </div>
+
+    <!-- Primary Email Unsubscribe -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Primary Email Preferences</span>
+        <button class="tooltip-btn" data-tooltip="tip-unsub-primary">?</button>
+      </div>
+      <div class="tooltip-panel" id="tip-unsub-primary">
+        Unsubscribing this email will stop all communications to this address, including session summary reports. Before unsubscribing, make sure you have an alternative contact method on file -- such as a secondary email or phone number -- so you can still reach this family.
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="field-unsub-primary" />
+        <div class="checkbox-label-wrap">
+          <label class="checkbox-label" for="field-unsub-primary">Unsubscribe primary email</label>
+          <div class="checkbox-sub">Stop all emails to the primary address</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Secondary Email -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Secondary Email</span>
+        <span class="field-optional">optional</span>
+      </div>
+      <input type="email" class="field-input" id="field-email-secondary"
+             placeholder="optional@example.com" autocomplete="off" />
+    </div>
+
+    <!-- Secondary Email Unsubscribe -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Secondary Email Preferences</span>
+        <button class="tooltip-btn" data-tooltip="tip-unsub-secondary">?</button>
+      </div>
+      <div class="tooltip-panel" id="tip-unsub-secondary">
+        Unsubscribing this email will stop all communications to this secondary address.
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="field-unsub-secondary" />
+        <div class="checkbox-label-wrap">
+          <label class="checkbox-label" for="field-unsub-secondary">Unsubscribe secondary email</label>
+          <div class="checkbox-sub">Stop all emails to the secondary address</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Phone -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Phone Number</span>
+        <span class="field-optional">optional</span>
+      </div>
+      <input type="tel" class="field-input" id="field-phone"
+             placeholder="e.g. 613-555-0100" autocomplete="off" />
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Current Book -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Current Book</span>
+        <span class="field-optional">optional</span>
+      </div>
+      <select class="field-select" id="field-book">
+        <option value="">-- No book assigned --</option>
+      </select>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Contact warning -->
+    <div id="contact-warning" class="warning-box">
+      No alternative contact method is on file. Consider adding a secondary email or phone number before unsubscribing the primary email.
+    </div>
+
+    <!-- Save -->
+    <button class="btn-save" id="btn-save">Save Student</button>
+
+    <!-- Lifecycle actions (edit mode only) -->
+    <div id="lifecycle-section" style="display:none;">
+      <button class="btn-secondary" id="btn-retire-reactivate"></button>
+      <div class="btn-disabled-note" id="reactivate-note" style="display:none;"></div>
+      <button class="btn-danger" id="btn-delete">Delete Student</button>
+    </div>
+
+  </div>
+
+</div><!-- end page-card -->
+
+<!-- ══════════════════════════════
+     CONFIRMATION OVERLAYS
+══════════════════════════════ -->
+
+<!-- Retire -->
+<div class="confirm-overlay" id="confirm-retire">
+  <div class="confirm-card">
+    <div class="confirm-title">Retire this student?</div>
+    <div class="confirm-body">
+      <strong id="retire-student-name"></strong> will be retired immediately. Their seat will be available for a new student right away.<br><br>
+      You can view their history and profile at any time by unchecking <em>Show Active Only</em> on the student list. You will not be able to reactivate them for <strong>30 days</strong>.
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn-primary orange" id="confirm-retire-yes">Retire Student</button>
+      <button class="confirm-btn-cancel" id="confirm-retire-no">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete -->
+<div class="confirm-overlay" id="confirm-delete">
+  <div class="confirm-card">
+    <div class="confirm-title danger">Delete this student?</div>
+    <div class="confirm-body">
+      This cannot be undone. <strong id="delete-student-name"></strong> will be permanently removed from your roster and their name will be cleared. You will no longer be able to access their profile or session history.<br><br>
+      Are you sure you want to continue?
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn-primary red" id="confirm-delete-yes">Yes, Delete Student</button>
+      <button class="confirm-btn-cancel" id="confirm-delete-no">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase } from '/assets/app.js';
+
+  // ── Auth guard ──────────────────────────────────────────────────────
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/wunderkeys/'; throw new Error('Not authenticated'); }
+  const teacherId = sessionStorage.getItem('teacher_id');
+  const seriesId  = sessionStorage.getItem('series_id');
+  const seriesSlug = sessionStorage.getItem('series_slug') || '';
+  if (!teacherId) { window.location.href = '/wunderkeys/'; throw new Error('No teacher_id'); }
+
+  // ── Constants ───────────────────────────────────────────────────────
+  const COOLING_DAYS = 30; // retirement_cooling_days Config key default
+
+  // ── State ───────────────────────────────────────────────────────────
+  let allStudents    = [];
+  let currentStudent = null;
+  let allBooks       = [];
+
+  // ── Element refs ────────────────────────────────────────────────────
+  const viewList            = document.getElementById('view-list');
+  const viewEdit            = document.getElementById('view-edit');
+  const studentListEl       = document.getElementById('student-list');
+  const listStateEl         = document.getElementById('list-state');
+  const listErrorBox        = document.getElementById('list-error-box');
+  const chkActiveOnly       = document.getElementById('chk-active-only');
+  const editTitle           = document.getElementById('edit-title');
+  const editErrorBox        = document.getElementById('edit-error-box');
+  const editWarningBox      = document.getElementById('edit-warning-box');
+  const contactWarning      = document.getElementById('contact-warning');
+  const lifecycleSection    = document.getElementById('lifecycle-section');
+  const btnRetireReactivate = document.getElementById('btn-retire-reactivate');
+  const reactivateNote      = document.getElementById('reactivate-note');
+  const consentDateDisplay  = document.getElementById('consent-date-display');
+  const fSafename           = document.getElementById('field-safename');
+  const fEmailPrimary       = document.getElementById('field-email-primary');
+  const fConsent            = document.getElementById('field-consent');
+  const fUnsubPrimary       = document.getElementById('field-unsub-primary');
+  const fEmailSecondary     = document.getElementById('field-email-secondary');
+  const fUnsubSecondary     = document.getElementById('field-unsub-secondary');
+  const fPhone              = document.getElementById('field-phone');
+  const fBook               = document.getElementById('field-book');
+  const btnSave             = document.getElementById('btn-save');
+
+  // ── Helpers ─────────────────────────────────────────────────────────
+  function showListError(msg) { listErrorBox.textContent = msg; listErrorBox.style.display = 'block'; }
+  function clearListError()   { listErrorBox.textContent = ''; listErrorBox.style.display = 'none'; }
+  function showEditError(msg) { editErrorBox.textContent = msg; editErrorBox.style.display = 'block'; window.scrollTo(0,0); }
+  function clearEditError()   { editErrorBox.textContent = ''; editErrorBox.style.display = 'none'; }
+
+  function setFieldError(fieldId, errId, msg) {
+    if (fieldId) { const f = document.getElementById(fieldId); if (f) f.classList.add('error'); }
+    const e = document.getElementById(errId);
+    if (e) { e.textContent = msg; e.style.display = 'block'; }
+  }
+  function clearFieldErrors() {
+    document.querySelectorAll('.field-input').forEach(f => f.classList.remove('error'));
+    document.querySelectorAll('.field-error').forEach(e => { e.textContent = ''; e.style.display = 'none'; });
+  }
+
+  function genRandomName() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let r = 'DELETED-';
+    for (let i = 0; i < 6; i++) r += chars[Math.floor(Math.random() * chars.length)];
+    return r;
+  }
+
+  function daysSince(dateStr) {
+    if (!dateStr) return null;
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  const isActive   = s => s?.student_status === 'active';
+  const isRetired  = s => s?.student_status === 'retired';
+  const coolingLocked = s => {
+    if (!isRetired(s)) return false;
+    const d = daysSince(s.retired_date);
+    return d !== null && d < COOLING_DAYS;
+  };
+  const daysUntilUnlock = s => {
+    const d = daysSince(s.retired_date);
+    return Math.max(0, COOLING_DAYS - (d ?? 0));
+  };
+
+  // ── Tooltips ────────────────────────────────────────────────────────
+  document.querySelectorAll('.tooltip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(btn.getAttribute('data-tooltip'));
+      if (panel) panel.classList.toggle('open');
+    });
+  });
+
+  // ── Contact warning ──────────────────────────────────────────────────
+  function checkContactWarning() {
+    const unsubbed    = fUnsubPrimary.checked;
+    const hasSecondary = fEmailSecondary.value.trim().length > 0 && !fUnsubSecondary.checked;
+    const hasPhone     = fPhone.value.trim().length > 0;
+    contactWarning.style.display = (unsubbed && !hasSecondary && !hasPhone) ? 'block' : 'none';
+  }
+  fUnsubPrimary.addEventListener('change', checkContactWarning);
+  fEmailSecondary.addEventListener('input', checkContactWarning);
+  fUnsubSecondary.addEventListener('change', checkContactWarning);
+  fPhone.addEventListener('input', checkContactWarning);
+
+  // ── Consent date hint ────────────────────────────────────────────────
+  fConsent.addEventListener('change', () => {
+    if (fConsent.checked && !currentStudent?.parental_consent_date) {
+      consentDateDisplay.textContent = 'Consent date will be recorded as today.';
+    } else if (!fConsent.checked) {
+      consentDateDisplay.textContent = '';
+    }
+  });
+
+  // ── Views ────────────────────────────────────────────────────────────
+  function showListView() {
+    viewEdit.style.display = 'none';
+    viewList.style.display = 'block';
+    clearEditError();
+    contactWarning.style.display = 'none';
+  }
+
+  function showEditView(student) {
+    currentStudent = student;
+    const isNew = student === null;
+
+    editTitle.textContent = isNew ? 'Add Student' : 'Edit Student';
+    clearEditError();
+    clearFieldErrors();
+    contactWarning.style.display = 'none';
+
+    // Populate fields
+    fSafename.value         = student?.safe_name                     || '';
+    fEmailPrimary.value     = student?.email_primary                 || '';
+    fConsent.checked        = student?.parental_consent_given        || false;
+    fUnsubPrimary.checked   = student?.email_primary_unsubscribed    || false;
+    fEmailSecondary.value   = student?.email_secondary               || '';
+    fUnsubSecondary.checked = student?.email_secondary_unsubscribed  || false;
+    fPhone.value            = student?.phone_primary                 || '';
+    fBook.value             = student?.current_book                  || '';
+
+    // Consent date display
+    if (student?.parental_consent_date) {
+      const d = new Date(student.parental_consent_date);
+      consentDateDisplay.textContent = 'Consent recorded: ' + d.toLocaleDateString();
+    } else {
+      consentDateDisplay.textContent = '';
     }
 
-    const teacherId  = sessionStorage.getItem('teacher_id');
-    const seriesSlug = sessionStorage.getItem('series_slug');
+    // Field editability
+    fSafename.disabled = !isNew && !isActive(student);
+    fBook.disabled     = !isNew && !isActive(student);
 
-    if (!teacherId) {
-      window.location.href = '/wunderkeys/';
-      throw new Error('No teacher_id in session');
-    }
-
-    // ── Elements ──
-    const viewList       = document.getElementById('view-list');
-    const viewEdit       = document.getElementById('view-edit');
-    const studentList    = document.getElementById('student-list');
-    const listState      = document.getElementById('list-state');
-    const errorBox       = document.getElementById('error-box');
-    const chkActiveOnly  = document.getElementById('chk-active-only');
-    const editTitle      = document.getElementById('edit-title');
-    const editStubName   = document.getElementById('edit-stub-name');
-
-    // ── State ──
-    let allStudents = [];
-
-    // ── Helpers ──
-    function showError(msg) {
-      errorBox.textContent = msg;
-      errorBox.style.display = 'block';
-    }
-
-    function clearError() {
-      errorBox.textContent = '';
-      errorBox.style.display = 'none';
-    }
-
-    function showListView() {
-      viewEdit.style.display = 'none';
-      viewList.style.display = 'block';
-    }
-
-    function showEditView(student) {
-      // student is null for Add New
-      const isNew = student === null;
-      editTitle.textContent     = isNew ? 'Add New Student' : 'Edit Student';
-      editStubName.textContent  = isNew ? 'New Student' : student.safe_name;
-      viewList.style.display    = 'none';
-      viewEdit.style.display    = 'block';
-    }
-
-    // ── Render student list ──
-    function renderList() {
-      const activeOnly = chkActiveOnly.checked;
-
-      const filtered = activeOnly
-        ? allStudents.filter(s => s.student_status === 'active')
-        : allStudents;
-
-      studentList.innerHTML = '';
-
-      if (filtered.length === 0) {
-        const msg = document.createElement('div');
-        msg.className = 'state-message';
-        msg.textContent = activeOnly
-          ? 'No active students. Add a new student or uncheck Show Active Only to see all.'
-          : 'No students found. Add a new student to get started.';
-        studentList.appendChild(msg);
-        return;
+    // Lifecycle buttons
+    if (isNew) {
+      lifecycleSection.style.display = 'none';
+    } else {
+      lifecycleSection.style.display = 'block';
+      if (isActive(student)) {
+        btnRetireReactivate.textContent = 'Retire Student';
+        btnRetireReactivate.disabled    = false;
+        reactivateNote.style.display    = 'none';
+      } else if (isRetired(student)) {
+        btnRetireReactivate.textContent = 'Reactivate Student';
+        if (coolingLocked(student)) {
+          btnRetireReactivate.disabled = true;
+          const rem = daysUntilUnlock(student);
+          reactivateNote.textContent   = `This student cannot be reactivated for another ${rem} day${rem === 1 ? '' : 's'} (30-day retirement window).`;
+          reactivateNote.style.display = 'block';
+        } else {
+          btnRetireReactivate.disabled = false;
+          reactivateNote.style.display = 'none';
+        }
       }
-
-      // Sort: active first (alpha), then inactive (alpha)
-      const sorted = [...filtered].sort((a, b) => {
-        const aActive = a.student_status === 'active' ? 0 : 1;
-        const bActive = b.student_status === 'active' ? 0 : 1;
-        if (aActive !== bActive) return aActive - bActive;
-        return a.safe_name.localeCompare(b.safe_name);
-      });
-
-      sorted.forEach(student => {
-        const row = document.createElement('button');
-        row.className = 'student-row' + (student.student_status !== 'active' ? ' inactive' : '');
-
-        const nameEl = document.createElement('div');
-        nameEl.className = 'student-name';
-        nameEl.textContent = student.safe_name;
-
-        const statusEl = document.createElement('div');
-        statusEl.className = 'student-status';
-        statusEl.textContent = student.student_status;
-
-        row.appendChild(nameEl);
-        row.appendChild(statusEl);
-        row.addEventListener('click', () => showEditView(student));
-        studentList.appendChild(row);
-      });
     }
 
-    // ── Load students from Supabase ──
-    async function loadStudents() {
-      listState.textContent = 'Loading students...';
-      clearError();
+    populateBookDropdown(student?.current_book || '');
+    viewList.style.display = 'none';
+    viewEdit.style.display = 'block';
+  }
 
-      const { data, error } = await supabase
-        .from('students')
-        .select('student_id, safe_name, student_status')
-        .eq('teacher_id', teacherId)
-        .order('safe_name', { ascending: true });
+  // ── Books dropdown ───────────────────────────────────────────────────
+  function populateBookDropdown(selectedId) {
+    fBook.innerHTML = '<option value="">-- No book assigned --</option>';
+    allBooks.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.book_id;
+      opt.textContent = b.full_display_name;
+      if (b.book_id === selectedId) opt.selected = true;
+      fBook.appendChild(opt);
+    });
+  }
 
-      if (error) {
-        listState.style.display = 'none';
-        showError('Could not load students. Please try again.');
-        return;
-      }
+  async function loadBooks() {
+    const { data, error } = await supabase
+      .from('books')
+      .select('book_id, full_display_name')
+      .eq('series_id', seriesId)
+      .eq('is_active', true)
+      .order('sequence_number', { ascending: true });
+    if (!error && data) allBooks = data;
+  }
 
-      allStudents = data || [];
-      listState.style.display = 'none';
-      renderList();
+  // ── Student list ─────────────────────────────────────────────────────
+  function renderList() {
+    const activeOnly = chkActiveOnly.checked;
+    const visible = allStudents.filter(s =>
+      s.student_status !== 'archived' && s.student_status !== 'deleted'
+    );
+    const filtered = activeOnly ? visible.filter(s => s.student_status === 'active') : visible;
+
+    studentListEl.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'state-message';
+      msg.textContent = activeOnly
+        ? 'No active students. Add a new student or uncheck Show Active Only to see retired students.'
+        : 'No students found. Add a new student to get started.';
+      studentListEl.appendChild(msg);
+      return;
     }
 
-    // ── Event listeners ──
-    chkActiveOnly.addEventListener('change', renderList);
-
-    document.getElementById('btn-add-student').addEventListener('click', () => {
-      clearError();
-      showEditView(null);
+    const sorted = [...filtered].sort((a, b) => {
+      const aA = a.student_status === 'active' ? 0 : 1;
+      const bA = b.student_status === 'active' ? 0 : 1;
+      if (aA !== bA) return aA - bA;
+      return a.safe_name.localeCompare(b.safe_name);
     });
 
-    document.getElementById('btn-back-list').addEventListener('click', showListView);
-
-    document.getElementById('btn-back-menu').addEventListener('click', () => {
-      window.location.href = '/main_menu.html';
+    sorted.forEach(s => {
+      const row = document.createElement('button');
+      row.className = 'student-row' + (s.student_status !== 'active' ? ' inactive' : '');
+      const nameEl = document.createElement('div');
+      nameEl.className = 'student-name';
+      nameEl.textContent = s.safe_name;
+      const statusEl = document.createElement('div');
+      statusEl.className = 'student-status';
+      statusEl.textContent = s.student_status;
+      row.appendChild(nameEl);
+      row.appendChild(statusEl);
+      row.addEventListener('click', () => showEditView(s));
+      studentListEl.appendChild(row);
     });
+  }
 
-    // ── Init ──
+  async function loadStudents() {
+    listStateEl.style.display = 'block';
+    listStateEl.textContent   = 'Loading students...';
+    clearListError();
+
+    const { data, error } = await supabase
+      .from('students')
+      .select('student_id, safe_name, student_status, retired_date, archived_date, current_book, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, phone_primary, parental_consent_given, parental_consent_date')
+      .eq('teacher_id', teacherId)
+      .order('safe_name', { ascending: true });
+
+    if (error) {
+      listStateEl.style.display = 'none';
+      showListError('Could not load students. Please try again.');
+      return;
+    }
+
+    allStudents = data || [];
+    listStateEl.style.display = 'none';
+    renderList();
+  }
+
+  // ── Validation ───────────────────────────────────────────────────────
+  function validateForm() {
+    clearFieldErrors();
+    let valid = true;
+
+    const safeName = fSafename.value.trim();
+    if (!fSafename.disabled) {
+      if (!safeName) {
+        setFieldError('field-safename', 'err-safename', 'Student name is required.');
+        valid = false;
+      } else {
+        const dupe = allStudents.find(s =>
+          s.safe_name.toLowerCase() === safeName.toLowerCase() &&
+          s.student_status !== 'archived' &&
+          s.student_status !== 'deleted' &&
+          s.student_id !== currentStudent?.student_id
+        );
+        if (dupe) {
+          const parts = safeName.trim().split(' ');
+          const first = parts[0] || safeName;
+          setFieldError('field-safename', 'err-safename',
+            `You already have a student named "${safeName}". Use a more specific format -- e.g. ${first} Jo or ${first} Ja.`);
+          valid = false;
+        }
+      }
+    }
+
+    const emailPrimary = fEmailPrimary.value.trim();
+    if (!emailPrimary) {
+      setFieldError('field-email-primary', 'err-email-primary', 'Primary email is required.');
+      valid = false;
+    } else if (!emailPrimary.includes('@')) {
+      setFieldError('field-email-primary', 'err-email-primary', 'Please enter a valid email address.');
+      valid = false;
+    }
+
+    if (!fConsent.checked) {
+      setFieldError(null, 'err-consent', 'Parental consent must be confirmed before saving.');
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // ── Save ─────────────────────────────────────────────────────────────
+  async function saveStudent() {
+    clearEditError();
+    if (!validateForm()) return;
+
+    btnSave.disabled    = true;
+    btnSave.textContent = 'Saving...';
+
+    const safeName    = fSafename.disabled ? currentStudent.safe_name : fSafename.value.trim();
+    const displayName = safeName + (seriesSlug ? ' (' + seriesSlug.charAt(0).toUpperCase() + seriesSlug.slice(1) + ')' : '');
+
+    const payload = {
+      safe_name:                    safeName,
+      display_name:                 displayName,
+      email_primary:                fEmailPrimary.value.trim()    || null,
+      email_primary_unsubscribed:   fUnsubPrimary.checked,
+      email_secondary:              fEmailSecondary.value.trim()  || null,
+      email_secondary_unsubscribed: fUnsubSecondary.checked,
+      phone_primary:                fPhone.value.trim()           || null,
+      parental_consent_given:       fConsent.checked,
+      current_book:                 (!fBook.disabled && fBook.value) ? fBook.value : (currentStudent?.current_book || null),
+      updated_at:                   new Date().toISOString()
+    };
+
+    if (fConsent.checked && !currentStudent?.parental_consent_given) {
+      payload.parental_consent_date = new Date().toISOString();
+    } else if (!fConsent.checked) {
+      payload.parental_consent_date = null;
+    }
+
+    let error;
+    if (currentStudent === null) {
+      const { error: e } = await supabase.from('students').insert({
+        ...payload,
+        teacher_id:     teacherId,
+        student_status: 'active',
+        created_at:     new Date().toISOString()
+      });
+      error = e;
+    } else {
+      const { error: e } = await supabase.from('students')
+        .update(payload)
+        .eq('student_id', currentStudent.student_id);
+      error = e;
+    }
+
+    btnSave.disabled    = false;
+    btnSave.textContent = 'Save Student';
+
+    if (error) {
+      showEditError('Could not save student. Please try again. (' + error.message + ')');
+      return;
+    }
+
     await loadStudents();
-  </script>
+    showListView();
+  }
+
+  // ── Retire ───────────────────────────────────────────────────────────
+  async function retireStudent() {
+    const { error } = await supabase.from('students').update({
+      student_status: 'retired',
+      retired_date:   new Date().toISOString().split('T')[0],
+      updated_at:     new Date().toISOString()
+    }).eq('student_id', currentStudent.student_id);
+
+    if (error) { showEditError('Could not retire student. Please try again.'); return; }
+    await loadStudents();
+    showListView();
+  }
+
+  // ── Reactivate ───────────────────────────────────────────────────────
+  async function reactivateStudent() {
+    const activeCount = allStudents.filter(s => s.student_status === 'active').length;
+
+    const { data: subData } = await supabase
+      .from('series_subscriptions')
+      .select('student_seat_limit')
+      .eq('teacher_id', teacherId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const seatLimit = subData?.student_seat_limit ?? 5;
+
+    if (activeCount >= seatLimit) {
+      showEditError(`You have reached your student seat limit (${seatLimit} active students). Please retire another student before reactivating this one.`);
+      return;
+    }
+
+    const { error } = await supabase.from('students').update({
+      student_status: 'active',
+      retired_date:   null,
+      updated_at:     new Date().toISOString()
+    }).eq('student_id', currentStudent.student_id);
+
+    if (error) { showEditError('Could not reactivate student. Please try again.'); return; }
+    await loadStudents();
+    showListView();
+  }
+
+  // ── Delete ───────────────────────────────────────────────────────────
+  async function deleteStudent() {
+    const randomName = genRandomName();
+    const { error } = await supabase.from('students').update({
+      student_status: 'archived',
+      safe_name:      randomName,
+      display_name:   randomName,
+      archived_date:  new Date().toISOString().split('T')[0],
+      updated_at:     new Date().toISOString()
+    }).eq('student_id', currentStudent.student_id);
+
+    if (error) { showEditError('Could not delete student. Please try again.'); return; }
+    await loadStudents();
+    showListView();
+  }
+
+  // ── Event listeners ──────────────────────────────────────────────────
+  chkActiveOnly.addEventListener('change', renderList);
+
+  document.getElementById('btn-add-student').addEventListener('click', () => {
+    clearListError(); showEditView(null);
+  });
+  document.getElementById('btn-back-list').addEventListener('click', showListView);
+  document.getElementById('btn-back-menu').addEventListener('click', () => {
+    window.location.href = '/main_menu.html';
+  });
+
+  btnSave.addEventListener('click', saveStudent);
+
+  btnRetireReactivate.addEventListener('click', () => {
+    if (isActive(currentStudent)) {
+      document.getElementById('retire-student-name').textContent = currentStudent.safe_name;
+      document.getElementById('confirm-retire').classList.add('active');
+    } else if (isRetired(currentStudent)) {
+      reactivateStudent();
+    }
+  });
+
+  document.getElementById('btn-delete').addEventListener('click', () => {
+    document.getElementById('delete-student-name').textContent = currentStudent.safe_name;
+    document.getElementById('confirm-delete').classList.add('active');
+  });
+
+  document.getElementById('confirm-retire-yes').addEventListener('click', () => {
+    document.getElementById('confirm-retire').classList.remove('active');
+    retireStudent();
+  });
+  document.getElementById('confirm-retire-no').addEventListener('click', () => {
+    document.getElementById('confirm-retire').classList.remove('active');
+  });
+
+  document.getElementById('confirm-delete-yes').addEventListener('click', () => {
+    document.getElementById('confirm-delete').classList.remove('active');
+    deleteStudent();
+  });
+  document.getElementById('confirm-delete-no').addEventListener('click', () => {
+    document.getElementById('confirm-delete').classList.remove('active');
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  await Promise.all([loadStudents(), loadBooks()]);
+</script>
 
 </body>
 </html>
