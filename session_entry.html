@@ -490,7 +490,6 @@
       .order('entry_sequence', { ascending: false })
       .limit(1);
 
-    console.log('DEBUG sequence query -- data:', data, 'error:', error);
     if (!error && data && data.length > 0) {
       nextSequence = data[0].entry_sequence + 1;
       await loadExistingEntries();
@@ -508,7 +507,6 @@
       .eq('entry_source', 'teacher')
       .order('entry_sequence', { ascending: true });
 
-    console.log('DEBUG loadExistingEntries -- data:', data, 'error:', error);
     if (error || !data) return;
     data.forEach(row => appendEntryToLog(row.entry_text, row.created_at));
   }
