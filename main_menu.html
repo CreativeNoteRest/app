@@ -387,6 +387,20 @@
     const TEACHER_ID = sessionStorage.getItem('teacher_id') || '';
     const SERIES_ID  = sessionStorage.getItem('series_id')  || '';
 
+    // ── DB warm-up -- fire and forget ────────────────────────────────
+    // Runs in parallel immediately on page load, before the teacher taps
+    // anything. Warms the Supabase connection, pgBouncer pool, and
+    // Postgres buffer cache for the tables that drive Open Lesson and
+    // Manage Students. No await -- never blocks page render.
+    if (TEACHER_ID && SERIES_ID) {
+      Promise.all([
+        supabase.from('config').select('config_key').eq('series_id', SERIES_ID).limit(1),
+        supabase.from('students').select('student_id').eq('teacher_id', TEACHER_ID).eq('student_status', 'active').limit(1),
+        supabase.from('sessions').select('session_id').eq('teacher_id', TEACHER_ID).limit(1),
+        supabase.from('books').select('book_id').eq('series_id', SERIES_ID).eq('is_active', true).limit(1)
+      ]).catch(() => {}); // silently swallow any error -- warm-up is non-critical
+    }
+
     // ── UUID generator ───────────────────────────────────────────────
     function genUUID() {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
