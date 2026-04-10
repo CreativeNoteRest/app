@@ -818,12 +818,17 @@
     const recognition = new SpeechRecognition();
     recognition.lang           = 'en-CA';
     recognition.continuous     = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
 
-    let listening = false;
+    let listening    = false;
+    let textBeforeMic = ''; // not used (full erase/rewrite) -- retained for clarity
 
     btnMic.addEventListener('click', function() {
       if (listening) { recognition.stop(); return; }
+      // Clear textarea immediately on mic tap
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      btnSubmit.disabled = true;
       recognition.start();
     });
 
@@ -835,17 +840,32 @@
     };
 
     recognition.onresult = function(e) {
-      const transcript = e.results[0][0].transcript.trim();
-      if (transcript) {
-        textarea.value += (textarea.value ? ' ' : '') + transcript;
-        textarea.dispatchEvent(new Event('input'));
+      // Build the full transcript from all results so far
+      // Final results are committed; interim results stream in
+      let finalText   = '';
+      let interimText = '';
+
+      for (let i = 0; i < e.results.length; i++) {
+        const result = e.results[i];
+        if (result.isFinal) {
+          finalText += result[0].transcript;
+        } else {
+          interimText += result[0].transcript;
+        }
       }
+
+      // Show final + interim combined in textarea
+      textarea.value = (finalText + interimText).trim();
+      textarea.dispatchEvent(new Event('input'));
     };
 
     recognition.onend = function() {
       listening = false;
       btnMic.classList.remove('listening');
       btnMic.setAttribute('aria-label', 'Start voice input');
+      // Trim final value cleanly
+      textarea.value = textarea.value.trim();
+      textarea.dispatchEvent(new Event('input'));
       btnSubmit.disabled = textarea.value.trim().length === 0;
     };
 
