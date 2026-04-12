@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Close Lesson</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens (matched to app standard) ─────────────────── */
+    :root {
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Auth guard overlay ───────────────────────────────────────── */
+    #auth-loading {
+      position: fixed; inset: 0;
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .app-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-series-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem; color: var(--brand); letter-spacing: -0.01em;
+    }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* ── Main scroll area ────────────────────────────────────────── */
+    .main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 20px 120px; /* bottom pad clears sticky footer */
+    }
+
+    /* ── Page title block ────────────────────────────────────────── */
+    .page-title-block {
+      margin-bottom: 24px;
+    }
+    .page-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-light); margin-bottom: 4px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.75rem; color: var(--text); letter-spacing: -0.02em; line-height: 1.15;
+    }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle {
+      font-size: 0.82rem; color: var(--text-mid); margin-top: 5px;
+    }
+
+    /* ── Spinner / loading state ─────────────────────────────────── */
+    .loading-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 20px; gap: 16px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem; color: var(--text-mid);
+    }
+    .loading-sub { font-size: 0.8rem; color: var(--text-light); margin-top: -8px; }
+
+    /* ── Phase progress strip (shown during AI run) ──────────────── */
+    .phase-strip {
+      display: flex; gap: 6px; justify-content: center;
+      margin-top: 8px;
+    }
+    .phase-pip {
+      width: 28px; height: 4px; border-radius: 2px;
+      background: var(--border);
+      transition: background 0.4s;
+    }
+    .phase-pip.done { background: var(--brand); }
+    .phase-pip.active { background: var(--brand); opacity: 0.45; animation: pipPulse 1s ease-in-out infinite; }
+    @keyframes pipPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 0.85; } }
+
+    /* ── Card base ───────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .card-title-group { display: flex; align-items: center; gap: 10px; }
+    .card-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--brand-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-icon svg { width: 16px; height: 16px; fill: var(--brand); }
+    .card-title {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--text-light);
+    }
+    .card-body { padding: 16px 18px; }
+
+    /* ── Teacher summary ─────────────────────────────────────────── */
+    .summary-text {
+      font-size: 0.88rem; line-height: 1.7;
+      color: var(--text); white-space: pre-wrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Student practice plan ───────────────────────────────────── */
+    .practice-text {
+      font-size: 0.9rem; line-height: 1.7;
+      color: var(--text); white-space: pre-wrap;
+    }
+
+    /* ── Supplement cards ────────────────────────────────────────── */
+    .supplement-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .supplement-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .supplement-thumb {
+      width: 48px; height: 48px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--brand-light);
+    }
+    .supplement-thumb-placeholder {
+      width: 48px; height: 48px; border-radius: 8px;
+      background: var(--brand-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .supplement-thumb-placeholder svg { width: 20px; height: 20px; fill: var(--brand); opacity: 0.6; }
+    .supplement-info { flex: 1; min-width: 0; }
+    .supplement-title {
+      font-size: 0.88rem; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .supplement-meta {
+      font-size: 0.72rem; color: var(--text-light); margin-top: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .badge-free {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--success-light); color: var(--success);
+      border-radius: 4px; padding: 1px 5px;
+    }
+    .badge-paid {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--brand-light); color: var(--brand);
+      border-radius: 4px; padding: 1px 5px;
+    }
+    .supplement-link {
+      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-light); text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .supplement-link:hover { border-color: var(--brand); color: var(--brand); }
+    .supplement-link svg { width: 14px; height: 14px; }
+
+    .show-more-btn {
+      width: 100%; padding: 10px;
+      background: none; border: 1px dashed var(--border);
+      border-radius: 10px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; color: var(--text-light);
+      transition: border-color 0.15s, color 0.15s;
+      margin-top: 4px;
+    }
+    .show-more-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+    .no-supplements {
+      font-size: 0.85rem; color: var(--text-light); line-height: 1.6;
+      padding: 4px 0;
+    }
+
+    /* ── Book transition card ─────────────────────────────────────── */
+    .transition-card {
+      background: var(--warn-light);
+      border: 1px solid var(--warn-border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .transition-heading {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--warn); margin-bottom: 8px;
+    }
+    .transition-question {
+      font-size: 0.95rem; font-weight: 600; color: var(--text);
+      margin-bottom: 14px; line-height: 1.4;
+    }
+    .transition-actions { display: flex; gap: 10px; }
+    .btn-transition-confirm {
+      flex: 1; height: 42px; background: var(--brand); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-transition-confirm:hover { opacity: 0.88; }
+    .btn-transition-notyet {
+      flex: 1; height: 42px; background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-transition-notyet:hover { border-color: var(--text-mid); }
+    .transition-confirmed-note {
+      font-size: 0.82rem; color: var(--success); font-weight: 600;
+      margin-top: 10px; display: none;
+    }
+
+    /* ── Quality gate card ───────────────────────────────────────── */
+    .gate-card {
+      background: var(--warn-light);
+      border: 1px solid var(--warn-border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      margin-bottom: 16px;
+    }
+    .gate-heading {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--warn); margin-bottom: 10px;
+    }
+    .gate-message {
+      font-size: 0.88rem; color: var(--text); line-height: 1.65;
+      margin-bottom: 18px;
+    }
+    .gate-actions { display: flex; gap: 10px; }
+    .btn-gate-cancel {
+      flex: 1; height: 44px; background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-gate-cancel:hover { border-color: var(--text-mid); }
+    .btn-gate-anyway {
+      flex: 1; height: 44px; background: none; color: var(--brand);
+      border: 1.5px solid var(--brand); border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-gate-anyway:hover { background: var(--brand-light); }
+
+    /* ── Error card ──────────────────────────────────────────────── */
+    .error-card {
+      background: var(--danger-light);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      margin-bottom: 16px;
+    }
+    .error-heading {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--danger); margin-bottom: 8px;
+    }
+    .error-message {
+      font-size: 0.88rem; color: var(--text); line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .btn-retry {
+      height: 42px; padding: 0 20px;
+      background: var(--danger); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-retry:hover { opacity: 0.88; }
+
+    /* ── Sticky footer action bar ────────────────────────────────── */
+    .footer-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 14px 20px 20px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+      z-index: 50;
+    }
+    .footer-inner {
+      max-width: 600px; margin: 0 auto;
+      display: flex; gap: 10px;
+    }
+    .btn-cancel-lesson {
+      flex: 1; height: 50px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-cancel-lesson:hover { border-color: var(--text-mid); color: var(--text); }
+
+    .btn-approve {
+      flex: 2; height: 50px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(226,107,10,0.28);
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(226,107,10,0.36); }
+    .btn-approve:active { transform: translateY(0); }
+    .btn-approve:disabled {
+      background: var(--border); color: var(--text-light);
+      box-shadow: none; cursor: not-allowed; transform: none;
+    }
+
+    /* ── Utility: hide/show ──────────────────────────────────────── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Auth guard overlay -->
+  <div id="auth-loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="header-series-name" id="header-series-name">Creative Note</span>
+      <span class="header-dot"></span>
+      <span class="header-sub">Close Lesson</span>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main" id="main-content">
+
+    <!-- Page title -->
+    <div class="page-title-block">
+      <div class="page-label">Lesson review</div>
+      <h1 class="page-title" id="page-title">Closing<em>...</em></h1>
+      <div class="page-subtitle" id="page-subtitle"></div>
+    </div>
+
+    <!-- ── LOADING STATE ─────────────────────────────────────────── -->
+    <div id="state-loading" class="loading-state">
+      <div class="spinner"></div>
+      <div class="loading-label" id="loading-label">Reviewing your lesson</div>
+      <div class="loading-sub" id="loading-sub">This takes about 15 seconds</div>
+      <div class="phase-strip" id="phase-strip">
+        <div class="phase-pip" id="pip-1"></div>
+        <div class="phase-pip" id="pip-2"></div>
+        <div class="phase-pip" id="pip-3"></div>
+        <div class="phase-pip" id="pip-4"></div>
+        <div class="phase-pip" id="pip-5"></div>
+      </div>
+    </div>
+
+    <!-- ── ERROR STATE ───────────────────────────────────────────── -->
+    <div id="state-error" class="hidden">
+      <div class="error-card">
+        <div class="error-heading">Something went wrong</div>
+        <div class="error-message" id="error-message">
+          The lesson could not be processed. Your notes are safe -- tap Retry to try again, or Cancel to return to your lesson.
+        </div>
+        <button class="btn-retry" onclick="runEdgeFunction(false)">Retry</button>
+      </div>
+    </div>
+
+    <!-- ── GATE STATE (quality gate not satisfied) ───────────────── -->
+    <div id="state-gate" class="hidden">
+      <div class="gate-card">
+        <div class="gate-heading">Before you close</div>
+        <div class="gate-message" id="gate-message"></div>
+        <div class="gate-actions">
+          <button class="btn-gate-cancel" onclick="cancelAndReturn()">Cancel</button>
+          <button class="btn-gate-anyway" onclick="runEdgeFunction(true)">Close Anyway</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RESULTS STATE ─────────────────────────────────────────── -->
+    <div id="state-results" class="hidden">
+
+      <!-- Book transition question (shown only when suspected) -->
+      <div id="transition-card" class="transition-card hidden">
+        <div class="transition-heading">Book transition detected</div>
+        <div class="transition-question" id="transition-question"></div>
+        <div class="transition-actions">
+          <button class="btn-transition-confirm" onclick="confirmTransition(true)">Yes, confirm</button>
+          <button class="btn-transition-notyet" onclick="confirmTransition(false)">Not yet</button>
+        </div>
+        <div class="transition-confirmed-note" id="transition-confirmed-note">
+          Transition confirmed. This will be recorded when you approve.
+        </div>
+      </div>
+
+      <!-- Teacher summary card -->
+      <div class="card" id="card-teacher">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+            </div>
+            <div class="card-title">Teacher Summary</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="summary-text" id="teacher-summary-text"></div>
+        </div>
+      </div>
+
+      <!-- Student practice plan card -->
+      <div class="card" id="card-student">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="card-title">Student Practice Plan</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="practice-text" id="student-summary-text"></div>
+        </div>
+      </div>
+
+      <!-- Supplement recommendations card -->
+      <div class="card" id="card-supplements">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>
+            </div>
+            <div class="card-title">Recommended Supplements</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="supplement-list" id="supplement-list"></div>
+          <button class="show-more-btn hidden" id="show-more-btn" onclick="showMoreSupplements()">
+            Show more recommendations
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /state-results -->
+
+  </main>
+
+  <!-- Sticky footer (hidden during loading/gate/error) -->
+  <div class="footer-bar hidden" id="footer-bar">
+    <div class="footer-inner">
+      <button class="btn-cancel-lesson" onclick="cancelAndReturn()">Cancel</button>
+      <button class="btn-approve" id="btn-approve" onclick="handleApprove()">Approve &amp; Close</button>
+    </div>
+  </div>
+
+<script type="module">
+  import { supabase, requireAuth, applyBranding } from '/assets/app.js';
+
+  // ── 1. Auth guard ──────────────────────────────────────────────────
+  await requireAuth();
+  applyBranding();
+  document.getElementById('auth-loading').style.display = 'none';
+
+  // ── 2. Read session context from sessionStorage ────────────────────
+  const SESSION_ID    = sessionStorage.getItem('session_id')   || '';
+  const TEACHER_ID    = sessionStorage.getItem('teacher_id')   || '';
+  const STUDENT_ID    = sessionStorage.getItem('student_id')   || '';
+  const STUDENT_NAME  = sessionStorage.getItem('student_name') || 'Student';
+  const SERIES_ID     = sessionStorage.getItem('series_id')    || '';
+  const SERIES_SLUG   = sessionStorage.getItem('series_slug')  || 'wunderkeys';
+  const LESSON_BOOK_ID = sessionStorage.getItem('lesson_book_id') || null;
+
+  // Guard: if core context is missing, return to main menu
+  if (!SESSION_ID || !TEACHER_ID || !STUDENT_ID) {
+    window.location.href = '/main_menu.html';
+  }
+
+  // ── 3. Apply series name to header ────────────────────────────────
+  const nameMap = { wunderkeys: 'WunderKeys' };
+  const seriesEl = document.getElementById('header-series-name');
+  if (nameMap[SERIES_SLUG]) seriesEl.textContent = nameMap[SERIES_SLUG];
+
+  // ── 4. Set page title ─────────────────────────────────────────────
+  document.getElementById('page-title').innerHTML =
+    `${STUDENT_NAME}<em>'s lesson</em>`;
+
+  // ── 5. State management ───────────────────────────────────────────
+  // Tracks what the Edge Function returned, and teacher decisions.
+  let efResponse       = null;   // full Edge Function response object
+  let bookTransition   = false;  // has teacher confirmed a book transition?
+  let transitionBookId = null;   // new book_id if transition confirmed
+  let allSupplements   = [];     // full supplement list from response
+  let initialCount     = 3;      // how many to show before show-more
+
+  // ── 6. Phase pip animation helpers ───────────────────────────────
+  // The Edge Function runs five sequential AI phases.
+  // We animate the pips on a rough time estimate (3s per phase).
+  let pipTimer = null;
+  let currentPip = 0;
+
+  function startPipAnimation() {
+    currentPip = 0;
+    document.querySelectorAll('.phase-pip').forEach(p => {
+      p.classList.remove('done', 'active');
+    });
+    setPipActive(0);
+    pipTimer = setInterval(() => {
+      currentPip++;
+      if (currentPip < 5) {
+        setPipDone(currentPip - 1);
+        setPipActive(currentPip);
+      } else {
+        clearInterval(pipTimer);
+      }
+    }, 3000);
+  }
+
+  function setPipActive(i) {
+    const pip = document.getElementById(`pip-${i + 1}`);
+    if (pip) pip.classList.add('active');
+  }
+
+  function setPipDone(i) {
+    const pip = document.getElementById(`pip-${i + 1}`);
+    if (pip) { pip.classList.remove('active'); pip.classList.add('done'); }
+  }
+
+  function finishPips() {
+    clearInterval(pipTimer);
+    document.querySelectorAll('.phase-pip').forEach(p => {
+      p.classList.remove('active');
+      p.classList.add('done');
+    });
+  }
+
+  function stopPips() {
+    clearInterval(pipTimer);
+    document.querySelectorAll('.phase-pip').forEach(p => {
+      p.classList.remove('active', 'done');
+    });
+  }
+
+  // ── 7. Show/hide states ───────────────────────────────────────────
+  function showState(name) {
+    document.getElementById('state-loading').classList.add('hidden');
+    document.getElementById('state-error').classList.add('hidden');
+    document.getElementById('state-gate').classList.add('hidden');
+    document.getElementById('state-results').classList.add('hidden');
+    document.getElementById('footer-bar').classList.add('hidden');
+
+    if (name === 'loading') {
+      document.getElementById('state-loading').classList.remove('hidden');
+    } else if (name === 'error') {
+      document.getElementById('state-error').classList.remove('hidden');
+    } else if (name === 'gate') {
+      document.getElementById('state-gate').classList.remove('hidden');
+    } else if (name === 'results') {
+      document.getElementById('state-results').classList.remove('hidden');
+      document.getElementById('footer-bar').classList.remove('hidden');
+    }
+  }
+
+  // ── 8. Call the Edge Function ─────────────────────────────────────
+  // bypass_gate = false on first call; true if teacher taps Close Anyway.
+  async function runEdgeFunction(bypass_gate) {
+    showState('loading');
+    startPipAnimation();
+
+    document.getElementById('loading-label').textContent = bypass_gate
+      ? 'Generating your summaries'
+      : 'Reviewing your lesson';
+
+    const body = {
+      session_id:    SESSION_ID,
+      teacher_id:    TEACHER_ID,
+      student_id:    STUDENT_ID,
+      series_id:     SERIES_ID,
+      lesson_book_id: LESSON_BOOK_ID,   // null is fine -- Edge Function handles it
+      student_name:  STUDENT_NAME,
+      bypass_gate:   bypass_gate
+    };
+
+    try {
+      const { data, error } = await supabase.functions.invoke('session-close', {
+        body
+      });
+
+      finishPips();
+
+      if (error) {
+        // Network-level or function-level failure
+        console.error('Edge Function error:', error);
+        showError(
+          `The lesson summary could not be generated. Your notes are safe. ` +
+          `Please try again, or cancel to return to your lesson. (${error.message || 'Unknown error'})`
+        );
+        return;
+      }
+
+      if (!data || data.success === false) {
+        // Function ran but returned a hard failure
+        const msg = data?.error || 'An unknown error occurred in the summary service.';
+        console.error('Edge Function returned success:false:', msg);
+        showError(
+          `The summary service reported an error. Your notes are safe. ` +
+          `Please try again shortly. (${msg})`
+        );
+        return;
+      }
+
+      // Store full response for use at approve time
+      efResponse = data;
+
+      if (data.gate_satisfied === false) {
+        // Quality gate fired -- show gate message, not full results
+        renderGate(data.gate_message);
+        return;
+      }
+
+      // Gate satisfied (or bypassed) -- render full results
+      renderResults(data);
+
+    } catch (err) {
+      finishPips();
+      stopPips();
+      console.error('Unexpected error calling Edge Function:', err);
+      showError(
+        `An unexpected error occurred. Your notes are safe. ` +
+        `Please try again. (${err.message})`
+      );
+    }
+  }
+
+  // ── 9. Render: quality gate message ──────────────────────────────
+  function renderGate(message) {
+    stopPips();
+    document.getElementById('gate-message').textContent = message ||
+      'Please add more lesson notes before closing.';
+    document.getElementById('page-subtitle').textContent =
+      'A few things to check before closing';
+    showState('gate');
+  }
+
+  // ── 10. Render: full results ──────────────────────────────────────
+  function renderResults(data) {
+    document.getElementById('page-subtitle').textContent =
+      'Review and approve to save';
+
+    // Teacher summary
+    document.getElementById('teacher-summary-text').textContent =
+      data.ai_summ_teacher || '(No teacher summary generated.)';
+
+    // Student practice plan
+    document.getElementById('student-summary-text').textContent =
+      data.ai_summ_student || '(No student summary generated.)';
+
+    // Supplements
+    allSupplements = data.ai_summ_supplement_data || [];
+    initialCount   = data.supplement_initial_display || 3;
+    renderSupplements();
+
+    // Book transition question
+    if (data.book_transition_suspected && data.book_transition_book_name) {
+      const transCard = document.getElementById('transition-card');
+      transCard.classList.remove('hidden');
+      document.getElementById('transition-question').textContent =
+        `It looks like ${STUDENT_NAME} may have moved to a new book. ` +
+        `Are they now working in ${data.book_transition_book_name}?`;
+      transitionBookId = data.book_transition_book_id || null;
+    }
+
+    showState('results');
+    // Scroll to top so teacher sees the transition card / teacher summary first
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── 11. Render supplements ────────────────────────────────────────
+  function renderSupplements() {
+    const list = document.getElementById('supplement-list');
+    const showMoreBtn = document.getElementById('show-more-btn');
+    list.innerHTML = '';
+
+    if (!allSupplements || allSupplements.length === 0) {
+      list.innerHTML = `<div class="no-supplements">
+        Supplement recommendations will build as ${STUDENT_NAME} progresses through the book.
+      </div>`;
+      showMoreBtn.classList.add('hidden');
+      return;
+    }
+
+    const toShow = allSupplements.slice(0, initialCount);
+    toShow.forEach(s => list.appendChild(buildSupplementItem(s)));
+
+    if (allSupplements.length > initialCount) {
+      const remaining = allSupplements.length - initialCount;
+      showMoreBtn.textContent = `Show ${remaining} more recommendation${remaining > 1 ? 's' : ''}`;
+      showMoreBtn.classList.remove('hidden');
+    } else {
+      showMoreBtn.classList.add('hidden');
+    }
+  }
+
+  function buildSupplementItem(s) {
+    const div = document.createElement('div');
+    div.className = 'supplement-item';
+
+    // Thumbnail
+    let thumbHtml;
+    if (s.thumbnail_url) {
+      thumbHtml = `<img class="supplement-thumb" src="${escHtml(s.thumbnail_url)}"
+        alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="supplement-thumb-placeholder" style="display:none">
+          ${bookIconSvg()}
+        </div>`;
+    } else {
+      thumbHtml = `<div class="supplement-thumb-placeholder">${bookIconSvg()}</div>`;
+    }
+
+    // Free/paid badge
+    const badge = s.is_free === true
+      ? `<span class="badge-free">Free</span>`
+      : s.is_free === false
+        ? `<span class="badge-paid">Resource</span>`
+        : '';
+
+    // Pool label
+    const poolLabel = s.pool === 'fallback' ? 'General resource' : '';
+
+    div.innerHTML = `
+      ${thumbHtml}
+      <div class="supplement-info">
+        <div class="supplement-title">${escHtml(s.title || 'Untitled')}</div>
+        <div class="supplement-meta">
+          ${badge}
+          ${poolLabel ? `<span>${escHtml(poolLabel)}</span>` : ''}
+        </div>
+      </div>
+      ${s.source_url
+        ? `<a class="supplement-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener" aria-label="Open ${escHtml(s.title)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
+            </svg>
+          </a>`
+        : ''}
+    `;
+    return div;
+  }
+
+  function bookIconSvg() {
+    return `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>`;
+  }
+
+  window.showMoreSupplements = function() {
+    initialCount = allSupplements.length; // reveal all
+    renderSupplements();
+  };
+
+  // ── 12. Book transition confirmation ─────────────────────────────
+  window.confirmTransition = function(confirmed) {
+    bookTransition = confirmed;
+    const actions = document.querySelector('.transition-actions');
+    const note    = document.getElementById('transition-confirmed-note');
+
+    if (confirmed) {
+      actions.style.display = 'none';
+      note.style.display = 'block';
+      note.textContent = `Transition to ${efResponse?.book_transition_book_name || 'new book'} confirmed. This will be recorded when you approve.`;
+    } else {
+      // Teacher said Not Yet -- hide the card entirely
+      document.getElementById('transition-card').classList.add('hidden');
+      bookTransition = false;
+      transitionBookId = null;
+    }
+  };
+
+  // ── 13. Error helper ──────────────────────────────────────────────
+  function showError(msg) {
+    stopPips();
+    document.getElementById('error-message').textContent = msg;
+    document.getElementById('page-subtitle').textContent = '';
+    showState('error');
+  }
+
+  // ── 14. Cancel -- return to session_entry with no writes ──────────
+  window.cancelAndReturn = function() {
+    window.location.href = '/session_entry.html';
+  };
+
+  // ── 15. Approve (Pass 1: stub -- navigates without writing) ───────
+  // PASS 1 NOTE: Approval writes (Sessions update, entry deletion,
+  // active_sessions cleanup) are NOT implemented in this pass.
+  // The button is wired here to confirm the UI flow works end-to-end.
+  // Pass 2 will replace this stub with the full five-write sequence.
+  window.handleApprove = function() {
+    const btn = document.getElementById('btn-approve');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    // Log what would be written, for diagnostic purposes
+    console.log('--- APPROVE (Pass 1 stub) ---');
+    console.log('session_id:', SESSION_ID);
+    console.log('ai_summ_teacher length:', efResponse?.ai_summ_teacher?.length);
+    console.log('ai_summ_student length:', efResponse?.ai_summ_student?.length);
+    console.log('supplement count:', (efResponse?.ai_summ_supplement_data || []).length);
+    console.log('max_lesson_page:', efResponse?.max_lesson_page);
+    console.log('book_transition_confirmed:', bookTransition);
+    console.log('transition_book_id:', transitionBookId);
+    console.log('----------------------------');
+
+    // TEMPORARY: navigate to main_menu after short delay
+    // Pass 2 replaces this with actual write sequence
+    setTimeout(() => {
+      window.location.href = '/main_menu.html';
+    }, 800);
+  };
+
+  // ── 16. XSS helper ───────────────────────────────────────────────
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── 17. Expose runEdgeFunction to window (used by Retry button) ───
+  window.runEdgeFunction = runEdgeFunction;
+
+  // ── 18. Kick off the Edge Function call on page load ─────────────
+  runEdgeFunction(false);
+
+</script>
+
+</body>
+</html>
