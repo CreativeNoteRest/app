@@ -757,6 +757,7 @@
         sessionStorage.setItem('session_id',   sessionId);
         sessionStorage.setItem('student_id',   student.student_id);
         sessionStorage.setItem('student_name', student.safe_name);
+        sessionStorage.setItem('lesson_book_id', bookId || '');
 
         // Show bridging overlay then navigate
         closeSheet();
