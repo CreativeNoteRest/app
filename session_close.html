@@ -842,32 +842,123 @@
     window.location.href = '/session_entry.html';
   };
 
-  // ── 15. Approve (Pass 1: stub -- navigates without writing) ───────
-  // PASS 1 NOTE: Approval writes (Sessions update, entry deletion,
-  // active_sessions cleanup) are NOT implemented in this pass.
-  // The button is wired here to confirm the UI flow works end-to-end.
-  // Pass 2 will replace this stub with the full five-write sequence.
-  window.handleApprove = function() {
+  // ── 15. Approve -- five-write sequence ───────────────────────────
+  // Writes execute sequentially. Any failure stops the sequence and
+  // displays an error. Deletion steps (Writes 4 and 5) never run
+  // unless Write 3 confirms all AI fields are present in the DB.
+  window.handleApprove = async function() {
     const btn = document.getElementById('btn-approve');
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
-    // Log what would be written, for diagnostic purposes
-    console.log('--- APPROVE (Pass 1 stub) ---');
-    console.log('session_id:', SESSION_ID);
-    console.log('ai_summ_teacher length:', efResponse?.ai_summ_teacher?.length);
-    console.log('ai_summ_student length:', efResponse?.ai_summ_student?.length);
-    console.log('supplement count:', (efResponse?.ai_summ_supplement_data || []).length);
-    console.log('max_lesson_page:', efResponse?.max_lesson_page);
-    console.log('book_transition_confirmed:', bookTransition);
-    console.log('transition_book_id:', transitionBookId);
-    console.log('----------------------------');
+    try {
 
-    // TEMPORARY: navigate to main_menu after short delay
-    // Pass 2 replaces this with actual write sequence
-    setTimeout(() => {
+      // ── Write 1: Update Sessions record ────────────────────────
+      // Build teacher summary -- append transition note if confirmed.
+      let teacherSummary = efResponse.ai_summ_teacher || '';
+      if (bookTransition && efResponse.book_transition_book_name) {
+        teacherSummary +=
+          `\n\nNote: Book transition to ${efResponse.book_transition_book_name} confirmed this session.`;
+      }
+
+      const { error: w1Err } = await supabase
+        .from('sessions')
+        .update({
+          AI_summ_teacher:          teacherSummary,
+          AI_summ_student:          efResponse.ai_summ_student          || '',
+          AI_summ_supplement:       efResponse.ai_summ_supplement       || '',
+          AI_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
+          max_lesson_page:          efResponse.max_lesson_page           ?? null,
+          session_status:           'approved',
+          summary_approved_at:      new Date().toISOString()
+        })
+        .eq('session_id', SESSION_ID);
+
+      if (w1Err) throw new Error(`Write 1 failed (Sessions update): ${w1Err.message}`);
+
+      // ── Write 2 (conditional): Book transition ─────────────────
+      // Runs only if teacher confirmed the transition card.
+      // Three sub-writes are independent -- run in parallel.
+      if (bookTransition && transitionBookId) {
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const [ compErr, stuErr, sessBookErr ] = await Promise.all([
+          supabase.from('student_book_completions').insert({
+            student_id:           STUDENT_ID,
+            book_id:              LESSON_BOOK_ID,
+            completed_at:         today,
+            transition_session_id: SESSION_ID
+          }).then(r => r.error),
+
+          supabase.from('students')
+            .update({ current_book: transitionBookId })
+            .eq('student_id', STUDENT_ID)
+            .then(r => r.error),
+
+          supabase.from('sessions')
+            .update({ lesson_book_id: transitionBookId })
+            .eq('session_id', SESSION_ID)
+            .then(r => r.error)
+        ]);
+
+        if (compErr)    throw new Error(`Write 2 failed (student_book_completions): ${compErr.message}`);
+        if (stuErr)     throw new Error(`Write 2 failed (students.current_book): ${stuErr.message}`);
+        if (sessBookErr) throw new Error(`Write 2 failed (sessions.lesson_book_id): ${sessBookErr.message}`);
+      }
+
+      // ── Write 3: Verify AI fields written ──────────────────────
+      // Re-read the Sessions row. All four AI fields must be non-null
+      // before we proceed to delete session_entries. Hard stop if any
+      // field is missing -- entries are preserved and teacher can retry.
+      const { data: verifyRow, error: verifyErr } = await supabase
+        .from('sessions')
+        .select('AI_summ_teacher, AI_summ_student, AI_summ_supplement, AI_summ_supplement_data')
+        .eq('session_id', SESSION_ID)
+        .single();
+
+      if (verifyErr) throw new Error(`Write 3 failed (verify read): ${verifyErr.message}`);
+
+      const missing = ['AI_summ_teacher','AI_summ_student','AI_summ_supplement','AI_summ_supplement_data']
+        .filter(f => !verifyRow[f]);
+
+      if (missing.length > 0) {
+        throw new Error(
+          `Write 3 failed -- these fields were null after save: ${missing.join(', ')}. ` +
+          `Your notes are safe. Please tap Approve again to retry.`
+        );
+      }
+
+      // ── Write 4: Delete session_entries ────────────────────────
+      // Only runs after Write 3 confirms AI fields are present.
+      const { error: w4Err } = await supabase
+        .from('session_entries')
+        .delete()
+        .eq('session_id', SESSION_ID);
+
+      if (w4Err) throw new Error(`Write 4 failed (session_entries delete): ${w4Err.message}`);
+
+      // ── Write 5: Delete active_sessions row ────────────────────
+      const { error: w5Err } = await supabase
+        .from('active_sessions')
+        .delete()
+        .eq('teacher_id', TEACHER_ID);
+
+      if (w5Err) throw new Error(`Write 5 failed (active_sessions delete): ${w5Err.message}`);
+
+      // ── All writes complete -- navigate home ───────────────────
       window.location.href = '/main_menu.html';
-    }, 800);
+
+    } catch (err) {
+      // Re-enable button so teacher can retry
+      btn.disabled = false;
+      btn.textContent = 'Approve & Close';
+      console.error('Approve sequence failed:', err);
+      showError(
+        `Could not save the lesson. Your notes are safe -- please try again. ` +
+        `(${err.message})`
+      );
+      // Scroll error into view
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // ── 16. XSS helper ───────────────────────────────────────────────
