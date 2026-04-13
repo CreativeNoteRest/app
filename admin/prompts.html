@@ -8,822 +8,607 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* ── Design tokens ───────────────────────────────────────────── */
     :root {
-      --brand:         #E26B0A;
-      --brand-light:   #FCE4D6;
-      --text:          #1A1A1A;
-      --text-mid:      #5A5A5A;
-      --text-light:    #9A9A9A;
-      --surface:       #FAFAF8;
-      --card:          #FFFFFF;
-      --border:        #E8E4DF;
-      --radius:        14px;
-      --shadow:        0 2px 16px rgba(0,0,0,0.07);
-      --danger:        #DC2626;
-      --danger-light:  #FEF2F2;
-      --danger-border: #FECACA;
-      --success:       #16A34A;
-      --success-light: #F0FDF4;
-      --success-border:#BBF7D0;
-      --warn:          #F59E0B;
-      --warn-light:    #FFFBEB;
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --success-border: #BBF7D0;
+      --warn:           #F59E0B;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--surface);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Header ──────────────────────────────────────────────────── */
     .app-header {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
+      background: var(--card); border-bottom: 1px solid var(--border);
       padding: 0 24px; height: 56px;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 50;
       box-shadow: 0 1px 3px rgba(0,0,0,0.07);
     }
     .header-brand { display: flex; align-items: center; gap: 10px; }
-    .header-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.1rem; color: var(--brand);
-    }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--brand); }
     .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
     .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
-    .header-user { font-size: 0.78rem; color: var(--text-light); display: flex; align-items: center; gap: 12px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-email { font-size: 0.78rem; color: var(--text-light); }
     .btn-signout {
       font-size: 0.78rem; font-weight: 600; color: var(--text-mid);
-      background: none; border: 1px solid var(--border);
-      border-radius: 8px; padding: 5px 12px; cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s;
     }
     .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
 
-    /* ── Main ────────────────────────────────────────────────────── */
-    .main {
-      max-width: 860px; margin: 0 auto;
-      padding: 32px 24px 60px;
-    }
-
-    /* ── Page title ──────────────────────────────────────────────── */
-    .page-title-block { margin-bottom: 28px; }
-    .page-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-light); margin-bottom: 4px;
-    }
-    .page-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em;
-    }
-    .page-title em { color: var(--brand); font-style: italic; }
-    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-top: 5px; line-height: 1.5; }
-
-    /* ── Login card ──────────────────────────────────────────────── */
     .login-wrap {
-      min-height: 70vh; display: flex;
-      align-items: center; justify-content: center;
+      min-height: calc(100vh - 56px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
     }
     .login-card {
       background: var(--card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 36px 32px;
-      width: 100%; max-width: 400px;
-      box-shadow: var(--shadow);
+      width: 100%; max-width: 400px; box-shadow: var(--shadow);
     }
-    .login-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.5rem; color: var(--text); margin-bottom: 6px;
-    }
-    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 24px; line-height: 1.5; }
-
+    .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
     .field-label {
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
-      display: block;
+      display: block; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
     }
     .field-input {
       width: 100%; height: 46px; padding: 0 14px;
       border: 1.5px solid var(--border); border-radius: 10px;
       font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
       color: var(--text); background: var(--surface);
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-      margin-bottom: 16px;
+      outline: none; margin-bottom: 16px;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .field-input:focus {
-      border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(226,107,10,0.12);
-      background: #fff;
-    }
-
+    .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
     .btn-login {
-      width: 100%; height: 48px;
-      background: var(--brand); color: #fff;
-      border: none; border-radius: 10px;
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.1rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(226,107,10,0.28);
-      transition: opacity 0.15s;
-      margin-top: 4px;
+      width: 100%; height: 48px; margin-top: 8px;
+      background: var(--brand); color: #fff; border: none; border-radius: 10px;
+      font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s;
     }
     .btn-login:hover { opacity: 0.88; }
     .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
-
     .login-error {
+      margin-top: 14px; padding: 10px 14px;
       background: var(--danger-light); border: 1px solid var(--danger-border);
-      border-radius: 8px; padding: 10px 14px;
-      font-size: 0.82rem; color: var(--danger);
-      margin-top: 14px; display: none;
+      border-radius: 8px; font-size: 0.82rem; color: var(--danger);
     }
 
-    /* ── Prompt list ─────────────────────────────────────────────── */
-    .prompt-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .main { max-width: 860px; margin: 0 auto; padding: 32px 24px 60px; }
+    .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
 
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-wrap { display: flex; flex-direction: column; align-items: center; padding: 60px 0; gap: 14px; }
+    .loading-text { font-size: 0.85rem; color: var(--text-light); }
+
+    .prompt-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
     .prompt-item {
-      background: var(--card); border: 1.5px solid var(--border);
-      border-radius: var(--radius); padding: 16px 18px;
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: space-between; gap: 16px;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      transition: border-color 0.15s, box-shadow 0.15s; user-select: none;
     }
     .prompt-item:hover { border-color: var(--brand); box-shadow: var(--shadow); }
     .prompt-item.active { border-color: var(--brand); background: #FFFAF6; }
-
-    .prompt-item-left { flex: 1; min-width: 0; }
-    .prompt-item-key {
-      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
-      text-transform: uppercase; color: var(--text-light); margin-bottom: 3px;
-    }
+    .prompt-item-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 3px; }
     .prompt-item-label { font-size: 0.95rem; font-weight: 600; color: var(--text); }
     .prompt-item-meta { font-size: 0.72rem; color: var(--text-light); margin-top: 3px; }
+    .chevron { color: var(--text-light); flex-shrink: 0; transition: color 0.15s; }
+    .prompt-item:hover .chevron, .prompt-item.active .chevron { color: var(--brand); }
 
-    .prompt-item-chevron { color: var(--text-light); flex-shrink: 0; transition: color 0.15s; }
-    .prompt-item:hover .prompt-item-chevron,
-    .prompt-item.active .prompt-item-chevron { color: var(--brand); }
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
-    /* ── Editor panel ────────────────────────────────────────────── */
-    .editor-panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 24px;
-      box-shadow: var(--shadow);
-    }
-    .editor-header { margin-bottom: 18px; }
-    .editor-prompt-key {
-      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
-      text-transform: uppercase; color: var(--text-light); margin-bottom: 4px;
-    }
-    .editor-prompt-label {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.3rem; color: var(--text);
-    }
-    .editor-updated {
-      font-size: 0.72rem; color: var(--text-light); margin-top: 4px;
-    }
+    .editor-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+    .editor-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .editor-label { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
+    .editor-updated { font-size: 0.72rem; color: var(--text-light); margin-top: 4px; margin-bottom: 18px; }
+    .vars-heading { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+    .vars-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .var-chip { font-size: 0.72rem; font-weight: 600; font-family: monospace; background: var(--brand-light); color: var(--brand); border-radius: 6px; padding: 3px 9px; }
+    .var-chip.missing { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+    .vars-none { font-size: 0.78rem; color: var(--text-light); }
 
-    /* Required variables chips */
-    .vars-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-    .var-chip {
-      font-size: 0.72rem; font-weight: 600;
-      background: var(--brand-light); color: var(--brand);
-      border-radius: 6px; padding: 3px 9px;
-      font-family: 'DM Sans', monospace;
-    }
-    .var-chip.missing {
-      background: var(--danger-light); color: var(--danger);
-      border: 1px solid var(--danger-border);
-    }
-    .vars-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-light);
-      margin-bottom: 8px;
-    }
-
-    /* Textarea */
     .prompt-textarea {
-      width: 100%; min-height: 340px;
-      padding: 14px 16px;
+      width: 100%; min-height: 360px; padding: 14px 16px;
       border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', monospace; font-size: 0.88rem;
-      line-height: 1.65; color: var(--text);
-      background: var(--surface); resize: vertical;
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-      margin-bottom: 6px;
+      font-family: 'DM Sans', monospace; font-size: 0.88rem; line-height: 1.65;
+      color: var(--text); background: var(--surface); resize: vertical; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s; margin-bottom: 6px;
     }
-    .prompt-textarea:focus {
-      border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(226,107,10,0.12);
-      background: #fff;
-    }
+    .prompt-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .char-count { font-size: 0.72rem; color: var(--text-light); text-align: right; margin-bottom: 16px; }
 
-    .char-count { font-size: 0.72rem; color: var(--text-light); margin-bottom: 16px; text-align: right; }
+    .msg-box { padding: 12px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 14px; }
+    .msg-error { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
 
-    /* Validation error */
-    .validation-error {
-      background: var(--danger-light); border: 1px solid var(--danger-border);
-      border-radius: 8px; padding: 12px 14px;
-      font-size: 0.82rem; color: var(--danger);
-      margin-bottom: 14px; display: none; line-height: 1.5;
-    }
-
-    /* Save success */
-    .save-success {
-      background: var(--success-light); border: 1px solid var(--success-border);
-      border-radius: 8px; padding: 12px 14px;
-      font-size: 0.82rem; color: var(--success);
-      margin-bottom: 14px; display: none;
-    }
-
-    /* Editor action row */
     .editor-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-
     .btn-save {
-      height: 46px; padding: 0 28px;
-      background: var(--brand); color: #fff;
-      border: none; border-radius: 10px;
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.05rem; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(226,107,10,0.26);
-      transition: opacity 0.15s, transform 0.1s;
+      height: 46px; padding: 0 28px; background: var(--brand); color: #fff; border: none;
+      border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.05rem;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(226,107,10,0.26); transition: opacity 0.15s;
     }
     .btn-save:hover { opacity: 0.88; }
-    .btn-save:active { transform: scale(0.98); }
-    .btn-save:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-
+    .btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-undo {
-      height: 46px; padding: 0 20px;
-      background: var(--card); color: var(--text-mid);
+      height: 46px; padding: 0 20px; background: var(--card); color: var(--text-mid);
       border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s;
     }
     .btn-undo:hover { border-color: var(--warn); color: var(--warn); }
     .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; }
-
     .btn-discard {
-      height: 46px; padding: 0 20px;
-      background: none; color: var(--text-light);
-      border: none; font-size: 0.88rem; font-weight: 600;
-      cursor: pointer; transition: color 0.15s;
+      height: 46px; padding: 0 16px; background: none; border: none;
+      font-size: 0.88rem; font-weight: 600; color: var(--text-light); cursor: pointer; transition: color 0.15s;
     }
     .btn-discard:hover { color: var(--danger); }
 
-    /* ── Spinner ─────────────────────────────────────────────────── */
-    .spinner {
-      width: 22px; height: 22px;
-      border: 2px solid var(--border);
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block; vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Loading state ───────────────────────────────────────────── */
-    .loading-state {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 60px 0; gap: 14px;
-    }
-    .loading-state .spinner { width: 32px; height: 32px; border-width: 3px; }
-    .loading-text { font-size: 0.85rem; color: var(--text-light); }
-
-    /* ── Utility ─────────────────────────────────────────────────── */
     .hidden { display: none !important; }
-    .divider { height: 1px; background: var(--border); margin: 24px 0; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="app-header">
-    <div class="header-brand">
-      <span class="header-title">Creative Note</span>
-      <span class="header-dot"></span>
-      <span class="header-sub">Admin</span>
-    </div>
-    <div class="header-user" id="header-user-area" style="display:none">
-      <span id="header-email"></span>
-      <button class="btn-signout" onclick="signOut()">Sign out</button>
-    </div>
-  </header>
-
-  <!-- ── LOGIN VIEW ────────────────────────────────────────────────── -->
-  <div id="view-login" class="login-wrap">
-    <div class="login-card">
-      <div class="login-title">Admin sign in</div>
-      <div class="login-sub">Creative Note prompt editor. Access is restricted to approved administrators.</div>
-
-      <label class="field-label" for="login-email">Email</label>
-      <input class="field-input" id="login-email" type="email"
-        autocomplete="email" placeholder="your@email.com" />
-
-      <label class="field-label" for="login-password">Password</label>
-      <input class="field-input" id="login-password" type="password"
-        autocomplete="current-password" placeholder="Password"
-        style="margin-bottom:0" />
-
-      <div class="login-error" id="login-error"></div>
-
-      <button class="btn-login" id="btn-login" onclick="handleLogin()">Sign in</button>
-    </div>
+<header class="app-header">
+  <div class="header-brand">
+    <span class="header-title">Creative Note</span>
+    <span class="header-dot"></span>
+    <span class="header-sub">Admin</span>
   </div>
+  <div class="header-right hidden" id="header-right">
+    <span class="header-email" id="header-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign out</button>
+  </div>
+</header>
 
-  <!-- ── EDITOR VIEW ───────────────────────────────────────────────── -->
-  <div id="view-editor" class="hidden">
-    <main class="main">
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin sign in</div>
+    <div class="login-sub">Creative Note prompt editor. Access is restricted to approved administrators.</div>
+    <label class="field-label" for="inp-email">Email</label>
+    <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
+    <label class="field-label" for="inp-password">Password</label>
+    <input class="field-input" id="inp-password" type="password" autocomplete="current-password" placeholder="Password" style="margin-bottom:0" />
+    <div id="login-error" class="login-error hidden"></div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+  </div>
+</div>
 
-      <div class="page-title-block">
-        <div class="page-label">Session close</div>
-        <h1 class="page-title">Prompt <em>editor</em></h1>
-        <div class="page-subtitle">
-          Select a prompt to edit. All required variables must be present before saving.
-          One prior version is retained automatically for undo.
+<div id="view-editor" class="hidden">
+  <main class="main">
+    <div class="page-label">Session close</div>
+    <h1 class="page-title">Prompt <em>editor</em></h1>
+    <p class="page-subtitle">Select a prompt to edit. All required variables must be present before saving. One prior version is retained automatically.</p>
+    <div id="view-loading" class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">Loading prompts...</div>
+    </div>
+    <div id="view-prompts" class="hidden">
+      <div class="prompt-list" id="prompt-list"></div>
+      <div class="divider hidden" id="editor-divider"></div>
+      <div id="editor-panel" class="editor-panel hidden">
+        <div class="editor-key" id="editor-key"></div>
+        <div class="editor-label" id="editor-label"></div>
+        <div class="editor-updated" id="editor-updated"></div>
+        <div class="vars-heading">Required variables -- all must appear in the prompt text</div>
+        <div class="vars-row" id="vars-row"></div>
+        <textarea class="prompt-textarea" id="prompt-textarea" placeholder="Prompt text..."></textarea>
+        <div class="char-count" id="char-count">0 characters</div>
+        <div id="msg-error" class="msg-box msg-error hidden"></div>
+        <div id="msg-success" class="msg-box msg-success hidden"></div>
+        <div class="editor-actions">
+          <button class="btn-save" id="btn-save">Save prompt</button>
+          <button class="btn-undo" id="btn-undo">Restore previous</button>
+          <button class="btn-discard" id="btn-discard">Discard changes</button>
         </div>
       </div>
-
-      <!-- Loading state -->
-      <div id="state-loading" class="loading-state">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading prompts...</div>
-      </div>
-
-      <!-- Prompts loaded -->
-      <div id="state-prompts" class="hidden">
-
-        <!-- Prompt list -->
-        <div class="prompt-list" id="prompt-list"></div>
-
-        <div class="divider"></div>
-
-        <!-- Editor panel (hidden until a prompt is selected) -->
-        <div id="editor-panel" class="editor-panel hidden">
-
-          <div class="editor-header">
-            <div class="editor-prompt-key" id="editor-key"></div>
-            <div class="editor-prompt-label" id="editor-label"></div>
-            <div class="editor-updated" id="editor-updated"></div>
-          </div>
-
-          <div class="vars-label">Required variables -- all must be present in the prompt text</div>
-          <div class="vars-row" id="vars-row"></div>
-
-          <textarea class="prompt-textarea" id="prompt-textarea"
-            placeholder="Enter prompt text here..."
-            oninput="onTextareaInput()"></textarea>
-          <div class="char-count" id="char-count"></div>
-
-          <div class="validation-error" id="validation-error"></div>
-          <div class="save-success" id="save-success"></div>
-
-          <div class="editor-actions">
-            <button class="btn-save" id="btn-save" onclick="handleSave()">Save prompt</button>
-            <button class="btn-undo" id="btn-undo" onclick="handleUndo()">Restore previous</button>
-            <button class="btn-discard" onclick="handleDiscard()">Discard changes</button>
-          </div>
-
-        </div>
-      </div>
-
-    </main>
-  </div>
+    </div>
+  </main>
+</div>
 
 <script type="module">
-  // ── Supabase client (inline init -- this page does not load app.js) ──
-  // Admin page runs outside the normal teacher auth flow.
-  // It uses signInWithPassword, not OTP.
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-  const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
-  // Replace YOUR_PUBLISHABLE_KEY_HERE with your sb_publishable_... key.
-  // The publishable key is safe to include here -- it only allows reads
-  // on tables with anon/authenticated SELECT policies.
-  // All writes go through the admin-prompt-save Edge Function which
-  // uses the service role key server-side.
+const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY_HERE';
+const ADMIN_EMAILS = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
+const PHASE_LABELS = {
+  session_close_phase1: 'Phase 1 -- Working Position and Book Transition',
+  session_close_phase2: 'Phase 2 -- Quality Gate',
+  session_close_phase3: 'Phase 3 -- Supplement Selection',
+  session_close_phase4: 'Phase 4 -- Teacher Summary',
+  session_close_phase5: 'Phase 5 -- Student Summary'
+};
 
-  const ADMIN_EMAILS = [
-    'sgdensham@gmail.com',
-    'creativenotemusicstudio@gmail.com'
-  ];
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let prompts      = [];
+let selected     = null;
+let originalText = '';
 
-  // ── State ───────────────────────────────────────────────────────────
-  let prompts        = [];   // all prompt rows from DB
-  let selectedPrompt = null; // currently selected prompt object
-  let originalText   = '';   // prompt_text as loaded -- for discard
+const elViewLogin    = document.getElementById('view-login');
+const elViewEditor   = document.getElementById('view-editor');
+const elViewLoading  = document.getElementById('view-loading');
+const elViewPrompts  = document.getElementById('view-prompts');
+const elHeaderRight  = document.getElementById('header-right');
+const elHeaderEmail  = document.getElementById('header-email');
+const elLoginError   = document.getElementById('login-error');
+const elBtnLogin     = document.getElementById('btn-login');
+const elInpEmail     = document.getElementById('inp-email');
+const elInpPassword  = document.getElementById('inp-password');
+const elPromptList   = document.getElementById('prompt-list');
+const elEditorDiv    = document.getElementById('editor-divider');
+const elEditorPanel  = document.getElementById('editor-panel');
+const elEditorKey    = document.getElementById('editor-key');
+const elEditorLabel  = document.getElementById('editor-label');
+const elEditorUpd    = document.getElementById('editor-updated');
+const elVarsRow      = document.getElementById('vars-row');
+const elTextarea     = document.getElementById('prompt-textarea');
+const elCharCount    = document.getElementById('char-count');
+const elMsgError     = document.getElementById('msg-error');
+const elMsgSuccess   = document.getElementById('msg-success');
+const elBtnSave      = document.getElementById('btn-save');
+const elBtnUndo      = document.getElementById('btn-undo');
+const elBtnDiscard   = document.getElementById('btn-discard');
 
-  // ── On load: check for existing session ────────────────────────────
-  const { data: { session } } = await supabase.auth.getSession();
+// ── Startup ────────────────────────────────────────────────────────────
+const sessionResult = await sb.auth.getSession();
+const existingSession = sessionResult.data.session;
+if (existingSession && ADMIN_EMAILS.indexOf(existingSession.user.email) !== -1) {
+  enterEditor(existingSession.user.email);
+} else {
+  if (existingSession) { await sb.auth.signOut(); }
+  showLogin();
+}
 
-  if (session) {
-    await onSessionEstablished(session);
+// ── Login ──────────────────────────────────────────────────────────────
+elBtnLogin.addEventListener('click', doLogin);
+elInpPassword.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { doLogin(); }
+});
+
+async function doLogin() {
+  var email = elInpEmail.value.trim();
+  var pass  = elInpPassword.value;
+  elLoginError.classList.add('hidden');
+
+  if (!email || !pass) {
+    setLoginError('Please enter your email and password.');
+    return;
+  }
+
+  elBtnLogin.disabled    = true;
+  elBtnLogin.textContent = 'Signing in...';
+
+  var result = await sb.auth.signInWithPassword({ email: email, password: pass });
+  var signInData  = result.data;
+  var signInError = result.error;
+
+  if (signInError || !signInData.session) {
+    elBtnLogin.disabled    = false;
+    elBtnLogin.textContent = 'Sign in';
+    var msg = 'Sign in failed.';
+    if (signInError && signInError.message === 'Invalid login credentials') {
+      msg = 'Incorrect email or password. Please try again.';
+    } else if (signInError) {
+      msg = 'Sign in failed: ' + signInError.message;
+    }
+    setLoginError(msg);
+    return;
+  }
+
+  if (ADMIN_EMAILS.indexOf(signInData.user.email) === -1) {
+    await sb.auth.signOut();
+    elBtnLogin.disabled    = false;
+    elBtnLogin.textContent = 'Sign in';
+    setLoginError('This account does not have admin access.');
+    return;
+  }
+
+  enterEditor(signInData.user.email);
+}
+
+// ── Sign out ───────────────────────────────────────────────────────────
+document.getElementById('btn-signout').addEventListener('click', async function() {
+  await sb.auth.signOut();
+  selected     = null;
+  originalText = '';
+  prompts      = [];
+  elInpEmail.value    = '';
+  elInpPassword.value = '';
+  showLogin();
+});
+
+// ── Enter editor ───────────────────────────────────────────────────────
+function enterEditor(email) {
+  elHeaderEmail.textContent = email;
+  elHeaderRight.classList.remove('hidden');
+  elViewLogin.classList.add('hidden');
+  elViewEditor.classList.remove('hidden');
+  loadPrompts();
+}
+
+// ── Load prompts ───────────────────────────────────────────────────────
+async function loadPrompts() {
+  elViewLoading.classList.remove('hidden');
+  elViewPrompts.classList.add('hidden');
+
+  var result = await sb
+    .from('prompts')
+    .select('prompt_id, prompt_key, prompt_label, prompt_text, prompt_text_previous, required_variables, updated_at')
+    .order('prompt_key', { ascending: true });
+
+  elViewLoading.classList.add('hidden');
+
+  if (result.error || !result.data) {
+    elViewPrompts.classList.remove('hidden');
+    elPromptList.innerHTML = '<p style="color:var(--danger);font-size:0.88rem;padding:20px 0">Could not load prompts: ' +
+      esc(result.error ? result.error.message : 'Unknown error') + '</p>';
+    return;
+  }
+
+  prompts = result.data;
+  renderList();
+  elViewPrompts.classList.remove('hidden');
+}
+
+// ── Render list ────────────────────────────────────────────────────────
+function renderList() {
+  elPromptList.innerHTML = '';
+  for (var i = 0; i < prompts.length; i++) {
+    var p       = prompts[i];
+    var label   = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
+    var updated = p.updated_at
+      ? new Date(p.updated_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
+      : 'Never saved';
+    var isActive = selected && selected.prompt_id === p.prompt_id;
+
+    var div = document.createElement('div');
+    div.className = 'prompt-item' + (isActive ? ' active' : '');
+    div.innerHTML =
+      '<div>' +
+        '<div class="prompt-item-key">' + esc(p.prompt_key) + '</div>' +
+        '<div class="prompt-item-label">' + esc(label) + '</div>' +
+        '<div class="prompt-item-meta">Last saved: ' + esc(updated) + '</div>' +
+      '</div>' +
+      '<svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>';
+
+    (function(prompt) {
+      div.addEventListener('click', function() { selectPrompt(prompt); });
+    })(p);
+
+    elPromptList.appendChild(div);
+  }
+}
+
+// ── Select prompt ──────────────────────────────────────────────────────
+function selectPrompt(p) {
+  if (selected && elTextarea.value !== originalText) {
+    if (!confirm('You have unsaved changes. Discard them and switch prompts?')) { return; }
+  }
+
+  selected     = p;
+  originalText = p.prompt_text || '';
+
+  renderList();
+
+  var label = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
+  elEditorKey.textContent   = p.prompt_key;
+  elEditorLabel.textContent = label;
+  elEditorUpd.textContent   = p.updated_at
+    ? 'Last saved: ' + new Date(p.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' })
+    : 'Not yet saved';
+
+  elTextarea.value = originalText;
+  updateCharCount();
+  renderChips();
+
+  elBtnUndo.disabled = !p.prompt_text_previous;
+  elMsgError.classList.add('hidden');
+  elMsgSuccess.classList.add('hidden');
+
+  elEditorDiv.classList.remove('hidden');
+  elEditorPanel.classList.remove('hidden');
+  elEditorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Chips ──────────────────────────────────────────────────────────────
+function renderChips() {
+  elVarsRow.innerHTML = '';
+  var vars = (selected && selected.required_variables) ? selected.required_variables : [];
+
+  if (vars.length === 0) {
+    var span = document.createElement('span');
+    span.className   = 'vars-none';
+    span.textContent = 'No required variables defined for this prompt.';
+    elVarsRow.appendChild(span);
+    return;
+  }
+
+  var currentText = elTextarea.value;
+  for (var i = 0; i < vars.length; i++) {
+    var placeholder = '{{' + vars[i] + '}}';
+    var present     = currentText.indexOf(placeholder) !== -1;
+    var chip        = document.createElement('span');
+    chip.className  = 'var-chip' + (present ? '' : ' missing');
+    chip.textContent = placeholder;
+    chip.title       = present ? 'Present in prompt' : 'MISSING from prompt text';
+    elVarsRow.appendChild(chip);
+  }
+}
+
+// ── Textarea events ────────────────────────────────────────────────────
+elTextarea.addEventListener('input', function() {
+  updateCharCount();
+  renderChips();
+  elMsgSuccess.classList.add('hidden');
+});
+
+function updateCharCount() {
+  elCharCount.textContent = elTextarea.value.length.toLocaleString() + ' characters';
+}
+
+// ── Validate ───────────────────────────────────────────────────────────
+function validate(text, requiredVars) {
+  var errors = [];
+  if (!text.trim()) {
+    errors.push('Prompt text cannot be empty.');
+    return errors;
+  }
+  var vars = requiredVars || [];
+  for (var i = 0; i < vars.length; i++) {
+    var placeholder = '{{' + vars[i] + '}}';
+    if (text.indexOf(placeholder) === -1) {
+      errors.push('Missing required variable: ' + placeholder);
+    }
+  }
+  return errors;
+}
+
+// ── Save ───────────────────────────────────────────────────────────────
+elBtnSave.addEventListener('click', async function() {
+  if (!selected) { return; }
+
+  elMsgError.classList.add('hidden');
+  elMsgSuccess.classList.add('hidden');
+
+  var text   = elTextarea.value;
+  var errors = validate(text, selected.required_variables || []);
+
+  if (errors.length > 0) {
+    var lines = '';
+    for (var i = 0; i < errors.length; i++) {
+      lines += (i > 0 ? '<br>' : '') + '- ' + esc(errors[i]);
+    }
+    elMsgError.innerHTML = lines;
+    elMsgError.classList.remove('hidden');
+    elMsgError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  elBtnSave.disabled    = true;
+  elBtnSave.textContent = 'Saving...';
+
+  var sessionResult2 = await sb.auth.getSession();
+  if (!sessionResult2.data.session) {
+    elMsgError.textContent = 'Your session has expired. Please sign in again.';
+    elMsgError.classList.remove('hidden');
+    elBtnSave.disabled    = false;
+    elBtnSave.textContent = 'Save prompt';
+    showLogin();
+    return;
+  }
+
+  var invokeResult = await sb.functions.invoke('admin-prompt-save', {
+    body: {
+      prompt_id:            selected.prompt_id,
+      prompt_key:           selected.prompt_key,
+      prompt_text:          text,
+      prompt_text_previous: selected.prompt_text || null
+    }
+  });
+
+  elBtnSave.disabled    = false;
+  elBtnSave.textContent = 'Save prompt';
+
+  var invokeData  = invokeResult.data;
+  var invokeError = invokeResult.error;
+
+  if (invokeError || !invokeData || !invokeData.success) {
+    var errMsg = 'Unknown error';
+    if (invokeData && invokeData.error) { errMsg = invokeData.error; }
+    else if (invokeError) { errMsg = invokeError.message; }
+    elMsgError.textContent = 'Save failed: ' + errMsg;
+    elMsgError.classList.remove('hidden');
+    return;
+  }
+
+  if (invokeData.prompt) {
+    for (var j = 0; j < prompts.length; j++) {
+      if (prompts[j].prompt_id === selected.prompt_id) {
+        prompts[j] = invokeData.prompt;
+        break;
+      }
+    }
+    selected     = invokeData.prompt;
+    originalText = invokeData.prompt.prompt_text;
+    renderList();
+    elEditorUpd.textContent = 'Last saved: ' +
+      new Date(invokeData.prompt.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' });
+    elBtnUndo.disabled = !invokeData.prompt.prompt_text_previous;
   } else {
-    showLogin();
+    originalText = text;
   }
 
-  // ── Login handler ───────────────────────────────────────────────────
-  window.handleLogin = async function() {
-    const email    = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl    = document.getElementById('login-error');
-    const btn      = document.getElementById('btn-login');
-
-    errEl.style.display = 'none';
-
-    if (!email || !password) {
-      showLoginError('Please enter your email and password.');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Signing in...';
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error || !data.session) {
-      btn.disabled = false;
-      btn.textContent = 'Sign in';
-      showLoginError(
-        error?.message === 'Invalid login credentials'
-          ? 'Incorrect email or password. Please try again.'
-          : `Sign in failed: ${error?.message || 'Unknown error'}`
-      );
-      return;
-    }
-
-    // Check admin allowlist
-    if (!ADMIN_EMAILS.includes(data.user.email ?? '')) {
-      await supabase.auth.signOut();
-      btn.disabled = false;
-      btn.textContent = 'Sign in';
-      showLoginError('This account does not have admin access.');
-      return;
-    }
-
-    await onSessionEstablished(data.session);
-  };
-
-  // Allow Enter key on password field to trigger login
-  document.getElementById('login-password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') window.handleLogin();
-  });
-
-  // ── Session established ─────────────────────────────────────────────
-  async function onSessionEstablished(session) {
-    const email = session.user.email ?? '';
-
-    // Admin check (handles page refresh with existing session)
-    if (!ADMIN_EMAILS.includes(email)) {
-      await supabase.auth.signOut();
-      showLogin();
-      showLoginError('This account does not have admin access.');
-      return;
-    }
-
-    // Show header user info
-    document.getElementById('header-email').textContent = email;
-    document.getElementById('header-user-area').style.display = 'flex';
-
-    showEditor();
-    await loadPrompts();
-  }
-
-  // ── Load prompts from DB ────────────────────────────────────────────
-  async function loadPrompts() {
-    showState('loading');
-
-    const { data, error } = await supabase
-      .from('prompts')
-      .select('prompt_id, prompt_key, prompt_label, prompt_text, prompt_text_previous, required_variables, updated_at')
-      .order('prompt_key', { ascending: true });
-
-    if (error || !data) {
-      // Show error inline
-      document.getElementById('state-loading').innerHTML = `
-        <div style="color:var(--danger);font-size:0.88rem;text-align:center;padding:40px 0">
-          Could not load prompts: ${error?.message || 'Unknown error'}<br><br>
-          <button onclick="loadPrompts()" style="margin-top:8px;padding:8px 18px;background:var(--brand);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.88rem">Retry</button>
-        </div>`;
-      return;
-    }
-
-    prompts = data;
-    renderPromptList();
-    showState('prompts');
-  }
-  window.loadPrompts = loadPrompts;
-
-  // ── Render prompt list ──────────────────────────────────────────────
-  function renderPromptList() {
-    const list = document.getElementById('prompt-list');
-    list.innerHTML = '';
-
-    // Human-readable label map keyed by prompt_key
-    const labelMap = {
-      session_close_phase1: 'Phase 1 -- Working Position and Book Transition',
-      session_close_phase2: 'Phase 2 -- Quality Gate',
-      session_close_phase3: 'Phase 3 -- Supplement Selection',
-      session_close_phase4: 'Phase 4 -- Teacher Summary',
-      session_close_phase5: 'Phase 5 -- Student Summary'
-    };
-
-    prompts.forEach(p => {
-      const displayLabel = p.prompt_label || labelMap[p.prompt_key] || p.prompt_key;
-      const updatedStr   = p.updated_at
-        ? new Date(p.updated_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
-        : 'Never saved';
-      const isActive = selectedPrompt?.prompt_id === p.prompt_id;
-
-      const item = document.createElement('div');
-      item.className = `prompt-item${isActive ? ' active' : ''}`;
-      item.dataset.id = p.prompt_id;
-      item.innerHTML = `
-        <div class="prompt-item-left">
-          <div class="prompt-item-key">${escHtml(p.prompt_key)}</div>
-          <div class="prompt-item-label">${escHtml(displayLabel)}</div>
-          <div class="prompt-item-meta">Last saved: ${updatedStr}</div>
-        </div>
-        <svg class="prompt-item-chevron" viewBox="0 0 24 24" width="18" height="18"
-          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M9 18l6-6-6-6"/>
-        </svg>
-      `;
-      item.addEventListener('click', () => selectPrompt(p));
-      list.appendChild(item);
-    });
-  }
-
-  // ── Select a prompt ─────────────────────────────────────────────────
-  function selectPrompt(prompt) {
-    // Warn if unsaved changes exist
-    const textarea = document.getElementById('prompt-textarea');
-    if (selectedPrompt && textarea.value !== originalText) {
-      if (!confirm('You have unsaved changes. Discard them and switch prompts?')) return;
-    }
-
-    selectedPrompt = prompt;
-    originalText   = prompt.prompt_text || '';
-
-    // Re-render list to update active state
-    renderPromptList();
-
-    // Populate editor
-    const labelMap = {
-      session_close_phase1: 'Phase 1 -- Working Position and Book Transition',
-      session_close_phase2: 'Phase 2 -- Quality Gate',
-      session_close_phase3: 'Phase 3 -- Supplement Selection',
-      session_close_phase4: 'Phase 4 -- Teacher Summary',
-      session_close_phase5: 'Phase 5 -- Student Summary'
-    };
-
-    document.getElementById('editor-key').textContent   = prompt.prompt_key;
-    document.getElementById('editor-label').textContent =
-      prompt.prompt_label || labelMap[prompt.prompt_key] || prompt.prompt_key;
-    document.getElementById('editor-updated').textContent = prompt.updated_at
-      ? `Last saved: ${new Date(prompt.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' })}`
-      : 'Not yet saved';
-
-    textarea.value = originalText;
-    updateCharCount();
-
-    // Render required variables chips
-    renderVarChips(prompt.required_variables || [], originalText);
-
-    // Undo button: enabled only if a previous version exists
-    document.getElementById('btn-undo').disabled = !prompt.prompt_text_previous;
-
-    // Clear any previous messages
-    document.getElementById('validation-error').style.display = 'none';
-    document.getElementById('save-success').style.display     = 'none';
-
-    document.getElementById('editor-panel').classList.remove('hidden');
-
-    // Scroll editor into view
-    document.getElementById('editor-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  // ── Variable chips ──────────────────────────────────────────────────
-  function renderVarChips(requiredVars, currentText) {
-    const row = document.getElementById('vars-row');
-    row.innerHTML = '';
-
-    if (!requiredVars || requiredVars.length === 0) {
-      row.innerHTML = '<span style="font-size:0.78rem;color:var(--text-light)">No required variables defined for this prompt.</span>';
-      return;
-    }
-
-    requiredVars.forEach(v => {
-      const placeholder = `{{${v}}}`;
-      const present     = currentText.includes(placeholder);
-      const chip        = document.createElement('span');
-      chip.className    = `var-chip${present ? '' : ' missing'}`;
-      chip.textContent  = placeholder;
-      chip.title        = present ? 'Present in prompt text' : 'MISSING from prompt text';
-      row.appendChild(chip);
-    });
-  }
-
-  // ── Textarea input handler ──────────────────────────────────────────
-  window.onTextareaInput = function() {
-    updateCharCount();
-    if (selectedPrompt) {
-      renderVarChips(
-        selectedPrompt.required_variables || [],
-        document.getElementById('prompt-textarea').value
-      );
-    }
-    // Clear save success on edit
-    document.getElementById('save-success').style.display = 'none';
-  };
-
-  function updateCharCount() {
-    const len = document.getElementById('prompt-textarea').value.length;
-    document.getElementById('char-count').textContent = `${len.toLocaleString()} characters`;
-  }
-
-  // ── Validate ────────────────────────────────────────────────────────
-  function validate(text, requiredVars) {
-    const errors = [];
-
-    if (!text.trim()) {
-      errors.push('Prompt text cannot be empty.');
-    }
-
-    (requiredVars || []).forEach(v => {
-      const placeholder = `{{${v}}}`;
-      if (!text.includes(placeholder)) {
-        errors.push(`Missing required variable: ${placeholder}`);
-      }
-    });
-
-    // Check for malformed placeholders (single braces, wrong case)
-    // Check for malformed placeholders -- single-brace patterns that look
-    // like intended variables (lowercase letters and underscores only).
-    // JSON example structures with single braces are intentional and ignored.
-// Check for malformed placeholders -- single-brace variable-like patterns
-// that are NOT part of a legitimate {{double_brace}} placeholder.
-const malformed = text.match(/\{[a-z][a-z_]*\}/g) || [];
-  malformed.forEach(m => {
-  const varName = m.slice(1, -1);
-  // Only flag if the double-brace version is NOT present in the text.
-  // If {{varName}} exists, this single-brace match is just the inner
-  // part of a legitimate placeholder being caught by the regex.
-  if (!text.includes(`{{${varName}}}`)) {
-    errors.push(`Possible malformed variable: ${m} -- did you mean {{${varName}}}?`);
-    }
-  });
-
-  // ── Save handler ────────────────────────────────────────────────────
-  window.handleSave = async function() {
-    if (!selectedPrompt) return;
-
-    const text      = document.getElementById('prompt-textarea').value;
-    const errEl     = document.getElementById('validation-error');
-    const successEl = document.getElementById('save-success');
-    const btn       = document.getElementById('btn-save');
-
-    errEl.style.display     = 'none';
-    successEl.style.display = 'none';
-
-    // Validate
-    const errors = validate(text, selectedPrompt.required_variables || []);
-    if (errors.length > 0) {
-      errEl.innerHTML = errors.map(e => `- ${escHtml(e)}`).join('<br>');
-      errEl.style.display = 'block';
-      errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
-    }
-
-    btn.disabled    = true;
-    btn.textContent = 'Saving...';
-
-    // Get current session JWT
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      errEl.textContent   = 'Your session has expired. Please sign in again.';
-      errEl.style.display = 'block';
-      btn.disabled        = false;
-      btn.textContent     = 'Save prompt';
-      showLogin();
-      return;
-    }
-
-    // Call Edge Function
-    const { data, error } = await supabase.functions.invoke('admin-prompt-save', {
-      body: {
-        prompt_id:            selectedPrompt.prompt_id,
-        prompt_key:           selectedPrompt.prompt_key,
-        prompt_text:          text,
-        prompt_text_previous: selectedPrompt.prompt_text || null
-      }
-    });
-
-    btn.disabled    = false;
-    btn.textContent = 'Save prompt';
-
-    if (error || !data?.success) {
-      const msg = data?.error || error?.message || 'Unknown error';
-      errEl.textContent   = `Save failed: ${msg}`;
-      errEl.style.display = 'block';
-      return;
-    }
-
-    // Update local state with saved prompt
-    if (data.prompt) {
-      const idx = prompts.findIndex(p => p.prompt_id === selectedPrompt.prompt_id);
-      if (idx !== -1) prompts[idx] = data.prompt;
-      selectedPrompt = data.prompt;
-      originalText   = data.prompt.prompt_text;
-
-      // Refresh list and editor metadata
-      renderPromptList();
-      document.getElementById('editor-updated').textContent =
-        `Last saved: ${new Date(data.prompt.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' })}`;
-      document.getElementById('btn-undo').disabled = !data.prompt.prompt_text_previous;
-    } else {
-      originalText = text;
-    }
-
-    successEl.textContent   = 'Prompt saved successfully.';
-    successEl.style.display = 'block';
-    successEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  };
-
-  // ── Undo handler (restore prompt_text_previous) ─────────────────────
-  window.handleUndo = function() {
-    if (!selectedPrompt?.prompt_text_previous) return;
-
-    if (!confirm('Restore the previous version of this prompt? Your current text will be lost.')) return;
-
-    document.getElementById('prompt-textarea').value = selectedPrompt.prompt_text_previous;
-    onTextareaInput();
-    document.getElementById('save-success').style.display = 'none';
-    document.getElementById('validation-error').style.display = 'none';
-  };
-
-  // ── Discard handler ─────────────────────────────────────────────────
-  window.handleDiscard = function() {
-    if (!selectedPrompt) return;
-    if (document.getElementById('prompt-textarea').value === originalText) return;
-    if (!confirm('Discard all changes and revert to the last saved version?')) return;
-
-    document.getElementById('prompt-textarea').value = originalText;
-    onTextareaInput();
-    document.getElementById('save-success').style.display = 'none';
-    document.getElementById('validation-error').style.display = 'none';
-  };
-
-  // ── Sign out ────────────────────────────────────────────────────────
-  window.signOut = async function() {
-    await supabase.auth.signOut();
-    selectedPrompt = null;
-    originalText   = '';
-    prompts        = [];
-    document.getElementById('header-user-area').style.display = 'none';
-    document.getElementById('login-email').value    = '';
-    document.getElementById('login-password').value = '';
-    showLogin();
-  };
-
-  // ── View helpers ─────────────────────────────────────────────────────
-  function showLogin() {
-    document.getElementById('view-login').classList.remove('hidden');
-    document.getElementById('view-editor').classList.add('hidden');
-    document.getElementById('btn-login').disabled    = false;
-    document.getElementById('btn-login').textContent = 'Sign in';
-    document.getElementById('login-error').style.display = 'none';
-  }
-
-  function showEditor() {
-    document.getElementById('view-login').classList.add('hidden');
-    document.getElementById('view-editor').classList.remove('hidden');
-  }
-
-  function showState(name) {
-    document.getElementById('state-loading').classList.toggle('hidden', name !== 'loading');
-    document.getElementById('state-prompts').classList.toggle('hidden', name !== 'prompts');
-  }
-
-  function showLoginError(msg) {
-    const el = document.getElementById('login-error');
-    el.textContent   = msg;
-    el.style.display = 'block';
-  }
-
-  // ── XSS helper ───────────────────────────────────────────────────────
-  function escHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
+  elMsgSuccess.textContent = 'Prompt saved successfully.';
+  elMsgSuccess.classList.remove('hidden');
+  elMsgSuccess.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+// ── Undo ───────────────────────────────────────────────────────────────
+elBtnUndo.addEventListener('click', function() {
+  if (!selected || !selected.prompt_text_previous) { return; }
+  if (!confirm('Restore the previous version? Your current text will be lost.')) { return; }
+  elTextarea.value = selected.prompt_text_previous;
+  updateCharCount();
+  renderChips();
+  elMsgSuccess.classList.add('hidden');
+  elMsgError.classList.add('hidden');
+});
+
+// ── Discard ────────────────────────────────────────────────────────────
+elBtnDiscard.addEventListener('click', function() {
+  if (!selected) { return; }
+  if (elTextarea.value === originalText) { return; }
+  if (!confirm('Discard all changes and revert to the last saved version?')) { return; }
+  elTextarea.value = originalText;
+  updateCharCount();
+  renderChips();
+  elMsgSuccess.classList.add('hidden');
+  elMsgError.classList.add('hidden');
+});
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function showLogin() {
+  elViewLogin.classList.remove('hidden');
+  elViewEditor.classList.add('hidden');
+  elHeaderRight.classList.add('hidden');
+  elBtnLogin.disabled    = false;
+  elBtnLogin.textContent = 'Sign in';
+  elLoginError.classList.add('hidden');
+}
+
+function setLoginError(msg) {
+  elLoginError.textContent = msg;
+  elLoginError.classList.remove('hidden');
+}
+
+function esc(str) {
+  if (!str) { return ''; }
+  var s = String(str);
+  s = s.replace(/&/g, '&amp;');
+  s = s.replace(/</g, '&lt;');
+  s = s.replace(/>/g, '&gt;');
+  s = s.replace(/"/g, '&quot;');
+  return s;
+}
 </script>
 
 </body>
