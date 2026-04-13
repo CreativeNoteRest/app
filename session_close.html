@@ -864,10 +864,10 @@
       const { error: w1Err } = await supabase
         .from('sessions')
         .update({
-          AI_summ_teacher:          teacherSummary,
-          AI_summ_student:          efResponse.ai_summ_student          || '',
-          AI_summ_supplement:       efResponse.ai_summ_supplement       || '',
-          AI_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
+          ai_summ_teacher:          teacherSummary,
+          ai_summ_student:          efResponse.ai_summ_student          || '',
+          ai_summ_supplement:       efResponse.ai_summ_supplement       || '',
+          ai_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
           summary_approved_at:      new Date().toISOString()
@@ -911,13 +911,13 @@
       // field is missing -- entries are preserved and teacher can retry.
       const { data: verifyRow, error: verifyErr } = await supabase
         .from('sessions')
-        .select('AI_summ_teacher, AI_summ_student, AI_summ_supplement, AI_summ_supplement_data')
+        .select('ai_summ_teacher, ai_summ_student, ai_summ_supplement, ai_summ_supplement_data')
         .eq('session_id', SESSION_ID)
         .single();
 
       if (verifyErr) throw new Error(`Write 3 failed (verify read): ${verifyErr.message}`);
 
-      const missing = ['AI_summ_teacher','AI_summ_student','AI_summ_supplement','AI_summ_supplement_data']
+      const missing = ['ai_summ_teacher','ai_summ_student','ai_summ_supplement','ai_summ_supplement_data']
         .filter(f => !verifyRow[f]);
 
       if (missing.length > 0) {
