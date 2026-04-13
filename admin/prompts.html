@@ -664,13 +664,18 @@
     // Check for malformed placeholders -- single-brace patterns that look
     // like intended variables (lowercase letters and underscores only).
     // JSON example structures with single braces are intentional and ignored.
-    const malformed = text.match(/\{[a-z][a-z_]*\}/g) || [];
-    malformed.forEach(m => {
-      errors.push(`Possible malformed variable: ${m} -- did you mean {{${m.slice(1,-1)}}}?`);
-    });
-
-    return errors;
-  }
+// Check for malformed placeholders -- single-brace variable-like patterns
+// that are NOT part of a legitimate {{double_brace}} placeholder.
+const malformed = text.match(/\{[a-z][a-z_]*\}/g) || [];
+  malformed.forEach(m => {
+  const varName = m.slice(1, -1);
+  // Only flag if the double-brace version is NOT present in the text.
+  // If {{varName}} exists, this single-brace match is just the inner
+  // part of a legitimate placeholder being caught by the regex.
+  if (!text.includes(`{{${varName}}}`)) {
+    errors.push(`Possible malformed variable: ${m} -- did you mean {{${varName}}}?`);
+    }
+  });
 
   // ── Save handler ────────────────────────────────────────────────────
   window.handleSave = async function() {
