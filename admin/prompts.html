@@ -661,11 +661,12 @@
     });
 
     // Check for malformed placeholders (single braces, wrong case)
-    const malformed = text.match(/\{[^{][^}]*\}|\{[^}]+\}/g) || [];
+    // Check for malformed placeholders -- single-brace patterns that look
+    // like intended variables (lowercase letters and underscores only).
+    // JSON example structures with single braces are intentional and ignored.
+    const malformed = text.match(/\{[a-z][a-z_]*\}/g) || [];
     malformed.forEach(m => {
-      if (!m.startsWith('{{')) {
-        errors.push(`Possible malformed variable: ${m} -- variables must use double curly braces like {{variable_name}}`);
-      }
+      errors.push(`Possible malformed variable: ${m} -- did you mean {{${m.slice(1,-1)}}}?`);
     });
 
     return errors;
