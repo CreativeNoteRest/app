@@ -198,6 +198,7 @@
   let allStudents     = [];
   let selectedStudent = null;           // { student_id, safe_name }
   let sessionRows     = [];             // cached session list for current student
+  let currentSession  = null;           // full session record shown in detail view
   let view            = 'students';     // 'students' | 'sessions' | 'detail'
 
   // ── DOM refs ──────────────────────────────────────────────────────────
@@ -386,7 +387,15 @@
     const cached = sessionRows.find(s => s.session_id === sessionId);
     let bookName = cached ? cached.bookName : 'Unknown book';
 
+    currentSession = session;
     renderDetail(session, bookName);
+
+    // Wire the PDF button now that the DOM is rendered
+    const pdfBtn = document.getElementById('pdfBtn');
+    if (pdfBtn) {
+      pdfBtn.disabled = false;
+      pdfBtn.addEventListener('click', () => sendPdf());
+    }
   }
 
   function renderDetail(s, bookName) {
@@ -418,9 +427,9 @@
       // Recommended Supplements -- top 3 only, priority order matches approval screen
       contentBlock('Recommended Supplements', topThree(s.ai_summ_supplement), true) +
 
-      // Email PDF button (disabled -- Step 5 will wire this)
+      // Email PDF button
       '<div class="pdf-btn-wrap">' +
-        '<button class="pdf-btn" id="pdfBtn" disabled>' +
+        '<button class="pdf-btn" id="pdfBtn">' +
           escHtml(pdfBtnLabel) +
           (pdfBtnSub ? '<span class="pdf-btn-sub">' + escHtml(pdfBtnSub) + '</span>' : '') +
         '</button>' +
@@ -451,6 +460,60 @@
       /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
     );
+  }
+
+  // ── Send PDF ──────────────────────────────────────────────────────────────
+  async function sendPdf() {
+    const pdfBtn = document.getElementById('pdfBtn');
+    if (!pdfBtn || !currentSession) return;
+
+    // Loading state
+    pdfBtn.disabled = true;
+    const originalHTML = pdfBtn.innerHTML;
+    pdfBtn.innerHTML = 'Sending...';
+
+    const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
+      body: {
+        session_id:  currentSession.session_id,
+        teacher_id:  teacherId,
+        send_type:   'manual',
+      },
+    });
+
+    if (error || !data?.success) {
+      const msg = data?.error || error?.message || 'Email failed. Please try again.';
+      pdfBtn.innerHTML = originalHTML;
+      pdfBtn.disabled = false;
+      showErr(msg);
+      return;
+    }
+
+    // Success -- update button and session state
+    const sentTo = (data.sent_to || []).join(', ');
+    const nowStr  = new Date().toISOString();
+    currentSession.pdf_sent_at = nowStr;
+    currentSession.pdf_sent_to = sentTo;
+
+    // Update button to resend state
+    pdfBtn.innerHTML = 'Resend Practice Plan' +
+      '<span class="pdf-btn-sub">Last sent ' + formatDate(nowStr) + ' to ' + escHtml(sentTo) + '</span>';
+    pdfBtn.disabled = false;
+
+    // Update session list row pdf badge so it reflects on back navigation
+    const listRow = sessionRows.find(s => s.session_id === currentSession.session_id);
+    if (listRow) { listRow.pdf_sent_at = nowStr; listRow.pdf_sent_to = sentTo; }
+
+    // Brief sent confirmation
+    const wrap = pdfBtn.closest('.pdf-btn-wrap');
+    if (wrap) {
+      const confirm = document.createElement('div');
+      confirm.style.cssText = 'text-align:center;color:#2E7D32;font-size:13px;font-weight:600;margin-top:6px;';
+      confirm.textContent = 'Sent!';
+      wrap.appendChild(confirm);
+      setTimeout(() => confirm.remove(), 2000);
+    }
+
+    clearErr();
   }
 
   // ── Utilities ─────────────────────────────────────────────────────────
