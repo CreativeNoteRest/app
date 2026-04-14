@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lesson History</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:       #E87722;
+      --brand-light: #FFF4EC;
+      --brand-dark:  #C45F00;
+      --text:        #1A1A1A;
+      --text-mid:    #555;
+      --text-muted:  #888;
+      --border:      #E0E0E0;
+      --bg:          #F7F7F7;
+      --white:       #FFFFFF;
+      --retired-bg:  #F5F5F5;
+      --error-bg:    #FFF0F0;
+      --error-text:  #CC0000;
+      --pdf-sent:    #2E7D32;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-back {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      margin-left: -8px;
+      color: var(--brand);
+      font-size: 20px;
+      line-height: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-back:hover { background: var(--brand-light); }
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ── Main content ── */
+    .content {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* ── Toolbar (checkbox row) ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0 14px;
+    }
+    .toolbar label {
+      font-size: 14px;
+      color: var(--text-mid);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toolbar input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    /* ── Card list ── */
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    /* ── Student row ── */
+    .student-row {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.12s, border-color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .student-row:hover { background: var(--brand-light); border-color: var(--brand); }
+    .student-row:active { background: #FFE8D4; }
+    .student-row.retired {
+      background: var(--retired-bg);
+      color: var(--text-muted);
+    }
+    .student-row.retired:hover { background: #EEEEEE; border-color: #CCC; }
+
+    .student-name {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .student-tag {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #EBEBEB;
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .chevron {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    /* ── Session row ── */
+    .session-row {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      transition: background 0.12s, border-color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .session-row:hover { background: var(--brand-light); border-color: var(--brand); }
+    .session-row:active { background: #FFE8D4; }
+
+    .session-info { flex: 1; min-width: 0; }
+    .session-date {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .session-book {
+      font-size: 13px;
+      color: var(--text-mid);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .session-page {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .pdf-sent-badge {
+      font-size: 12px;
+      color: var(--pdf-sent);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pdf-sent-badge::before {
+      content: '✓';
+      font-weight: 700;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* ── Loading state ── */
+    .loading-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid #FFCCCC;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .error-banner.visible { display: block; }
+
+    /* ── Section divider (retired group) ── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 16px 4px 6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <button class="header-back" id="backBtn" aria-label="Back">&#8592;</button>
+  <span class="header-title" id="headerTitle">Lesson History</span>
+</header>
+
+<!-- ── Content ── -->
+<main class="content">
+  <div id="errorBanner" class="error-banner" role="alert"></div>
+
+  <!-- VIEW 1: Student selector -->
+  <div id="viewStudents">
+    <div class="toolbar">
+      <label>
+        <input type="checkbox" id="activeOnlyCheck" checked />
+        Active students only
+      </label>
+    </div>
+    <div class="card-list" id="studentList">
+      <div class="loading-state">Loading students...</div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: Session list for selected student -->
+  <div id="viewSessions" style="display:none;">
+    <div class="card-list" id="sessionList">
+      <div class="loading-state">Loading lessons...</div>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { requireAuth, showError, clearError } from '/assets/app.js';
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'; // populated by app.js client; kept for reference
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  await requireAuth();
+
+  const teacherId = sessionStorage.getItem('teacher_id');
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let allStudents = [];           // full fetched list
+  let selectedStudent = null;     // { student_id, safe_name }
+  let view = 'students';          // 'students' | 'sessions'
+
+  // ── DOM refs ──────────────────────────────────────────────────────────
+  const viewStudents   = document.getElementById('viewStudents');
+  const viewSessions   = document.getElementById('viewSessions');
+  const studentList    = document.getElementById('studentList');
+  const sessionList    = document.getElementById('sessionList');
+  const activeOnlyCheck = document.getElementById('activeOnlyCheck');
+  const headerTitle    = document.getElementById('headerTitle');
+  const backBtn        = document.getElementById('backBtn');
+  const errorBanner    = document.getElementById('errorBanner');
+
+  // ── Error helpers ─────────────────────────────────────────────────────
+  function showErr(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+  }
+  function clearErr() {
+    errorBanner.textContent = '';
+    errorBanner.classList.remove('visible');
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────
+  backBtn.addEventListener('click', () => {
+    if (view === 'sessions') {
+      showStudentsView();
+    } else {
+      window.location.href = '/main_menu.html';
+    }
+  });
+
+  function showStudentsView() {
+    view = 'students';
+    selectedStudent = null;
+    headerTitle.textContent = 'Lesson History';
+    viewStudents.style.display = '';
+    viewSessions.style.display = 'none';
+    clearErr();
+  }
+
+  function showSessionsView(student) {
+    view = 'sessions';
+    selectedStudent = student;
+    headerTitle.textContent = `${student.safe_name} -- Lessons`;
+    viewStudents.style.display = 'none';
+    viewSessions.style.display = '';
+    clearErr();
+    loadSessions(student.student_id);
+  }
+
+  // ── Load students ─────────────────────────────────────────────────────
+  async function loadStudents() {
+    studentList.innerHTML = '<div class="loading-state">Loading students...</div>';
+    clearErr();
+
+    const { data, error } = await supabase
+      .from('students')
+      .select('student_id, safe_name, student_status')
+      .eq('teacher_id', teacherId)
+      .not('student_status', 'in', '("archived","deleted")')
+      .order('student_status', { ascending: true })   // active before retired
+      .order('safe_name', { ascending: true });
+
+    if (error) {
+      showErr('Could not load students. Please try again.');
+      studentList.innerHTML = '';
+      return;
+    }
+
+    allStudents = data || [];
+    renderStudents();
+  }
+
+  // ── Render students ───────────────────────────────────────────────────
+  function renderStudents() {
+    const activeOnly = activeOnlyCheck.checked;
+    const filtered = activeOnly
+      ? allStudents.filter(s => s.student_status === 'active')
+      : allStudents;
+
+    if (filtered.length === 0) {
+      studentList.innerHTML = `<div class="empty-state">${
+        activeOnly ? 'No active students.' : 'No students found.'
+      }</div>`;
+      return;
+    }
+
+    // Split into active / retired groups
+    const active  = filtered.filter(s => s.student_status === 'active');
+    const retired = filtered.filter(s => s.student_status !== 'active');
+
+    let html = '';
+
+    active.forEach(s => {
+      html += studentRowHTML(s, false);
+    });
+
+    if (retired.length > 0) {
+      html += `<div class="section-label">Retired</div>`;
+      retired.forEach(s => {
+        html += studentRowHTML(s, true);
+      });
+    }
+
+    studentList.innerHTML = html;
+
+    // Attach tap handlers
+    studentList.querySelectorAll('.student-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const studentId = row.dataset.studentId;
+        const student = allStudents.find(s => s.student_id === studentId);
+        if (student) showSessionsView(student);
+      });
+    });
+  }
+
+  function studentRowHTML(s, isRetired) {
+    return `
+      <div class="student-row${isRetired ? ' retired' : ''}" data-student-id="${s.student_id}" role="button" tabindex="0">
+        <span class="student-name">${escHtml(s.safe_name)}</span>
+        <span class="chevron">›</span>
+      </div>`;
+  }
+
+  // ── Active Only checkbox ──────────────────────────────────────────────
+  activeOnlyCheck.addEventListener('change', renderStudents);
+
+  // ── Load sessions ─────────────────────────────────────────────────────
+  async function loadSessions(studentId) {
+    sessionList.innerHTML = '<div class="loading-state">Loading lessons...</div>';
+
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('session_id, session_date, max_lesson_page, pdf_sent_at, pdf_sent_to, books(full_display_name)')
+      .eq('teacher_id', teacherId)
+      .eq('student_id', studentId)
+      .eq('session_status', 'approved')
+      .order('session_date', { ascending: false });
+
+    if (error) {
+      showErr('Could not load lessons. Please try again.');
+      sessionList.innerHTML = '';
+      return;
+    }
+
+    renderSessions(data || []);
+  }
+
+  // ── Render sessions ───────────────────────────────────────────────────
+  function renderSessions(sessions) {
+    if (sessions.length === 0) {
+      sessionList.innerHTML = `<div class="empty-state">No completed lessons yet for ${escHtml(selectedStudent.safe_name)}.</div>`;
+      return;
+    }
+
+    let html = '';
+    sessions.forEach(s => {
+      const dateStr   = formatDate(s.session_date);
+      const bookName  = s.books?.full_display_name ?? 'Unknown book';
+      const pageStr   = s.max_lesson_page ? `Page ${s.max_lesson_page}` : 'Page not recorded';
+      const pdfBadge  = s.pdf_sent_at
+        ? `<div class="pdf-sent-badge">PDF sent ${formatDate(s.pdf_sent_at)}</div>`
+        : '';
+
+      html += `
+        <div class="session-row" data-session-id="${s.session_id}" role="button" tabindex="0">
+          <div class="session-info">
+            <div class="session-date">${escHtml(dateStr)}</div>
+            <div class="session-book">${escHtml(bookName)}</div>
+            <div class="session-page">${escHtml(pageStr)}</div>
+            ${pdfBadge}
+          </div>
+          <span class="chevron">›</span>
+        </div>`;
+    });
+
+    sessionList.innerHTML = html;
+
+    // Tap handlers -- placeholder for Step 3 detail view
+    sessionList.querySelectorAll('.session-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const sessionId = row.dataset.sessionId;
+        // Step 3 will handle navigation to detail view
+        // Stored on element for forward-compatibility
+        console.log('Session tapped:', sessionId);
+      });
+    });
+  }
+
+  // ── Utilities ─────────────────────────────────────────────────────────
+  function formatDate(isoString) {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────
+  loadStudents();
+</script>
+
+</body>
+</html>

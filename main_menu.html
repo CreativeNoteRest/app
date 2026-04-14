@@ -339,6 +339,16 @@
       </div>
     </button>
 
+    <button class="action-secondary" style="width:100%;margin-bottom:14px;" onclick="goHistory()">
+      <div class="action-secondary-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      </div>
+      <div>
+        <div class="action-secondary-label">View</div>
+        <div class="action-secondary-title">Lesson History</div>
+      </div>
+    </button>
+
     <div class="action-grid">
       <button class="action-secondary" onclick="goStudents()">
         <div class="action-secondary-icon">
@@ -347,7 +357,6 @@
         <div>
           <div class="action-secondary-label">Manage</div>
           <div class="action-secondary-title">Students</div>
-          <span class="stub-badge">Coming soon</span>
         </div>
       </button>
 
@@ -772,6 +781,7 @@
 
     // ── Stub navigation ──────────────────────────────────────────────
     window.goStudents = () => { window.location.href = '/manage_students.html'; };
+    window.goHistory  = () => { window.location.href = '/session_history.html'; };
     window.goAccount  = () => console.log('Account: not yet built');
 
   </script>
