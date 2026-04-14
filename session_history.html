@@ -415,8 +415,8 @@
       // Student Practice Plan
       contentBlock('Student Practice Plan', s.ai_summ_student, false) +
 
-      // Recommended Supplements (render markdown links)
-      contentBlock('Recommended Supplements', s.ai_summ_supplement, true) +
+      // Recommended Supplements -- top 3 only, priority order matches approval screen
+      contentBlock('Recommended Supplements', topThree(s.ai_summ_supplement), true) +
 
       // Email PDF button (disabled -- Step 5 will wire this)
       '<div class="pdf-btn-wrap">' +
@@ -436,6 +436,12 @@
       '<div class="content-block-label">' + label + '</div>' +
       body +
       '</div>';
+  }
+
+  // Return the first 3 non-empty lines of ai_summ_supplement text
+  function topThree(text) {
+    if (!text) return '';
+    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 3).join('\n');
   }
 
   // Convert markdown-style [Title](url) links to <a> tags
