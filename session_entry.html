@@ -817,7 +817,7 @@
   } else {
     const recognition = new SpeechRecognition();
     recognition.lang           = 'en-CA';
-    recognition.continuous     = false;
+    recognition.continuous     = true;
     recognition.interimResults = true;
 
     let listening    = false;
