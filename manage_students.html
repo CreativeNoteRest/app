@@ -392,6 +392,20 @@
 
     <hr class="section-divider" />
 
+    <!-- Birth Year -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Birth Year</span>
+        <span class="field-optional">optional</span>
+      </div>
+      <input type="text" class="field-input" id="field-birth-year"
+             placeholder="e.g. 2016" inputmode="numeric" maxlength="4" autocomplete="off" />
+      <div class="field-hint">Used to tailor the student practice summary to the right reading level.</div>
+      <div id="age-display" style="font-size:0.82rem;color:var(--color-muted);margin-top:5px;"></div>
+    </div>
+
+    <hr class="section-divider" />
+
     <!-- Current Book -->
     <div class="field-group">
       <div class="field-label-row">
@@ -499,6 +513,8 @@
   const fEmailSecondary     = document.getElementById('field-email-secondary');
   const fUnsubSecondary     = document.getElementById('field-unsub-secondary');
   const fPhone              = document.getElementById('field-phone');
+  const fBirthYear          = document.getElementById('field-birth-year');
+  const ageDisplay          = document.getElementById('age-display');
   const fBook               = document.getElementById('field-book');
   const btnSave             = document.getElementById('btn-save');
 
@@ -562,6 +578,22 @@
   fUnsubSecondary.addEventListener('change', checkContactWarning);
   fPhone.addEventListener('input', checkContactWarning);
 
+  // ── Birth year -- live age display ───────────────────────────────────
+  function updateAgeDisplay() {
+    const val = fBirthYear.value.trim();
+    if (val.length === 4 && /^\d{4}$/.test(val)) {
+      const year = parseInt(val, 10);
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - year;
+      if (age >= 1 && age <= 99) {
+        ageDisplay.textContent = 'Age: ~' + age;
+        return;
+      }
+    }
+    ageDisplay.textContent = '';
+  }
+  fBirthYear.addEventListener('input', updateAgeDisplay);
+
   // ── Consent date hint ────────────────────────────────────────────────
   fConsent.addEventListener('change', () => {
     if (fConsent.checked && !currentStudent?.parental_consent_date) {
@@ -596,7 +628,9 @@
     fEmailSecondary.value   = student?.email_secondary               || '';
     fUnsubSecondary.checked = student?.email_secondary_unsubscribed  || false;
     fPhone.value            = student?.phone_primary                 || '';
+    fBirthYear.value        = student?.birth_year                    || '';
     fBook.value             = student?.current_book                  || '';
+    updateAgeDisplay();
 
     // Consent date display
     if (student?.parental_consent_date) {
@@ -710,7 +744,7 @@
 
     const { data, error } = await supabase
       .from('students')
-      .select('student_id, safe_name, student_status, retired_date, archived_date, current_book, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, phone_primary, parental_consent_given, parental_consent_date')
+      .select('student_id, safe_name, student_status, retired_date, archived_date, current_book, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, phone_primary, birth_year, parental_consent_given, parental_consent_date')
       .eq('teacher_id', teacherId)
       .order('safe_name', { ascending: true });
 
@@ -788,6 +822,7 @@
       email_secondary:              fEmailSecondary.value.trim()  || null,
       email_secondary_unsubscribed: fUnsubSecondary.checked,
       phone_primary:                fPhone.value.trim()           || null,
+      birth_year:                   fBirthYear.value.trim() ? parseInt(fBirthYear.value.trim(), 10) : null,
       parental_consent_given:       fConsent.checked,
       current_book:                 (!fBook.disabled && fBook.value) ? fBook.value : (currentStudent?.current_book || null),
       updated_at:                   new Date().toISOString()
