@@ -29,6 +29,7 @@
       min-height: 100vh;
     }
 
+    /* ── Header ── */
     .header {
       background: var(--white);
       border-bottom: 1px solid var(--border);
@@ -42,66 +43,33 @@
       z-index: 10;
     }
     .header-back {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px;
-      margin-left: -8px;
-      color: var(--brand);
-      font-size: 20px;
-      line-height: 1;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: none; border: none; cursor: pointer;
+      padding: 8px; margin-left: -8px;
+      color: var(--brand); font-size: 20px; line-height: 1;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
     }
     .header-back:hover { background: var(--brand-light); }
-    .header-title {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--text);
-      flex: 1;
-    }
+    .header-title { font-size: 17px; font-weight: 600; color: var(--text); flex: 1; }
 
-    .content {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+    /* ── Content ── */
+    .content { max-width: 640px; margin: 0 auto; padding: 16px; }
 
-    .toolbar {
-      display: flex;
-      align-items: center;
-      padding: 10px 0 14px;
-    }
+    /* ── Toolbar ── */
+    .toolbar { display: flex; align-items: center; padding: 10px 0 14px; }
     .toolbar label {
-      font-size: 14px;
-      color: var(--text-mid);
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 14px; color: var(--text-mid); cursor: pointer;
+      user-select: none; display: flex; align-items: center; gap: 6px;
     }
-    .toolbar input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--brand);
-      cursor: pointer;
-    }
+    .toolbar input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; }
 
+    /* ── Lists ── */
     .card-list { display: flex; flex-direction: column; gap: 2px; }
 
+    /* ── Student row ── */
     .student-row {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: background 0.12s, border-color 0.12s;
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; cursor: pointer; display: flex; align-items: center;
+      justify-content: space-between; transition: background 0.12s, border-color 0.12s;
       -webkit-tap-highlight-color: transparent;
     }
     .student-row:hover { background: var(--brand-light); border-color: var(--brand); }
@@ -111,16 +79,11 @@
     .student-name { font-size: 16px; font-weight: 500; }
     .chevron { color: var(--text-muted); font-size: 18px; margin-left: 8px; }
 
+    /* ── Session row ── */
     .session-row {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; cursor: pointer; display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 8px;
       transition: background 0.12s, border-color 0.12s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -132,28 +95,58 @@
     .session-page { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
     .pdf-sent-badge { font-size: 12px; color: var(--pdf-sent); margin-top: 4px; }
 
+    /* ── Detail view ── */
+    .detail-header {
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .detail-student { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .detail-meta { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
+
+    .content-block {
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .content-block-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--brand); margin-bottom: 10px;
+    }
+    .content-block-body {
+      font-size: 14px; color: var(--text); line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .content-block-body a {
+      color: var(--brand); text-decoration: underline; word-break: break-all;
+    }
+    .content-block-empty { font-size: 14px; color: var(--text-muted); font-style: italic; }
+
+    /* ── Email PDF button ── */
+    .pdf-btn-wrap { margin-bottom: 24px; }
+    .pdf-btn {
+      width: 100%; padding: 16px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      border: 1.5px solid var(--brand); background: var(--white);
+      color: var(--brand); transition: background 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .pdf-btn:hover:not(:disabled) { background: var(--brand-light); }
+    .pdf-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .pdf-btn-sub { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+
+    /* ── States ── */
     .empty-state  { text-align: center; padding: 48px 16px; color: var(--text-muted); font-size: 15px; }
     .loading-state { text-align: center; padding: 48px 16px; color: var(--text-muted); font-size: 15px; }
 
     .error-banner {
-      background: var(--error-bg);
-      color: var(--error-text);
-      border: 1px solid #FFCCCC;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      display: none;
+      background: var(--error-bg); color: var(--error-text);
+      border: 1px solid #FFCCCC; border-radius: 8px;
+      padding: 12px 14px; font-size: 14px; margin-bottom: 12px; display: none;
     }
     .error-banner.visible { display: block; }
 
     .section-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 16px 4px 6px;
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 4px 6px;
     }
   </style>
 </head>
@@ -167,6 +160,7 @@
 <main class="content">
   <div id="errorBanner" class="error-banner" role="alert"></div>
 
+  <!-- VIEW 1: Student selector -->
   <div id="viewStudents">
     <div class="toolbar">
       <label>
@@ -179,11 +173,18 @@
     </div>
   </div>
 
+  <!-- VIEW 2: Session list -->
   <div id="viewSessions" style="display:none;">
     <div class="card-list" id="sessionList">
       <div class="loading-state">Loading lessons...</div>
     </div>
   </div>
+
+  <!-- VIEW 3: Session detail -->
+  <div id="viewDetail" style="display:none;">
+    <div id="detailContent"></div>
+  </div>
+
 </main>
 
 <script type="module">
@@ -193,14 +194,19 @@
 
   const teacherId = sessionStorage.getItem('teacher_id');
 
-  let allStudents    = [];
-  let selectedStudent = null;
-  let view           = 'students';
+  // ── State ─────────────────────────────────────────────────────────────
+  let allStudents     = [];
+  let selectedStudent = null;           // { student_id, safe_name }
+  let sessionRows     = [];             // cached session list for current student
+  let view            = 'students';     // 'students' | 'sessions' | 'detail'
 
+  // ── DOM refs ──────────────────────────────────────────────────────────
   const viewStudents    = document.getElementById('viewStudents');
   const viewSessions    = document.getElementById('viewSessions');
+  const viewDetail      = document.getElementById('viewDetail');
   const studentList     = document.getElementById('studentList');
   const sessionList     = document.getElementById('sessionList');
+  const detailContent   = document.getElementById('detailContent');
   const activeOnlyCheck = document.getElementById('activeOnlyCheck');
   const headerTitle     = document.getElementById('headerTitle');
   const backBtn         = document.getElementById('backBtn');
@@ -209,21 +215,30 @@
   function showErr(msg) { errorBanner.textContent = msg; errorBanner.classList.add('visible'); }
   function clearErr()   { errorBanner.textContent = '';  errorBanner.classList.remove('visible'); }
 
-  // ── Navigation ────────────────────────────────────────────────────────
+  // ── Back button -- three-level navigation ─────────────────────────────
   backBtn.addEventListener('click', () => {
-    if (view === 'sessions') {
+    if (view === 'detail') {
+      // Detail -> session list
+      view = 'sessions';
+      headerTitle.textContent = selectedStudent.safe_name + ' -- Lessons';
+      viewDetail.style.display  = 'none';
+      viewSessions.style.display = '';
+      clearErr();
+    } else if (view === 'sessions') {
+      // Session list -> student selector
       view = 'students';
       selectedStudent = null;
+      sessionRows = [];
       headerTitle.textContent = 'Lesson History';
-      viewStudents.style.display = '';
       viewSessions.style.display = 'none';
+      viewStudents.style.display  = '';
       clearErr();
     } else {
       window.location.href = '/main_menu.html';
     }
   });
 
-  // ── Students ──────────────────────────────────────────────────────────
+  // ── STUDENTS ──────────────────────────────────────────────────────────
   async function loadStudents() {
     studentList.innerHTML = '<div class="loading-state">Loading students...</div>';
     clearErr();
@@ -254,10 +269,10 @@
     const active  = filtered.filter(s => s.student_status === 'active');
     const retired = filtered.filter(s => s.student_status !== 'active');
     let html = '';
-    active.forEach(s  => { html += rowHTML(s, false); });
+    active.forEach(s  => { html += studentRowHTML(s, false); });
     if (retired.length > 0) {
       html += '<div class="section-label">Retired</div>';
-      retired.forEach(s => { html += rowHTML(s, true); });
+      retired.forEach(s => { html += studentRowHTML(s, true); });
     }
     studentList.innerHTML = html;
     studentList.querySelectorAll('.student-row').forEach(el => {
@@ -268,7 +283,7 @@
     });
   }
 
-  function rowHTML(s, retired) {
+  function studentRowHTML(s, retired) {
     return '<div class="student-row' + (retired ? ' retired' : '') +
       '" data-student-id="' + s.student_id + '" role="button" tabindex="0">' +
       '<span class="student-name">' + escHtml(s.safe_name) + '</span>' +
@@ -282,16 +297,15 @@
     selectedStudent = student;
     headerTitle.textContent = student.safe_name + ' -- Lessons';
     viewStudents.style.display = 'none';
-    viewSessions.style.display = '';
+    viewSessions.style.display  = '';
     clearErr();
     loadSessions(student.student_id);
   }
 
-  // ── Sessions ──────────────────────────────────────────────────────────
+  // ── SESSIONS ──────────────────────────────────────────────────────────
   async function loadSessions(studentId) {
     sessionList.innerHTML = '<div class="loading-state">Loading lessons...</div>';
 
-    // Query 1: sessions (no FK join -- avoids PostgREST relationship resolution issues)
     const { data: sessions, error: sessErr } = await supabase
       .from('sessions')
       .select('session_id, session_date, max_lesson_page, pdf_sent_at, pdf_sent_to, lesson_book_id')
@@ -304,7 +318,7 @@
 
     const rows = sessions || [];
 
-    // Query 2: book names for all unique book IDs (single round trip)
+    // Fetch book names for all unique book IDs
     const bookIds = [...new Set(rows.map(s => s.lesson_book_id).filter(Boolean))];
     const bookMap = {};
     if (bookIds.length > 0) {
@@ -319,6 +333,7 @@
       s.bookName = s.lesson_book_id ? (bookMap[s.lesson_book_id] || 'Unknown book') : 'Book not recorded';
     });
 
+    sessionRows = rows; // cache for detail view -- avoids re-fetch
     renderSessions(rows);
   }
 
@@ -333,19 +348,103 @@
       const pdfLine = s.pdf_sent_at ? '<div class="pdf-sent-badge">&#10003; PDF sent ' + formatDate(s.pdf_sent_at) + '</div>' : '';
       html += '<div class="session-row" data-session-id="' + s.session_id + '" role="button" tabindex="0">' +
         '<div class="session-info">' +
-        '<div class="session-date">'  + escHtml(formatDate(s.session_date)) + '</div>' +
-        '<div class="session-book">'  + escHtml(s.bookName) + '</div>' +
-        '<div class="session-page">'  + escHtml(s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded') + '</div>' +
-        pdfLine +
-        '</div><span class="chevron">&#8250;</span></div>';
+        '<div class="session-date">' + escHtml(formatDate(s.session_date)) + '</div>' +
+        '<div class="session-book">' + escHtml(s.bookName) + '</div>' +
+        '<div class="session-page">' + escHtml(s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded') + '</div>' +
+        pdfLine + '</div><span class="chevron">&#8250;</span></div>';
     });
 
     sessionList.innerHTML = html;
 
-    // Step 3 will wire these tap handlers to the detail view
     sessionList.querySelectorAll('.session-row').forEach(el => {
-      el.addEventListener('click', () => { console.log('Session tapped:', el.dataset.sessionId); });
+      el.addEventListener('click', () => { openDetail(el.dataset.sessionId); });
     });
+  }
+
+  // ── DETAIL ────────────────────────────────────────────────────────────
+  async function openDetail(sessionId) {
+    view = 'detail';
+    headerTitle.textContent = selectedStudent.safe_name;
+    viewSessions.style.display = 'none';
+    viewDetail.style.display   = '';
+    detailContent.innerHTML    = '<div class="loading-state">Loading lesson...</div>';
+    clearErr();
+
+    // Fetch full session record -- content fields not loaded in list view
+    const { data: session, error } = await supabase
+      .from('sessions')
+      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement, pdf_sent_at, pdf_sent_to')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (error || !session) {
+      detailContent.innerHTML = '<div class="empty-state">Could not load lesson detail. Please go back and try again.</div>';
+      return;
+    }
+
+    // Book name: use cached value if available, else fall back to lesson_book_id lookup
+    const cached = sessionRows.find(s => s.session_id === sessionId);
+    let bookName = cached ? cached.bookName : 'Unknown book';
+
+    renderDetail(session, bookName);
+  }
+
+  function renderDetail(s, bookName) {
+    const pageStr    = s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded';
+    const dateStr    = formatDate(s.session_date);
+    const hasPdfSent = !!s.pdf_sent_at;
+    const pdfBtnLabel = hasPdfSent ? 'Resend Practice Plan' : 'Email Practice Plan';
+    const pdfBtnSub   = hasPdfSent
+      ? 'Last sent ' + formatDate(s.pdf_sent_at) + ' to ' + escHtml(s.pdf_sent_to || '')
+      : '';
+
+    detailContent.innerHTML =
+      // Header block
+      '<div class="detail-header">' +
+        '<div class="detail-student">' + escHtml(selectedStudent.safe_name) + '</div>' +
+        '<div class="detail-meta">' +
+          escHtml(dateStr) + '<br>' +
+          escHtml(bookName) + '<br>' +
+          escHtml(pageStr) +
+        '</div>' +
+      '</div>' +
+
+      // Teacher Summary
+      contentBlock('Teacher Summary', s.ai_summ_teacher, false) +
+
+      // Student Practice Plan
+      contentBlock('Student Practice Plan', s.ai_summ_student, false) +
+
+      // Recommended Supplements (render markdown links)
+      contentBlock('Recommended Supplements', s.ai_summ_supplement, true) +
+
+      // Email PDF button (disabled -- Step 5 will wire this)
+      '<div class="pdf-btn-wrap">' +
+        '<button class="pdf-btn" id="pdfBtn" disabled>' +
+          escHtml(pdfBtnLabel) +
+          (pdfBtnSub ? '<span class="pdf-btn-sub">' + escHtml(pdfBtnSub) + '</span>' : '') +
+        '</button>' +
+      '</div>';
+  }
+
+  function contentBlock(label, text, renderLinks) {
+    const isEmpty = !text || text.trim() === '';
+    const body    = isEmpty
+      ? '<div class="content-block-empty">Not recorded.</div>'
+      : '<div class="content-block-body">' + (renderLinks ? markdownLinks(escHtml(text)) : escHtml(text)) + '</div>';
+    return '<div class="content-block">' +
+      '<div class="content-block-label">' + label + '</div>' +
+      body +
+      '</div>';
+  }
+
+  // Convert markdown-style [Title](url) links to <a> tags
+  // Applied AFTER escHtml so we work with escaped text and insert safe HTML
+  function markdownLinks(escapedText) {
+    return escapedText.replace(
+      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
   }
 
   // ── Utilities ─────────────────────────────────────────────────────────
