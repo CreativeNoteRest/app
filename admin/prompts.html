@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Creative Note Admin -- Prompt Editor v2 -- Preview panel build April 2026 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -679,7 +678,7 @@ async function openPreview(p) {
 
   var result = await sb
     .from('active_sessions')
-    .select('session_id, student_id, teacher_id, series_id, lesson_book_id, students(safe_name)')
+    .select('session_id, student_id, teacher_id, series_id, students(safe_name), sessions(lesson_book_id)')
     .order('student_id', { ascending: true });
 
   elStudentPickerLoad.classList.add('hidden');
@@ -700,7 +699,7 @@ async function openPreview(p) {
       student_id:     row.student_id,
       teacher_id:     row.teacher_id,
       series_id:      row.series_id,
-      lesson_book_id: row.lesson_book_id,
+      lesson_book_id: row.sessions ? row.sessions.lesson_book_id : null,
       student_name:   name
     });
     opt.textContent = name;
