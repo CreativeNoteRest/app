@@ -229,6 +229,42 @@
       outline: none; margin-bottom: 14px;
     }
 
+    /* Model selector */
+    .model-selector { margin-bottom: 16px; }
+    .model-selector-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
+    }
+    .model-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .btn-model-pill {
+      height: 32px; padding: 0 14px;
+      border: 1.5px solid var(--brand); border-radius: 20px;
+      background: var(--card); color: var(--brand);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-model-pill:hover { background: var(--brand-light); }
+    .btn-model-pill.pill-active { background: var(--brand); color: #fff; }
+
+    /* Thinking budget */
+    .thinking-row { display: flex; align-items: center; gap: 10px; }
+    .thinking-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-mid); white-space: nowrap;
+    }
+    .thinking-input {
+      width: 82px; height: 32px; padding: 0 10px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      text-align: center; color: var(--text); background: var(--surface); outline: none;
+      transition: border-color 0.15s;
+    }
+    .thinking-input:focus { border-color: var(--brand); }
+    .thinking-hint { font-size: 0.72rem; color: var(--text-light); }
+
+    /* Model used badge shown after AI run */
+    .ai-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; }
+
     /* Preview action bar */
     .preview-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
     .btn-download {
@@ -335,6 +371,21 @@
         <div id="preview-prompt-wrap" class="preview-prompt-section hidden">
           <div class="preview-section-label">Assembled prompt</div>
           <textarea id="preview-textarea" class="preview-textarea" readonly></textarea>
+          <!-- Model selector and thinking budget -- used by Run AI only -->
+          <div class="model-selector">
+            <div class="model-selector-label">Model</div>
+            <div class="model-pills">
+              <button type="button" class="btn-model-pill pill-active" data-model="gemini-2.5-flash-lite" id="pill-flash-lite">Flash Lite</button>
+              <button type="button" class="btn-model-pill" data-model="gemini-2.5-flash" id="pill-flash">Flash</button>
+              <button type="button" class="btn-model-pill" data-model="gemini-2.5-pro" id="pill-pro">Pro</button>
+            </div>
+            <div class="thinking-row">
+              <span class="thinking-label">Thinking budget</span>
+              <input type="number" id="thinking-budget" class="thinking-input" value="0" min="0" max="24576" step="256" />
+              <span class="thinking-hint">0 = off</span>
+            </div>
+          </div>
+
           <div class="preview-actions">
             <button id="btn-download-prompt" class="btn-download">Download prompt .txt</button>
             <button id="btn-run-ai" class="btn-run-ai">Run AI</button>
@@ -344,6 +395,7 @@
           <!-- AI response: hidden until Run AI completes -->
           <div id="ai-response-section" class="ai-response-section hidden">
             <div class="ai-response-label">AI response</div>
+            <div id="ai-meta" class="ai-meta"></div>
             <textarea id="ai-response-textarea" class="ai-response-textarea" readonly></textarea>
             <div class="ai-response-actions">
               <button id="btn-download-response" class="btn-download">Download AI response .txt</button>
@@ -441,8 +493,29 @@ const elBtnDownloadPrompt   = document.getElementById('btn-download-prompt');
 const elBtnRunAI            = document.getElementById('btn-run-ai');
 const elPreviewRunError     = document.getElementById('preview-run-error');
 const elAIResponseSection   = document.getElementById('ai-response-section');
+const elAIMeta              = document.getElementById('ai-meta');
 const elAIResponseTextarea  = document.getElementById('ai-response-textarea');
 const elBtnDownloadResponse = document.getElementById('btn-download-response');
+const elModelPills          = document.querySelectorAll('.btn-model-pill');
+const elThinkingBudget      = document.getElementById('thinking-budget');
+
+// ── Model pill selection ───────────────────────────────────────────────
+elModelPills.forEach(function(pill) {
+  pill.addEventListener('click', function() {
+    elModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
+    pill.classList.add('pill-active');
+  });
+});
+
+function getSelectedModel() {
+  var active = document.querySelector('.btn-model-pill.pill-active');
+  return active ? active.getAttribute('data-model') : 'gemini-2.5-flash-lite';
+}
+
+function getThinkingBudget() {
+  var val = parseInt(elThinkingBudget.value, 10);
+  return (isNaN(val) || val < 0) ? 0 : val;
+}
 
 // ── Startup ────────────────────────────────────────────────────────────
 const sessionResult = await sb.auth.getSession();
@@ -665,9 +738,15 @@ async function openPreview(p) {
   elPreviewTextarea.value = '';
   elAIResponseSection.classList.add('hidden');
   elAIResponseTextarea.value = '';
+  elAIMeta.textContent = '';
   elPreviewRunError.classList.add('hidden');
   elBtnRunAI.disabled    = false;
   elBtnRunAI.textContent = 'Run AI';
+
+  // Reset model selector to default (Flash Lite) and thinking budget to 0
+  elModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
+  document.getElementById('pill-flash-lite').classList.add('pill-active');
+  elThinkingBudget.value = '0';
 
   elStudentPickerWrap.classList.remove('hidden');
   elPreviewPanel.classList.remove('hidden');
@@ -858,8 +937,10 @@ elBtnRunAI.addEventListener('click', async function() {
     return;
   }
 
-  var token   = sessionData.data.session.access_token;
+  var token    = sessionData.data.session.access_token;
   var phaseNum = getPhaseNumber(previewPrompt.prompt_key);
+  var modelOverride   = getSelectedModel();
+  var thinkingBudget  = getThinkingBudget();
 
   try {
     var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
@@ -879,7 +960,9 @@ elBtnRunAI.addEventListener('click', async function() {
         bypass_gate:       false,
         single_phase_run:  true,
         phase:             phaseNum,
-        assembled_prompt:  elPreviewTextarea.value
+        assembled_prompt:  elPreviewTextarea.value,
+        model_override:    modelOverride,
+        thinking_budget:   thinkingBudget
       })
     });
 
@@ -893,6 +976,9 @@ elBtnRunAI.addEventListener('click', async function() {
     }
 
     elAIResponseTextarea.value = result.ai_response;
+    var metaModel    = result.model_used || modelOverride;
+    var metaBudget   = (result.thinking_budget_used !== undefined) ? result.thinking_budget_used : thinkingBudget;
+    elAIMeta.textContent = 'Model: ' + metaModel + '  |  Thinking budget: ' + metaBudget;
     elAIResponseSection.classList.remove('hidden');
     elAIResponseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -914,6 +1000,8 @@ elBtnDownloadResponse.addEventListener('click', function() {
     'Phase: ' + previewPrompt.prompt_key + '\n' +
     'Prompt: ' + label + '\n' +
     'Student: ' + previewStudentRow.student_name + '\n' +
+    'Model: ' + getSelectedModel() + '\n' +
+    'Thinking budget: ' + getThinkingBudget() + '\n' +
     '\n' +
     '========================================\n' +
     '\n' +
@@ -927,6 +1015,7 @@ elBtnClosePreview.addEventListener('click', function() {
   previewPrompt     = null;
   previewStudentRow = null;
   assembledPrompts  = null;
+  elAIMeta.textContent = '';
 });
 
 // ── Chips ──────────────────────────────────────────────────────────────
