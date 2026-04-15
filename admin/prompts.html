@@ -678,7 +678,7 @@ async function openPreview(p) {
 
   var result = await sb
     .from('active_sessions')
-    .select('session_id, student_id, teacher_id, series_id, students(safe_name)')
+    .select('session_id, student_id, teacher_id, series_id')
     .order('student_id', { ascending: true });
 
   elStudentPickerLoad.classList.add('hidden');
@@ -688,17 +688,31 @@ async function openPreview(p) {
     return;
   }
 
+  // Fetch student names separately -- active_sessions has no FK to students in Supabase schema
+  var studentIds = result.data.map(function(r) { return r.student_id; });
+  var namesResult = await sb
+    .from('students')
+    .select('student_id, safe_name')
+    .in('student_id', studentIds);
+
+  var nameMap = {};
+  if (namesResult.data) {
+    for (var n = 0; n < namesResult.data.length; n++) {
+      nameMap[namesResult.data[n].student_id] = namesResult.data[n].safe_name;
+    }
+  }
+
   // Populate select
   elStudentSelect.innerHTML = '<option value="">-- choose a student --</option>';
   for (var i = 0; i < result.data.length; i++) {
     var row   = result.data[i];
-    var name  = row.students ? row.students.safe_name : 'Student ' + i;
+    var name  = nameMap[row.student_id] || 'Student ' + (i + 1);
     var opt   = document.createElement('option');
     opt.value = JSON.stringify({
-      session_id:  row.session_id,
-      student_id:  row.student_id,
-      teacher_id:  row.teacher_id,
-      series_id:   row.series_id,
+      session_id:   row.session_id,
+      student_id:   row.student_id,
+      teacher_id:   row.teacher_id,
+      series_id:    row.series_id,
       student_name: name
     });
     opt.textContent = name;
