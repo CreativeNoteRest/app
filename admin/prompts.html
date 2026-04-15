@@ -99,23 +99,34 @@
     .loading-wrap { display: flex; flex-direction: column; align-items: center; padding: 60px 0; gap: 14px; }
     .loading-text { font-size: 0.85rem; color: var(--text-light); }
 
+    /* ── Prompt list ─────────────────────────────────────────────────────── */
     .prompt-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
     .prompt-item {
       background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
-      padding: 16px 18px; cursor: pointer;
+      padding: 16px 18px;
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
       transition: border-color 0.15s, box-shadow 0.15s; user-select: none;
     }
     .prompt-item:hover { border-color: var(--brand); box-shadow: var(--shadow); }
     .prompt-item.active { border-color: var(--brand); background: #FFFAF6; }
+    .prompt-item-left { flex: 1; cursor: pointer; min-width: 0; }
     .prompt-item-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 3px; }
     .prompt-item-label { font-size: 0.95rem; font-weight: 600; color: var(--text); }
     .prompt-item-meta { font-size: 0.72rem; color: var(--text-light); margin-top: 3px; }
-    .chevron { color: var(--text-light); flex-shrink: 0; transition: color 0.15s; }
+    .prompt-item-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-preview {
+      font-size: 0.75rem; font-weight: 600; color: var(--brand);
+      background: var(--brand-light); border: 1px solid rgba(226,107,10,0.25);
+      border-radius: 8px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+    }
+    .btn-preview:hover { background: rgba(226,107,10,0.18); border-color: var(--brand); }
+    .chevron { color: var(--text-light); flex-shrink: 0; transition: color 0.15s; cursor: pointer; }
     .prompt-item:hover .chevron, .prompt-item.active .chevron { color: var(--brand); }
 
     .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
+    /* ── Editor panel ────────────────────────────────────────────────────── */
     .editor-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
     .editor-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
     .editor-label { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
@@ -161,6 +172,99 @@
     }
     .btn-discard:hover { color: var(--danger); }
 
+    /* ── Preview panel ───────────────────────────────────────────────────── */
+    .preview-panel {
+      background: var(--card); border: 1.5px solid var(--brand);
+      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+      margin-top: 20px;
+    }
+    .preview-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 18px;
+    }
+    .preview-title-block {}
+    .preview-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
+    .preview-label { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
+    .preview-student { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
+    .btn-close-panel {
+      flex-shrink: 0; height: 34px; padding: 0 14px;
+      background: none; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.82rem; font-weight: 600; color: var(--text-mid);
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-close-panel:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Student picker */
+    .student-picker { margin-bottom: 18px; }
+    .student-picker-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+    .student-picker-loading { font-size: 0.82rem; color: var(--text-light); padding: 8px 0; }
+    .student-select {
+      width: 100%; height: 44px; padding: 0 12px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+      color: var(--text); background: var(--surface); outline: none;
+      transition: border-color 0.15s;
+    }
+    .student-select:focus { border-color: var(--brand); }
+    .btn-confirm-student {
+      margin-top: 10px; height: 40px; padding: 0 20px;
+      background: var(--brand); color: #fff; border: none; border-radius: 9px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-confirm-student:hover { opacity: 0.88; }
+    .btn-confirm-student:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Assembled prompt display */
+    .preview-prompt-section { margin-top: 4px; }
+    .preview-section-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
+    }
+    .preview-textarea {
+      width: 100%; min-height: 280px; padding: 14px 16px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: monospace; font-size: 0.82rem; line-height: 1.65;
+      color: var(--text); background: var(--surface); resize: vertical;
+      outline: none; margin-bottom: 14px;
+    }
+
+    /* Preview action bar */
+    .preview-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .btn-download {
+      height: 40px; padding: 0 18px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-download:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-run-ai {
+      height: 40px; padding: 0 22px;
+      background: var(--brand); color: #fff; border: none; border-radius: 9px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(226,107,10,0.22); transition: opacity 0.15s;
+    }
+    .btn-run-ai:hover { opacity: 0.88; }
+    .btn-run-ai:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* AI response section */
+    .ai-response-section { border-top: 1px solid var(--border); padding-top: 18px; }
+    .ai-response-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
+    }
+    .ai-response-textarea {
+      width: 100%; min-height: 220px; padding: 14px 16px;
+      border: 1.5px solid var(--success-border); border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; line-height: 1.65;
+      color: var(--text); background: var(--success-light); resize: vertical;
+      outline: none; margin-bottom: 14px;
+    }
+    .ai-response-actions { display: flex; gap: 10px; }
+
+    .preview-msg { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -195,13 +299,59 @@
   <main class="main">
     <div class="page-label">Session close</div>
     <h1 class="page-title">Prompt <em>editor</em></h1>
-    <p class="page-subtitle">Select a prompt to edit. All required variables must be present before saving. One prior version is retained automatically.</p>
+    <p class="page-subtitle">Select a prompt to edit. All required variables must be present before saving. One prior version is retained automatically. Use Preview to inspect assembled prompts against live session data.</p>
     <div id="view-loading" class="loading-wrap">
       <div class="spinner"></div>
       <div class="loading-text">Loading prompts...</div>
     </div>
     <div id="view-prompts" class="hidden">
       <div class="prompt-list" id="prompt-list"></div>
+
+      <!-- Preview panel: appears when Preview is clicked on any prompt item -->
+      <div id="preview-panel" class="preview-panel hidden">
+        <div class="preview-header">
+          <div class="preview-title-block">
+            <div class="preview-key" id="preview-key"></div>
+            <div class="preview-label" id="preview-label"></div>
+            <div class="preview-student hidden" id="preview-student"></div>
+          </div>
+          <button class="btn-close-panel" id="btn-close-preview">Close</button>
+        </div>
+
+        <!-- Step 1: student picker -->
+        <div id="student-picker-wrap" class="student-picker">
+          <div class="student-picker-label">Select a student with an active session</div>
+          <div id="student-picker-loading" class="student-picker-loading hidden">Loading active sessions...</div>
+          <select id="student-select" class="student-select hidden">
+            <option value="">-- choose a student --</option>
+          </select>
+          <div id="student-picker-none" class="student-picker-loading hidden">No active sessions found.</div>
+          <br />
+          <button id="btn-confirm-student" class="btn-confirm-student hidden" disabled>Load prompt</button>
+          <div id="preview-fetch-error" class="preview-msg msg-error hidden"></div>
+        </div>
+
+        <!-- Step 2: assembled prompt and actions (hidden until student confirmed) -->
+        <div id="preview-prompt-wrap" class="preview-prompt-section hidden">
+          <div class="preview-section-label">Assembled prompt</div>
+          <textarea id="preview-textarea" class="preview-textarea" readonly></textarea>
+          <div class="preview-actions">
+            <button id="btn-download-prompt" class="btn-download">Download prompt .txt</button>
+            <button id="btn-run-ai" class="btn-run-ai">Run AI</button>
+          </div>
+          <div id="preview-run-error" class="preview-msg msg-error hidden"></div>
+
+          <!-- AI response: hidden until Run AI completes -->
+          <div id="ai-response-section" class="ai-response-section hidden">
+            <div class="ai-response-label">AI response</div>
+            <textarea id="ai-response-textarea" class="ai-response-textarea" readonly></textarea>
+            <div class="ai-response-actions">
+              <button id="btn-download-response" class="btn-download">Download AI response .txt</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="divider hidden" id="editor-divider"></div>
       <div id="editor-panel" class="editor-panel hidden">
         <div class="editor-key" id="editor-key"></div>
@@ -243,6 +393,11 @@ let prompts      = [];
 let selected     = null;
 let originalText = '';
 
+// Preview state
+let previewPrompt     = null;  // the prompt object being previewed
+let previewStudentRow = null;  // { student_id, teacher_id, session_id, series_id, lesson_book_id, student_name }
+let assembledPrompts  = null;  // debug_prompts object from dry_run response
+
 const elViewLogin    = document.getElementById('view-login');
 const elViewEditor   = document.getElementById('view-editor');
 const elViewLoading  = document.getElementById('view-loading');
@@ -267,6 +422,27 @@ const elMsgSuccess   = document.getElementById('msg-success');
 const elBtnSave      = document.getElementById('btn-save');
 const elBtnUndo      = document.getElementById('btn-undo');
 const elBtnDiscard   = document.getElementById('btn-discard');
+
+// Preview elements
+const elPreviewPanel        = document.getElementById('preview-panel');
+const elPreviewKey          = document.getElementById('preview-key');
+const elPreviewLabel        = document.getElementById('preview-label');
+const elPreviewStudent      = document.getElementById('preview-student');
+const elBtnClosePreview     = document.getElementById('btn-close-preview');
+const elStudentPickerWrap   = document.getElementById('student-picker-wrap');
+const elStudentPickerLoad   = document.getElementById('student-picker-loading');
+const elStudentSelect       = document.getElementById('student-select');
+const elStudentPickerNone   = document.getElementById('student-picker-none');
+const elBtnConfirmStudent   = document.getElementById('btn-confirm-student');
+const elPreviewFetchError   = document.getElementById('preview-fetch-error');
+const elPreviewPromptWrap   = document.getElementById('preview-prompt-wrap');
+const elPreviewTextarea     = document.getElementById('preview-textarea');
+const elBtnDownloadPrompt   = document.getElementById('btn-download-prompt');
+const elBtnRunAI            = document.getElementById('btn-run-ai');
+const elPreviewRunError     = document.getElementById('preview-run-error');
+const elAIResponseSection   = document.getElementById('ai-response-section');
+const elAIResponseTextarea  = document.getElementById('ai-response-textarea');
+const elBtnDownloadResponse = document.getElementById('btn-download-response');
 
 // ── Startup ────────────────────────────────────────────────────────────
 const sessionResult = await sb.auth.getSession();
@@ -331,6 +507,9 @@ document.getElementById('btn-signout').addEventListener('click', async function(
   selected     = null;
   originalText = '';
   prompts      = [];
+  previewPrompt     = null;
+  previewStudentRow = null;
+  assembledPrompts  = null;
   elInpEmail.value    = '';
   elInpPassword.value = '';
   showLogin();
@@ -382,23 +561,54 @@ function renderList() {
 
     var div = document.createElement('div');
     div.className = 'prompt-item' + (isActive ? ' active' : '');
-    div.innerHTML =
-      '<div>' +
-        '<div class="prompt-item-key">' + esc(p.prompt_key) + '</div>' +
-        '<div class="prompt-item-label">' + esc(label) + '</div>' +
-        '<div class="prompt-item-meta">Last saved: ' + esc(updated) + '</div>' +
-      '</div>' +
-      '<svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>';
 
+    // Left side: click to select for editing
+    var leftDiv = document.createElement('div');
+    leftDiv.className = 'prompt-item-left';
+    leftDiv.innerHTML =
+      '<div class="prompt-item-key">' + esc(p.prompt_key) + '</div>' +
+      '<div class="prompt-item-label">' + esc(label) + '</div>' +
+      '<div class="prompt-item-meta">Last saved: ' + esc(updated) + '</div>';
+
+    // Right side: Preview button + chevron
+    var actionsDiv = document.createElement('div');
+    actionsDiv.className = 'prompt-item-actions';
+
+    var btnPreview = document.createElement('button');
+    btnPreview.className   = 'btn-preview';
+    btnPreview.textContent = 'Preview';
+
+    var chevron = document.createElement('svg');
+    chevron.setAttribute('class', 'chevron');
+    chevron.setAttribute('viewBox', '0 0 24 24');
+    chevron.setAttribute('width', '18');
+    chevron.setAttribute('height', '18');
+    chevron.setAttribute('fill', 'none');
+    chevron.setAttribute('stroke', 'currentColor');
+    chevron.setAttribute('stroke-width', '2');
+    chevron.setAttribute('stroke-linecap', 'round');
+    chevron.innerHTML = '<path d="M9 18l6-6-6-6"/>';
+
+    actionsDiv.appendChild(btnPreview);
+    actionsDiv.appendChild(chevron);
+    div.appendChild(leftDiv);
+    div.appendChild(actionsDiv);
+
+    // Clicking left side or chevron selects for editing
     (function(prompt) {
-      div.addEventListener('click', function() { selectPrompt(prompt); });
+      leftDiv.addEventListener('click', function() { selectPrompt(prompt); });
+      chevron.addEventListener('click', function() { selectPrompt(prompt); });
+      btnPreview.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openPreview(prompt);
+      });
     })(p);
 
     elPromptList.appendChild(div);
   }
 }
 
-// ── Select prompt ──────────────────────────────────────────────────────
+// ── Select prompt (editor) ─────────────────────────────────────────────
 function selectPrompt(p) {
   if (selected && elTextarea.value !== originalText) {
     if (!confirm('You have unsaved changes. Discard them and switch prompts?')) { return; }
@@ -428,6 +638,267 @@ function selectPrompt(p) {
   elEditorPanel.classList.remove('hidden');
   elEditorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ── Open preview ───────────────────────────────────────────────────────
+async function openPreview(p) {
+  previewPrompt     = p;
+  previewStudentRow = null;
+  assembledPrompts  = null;
+
+  var label = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
+
+  elPreviewKey.textContent = p.prompt_key;
+  elPreviewLabel.textContent = label;
+  elPreviewStudent.textContent = '';
+  elPreviewStudent.classList.add('hidden');
+
+  // Reset student picker
+  elStudentSelect.innerHTML = '<option value="">-- choose a student --</option>';
+  elStudentSelect.classList.add('hidden');
+  elStudentPickerNone.classList.add('hidden');
+  elBtnConfirmStudent.classList.add('hidden');
+  elBtnConfirmStudent.disabled = true;
+  elPreviewFetchError.classList.add('hidden');
+
+  // Reset prompt and AI sections
+  elPreviewPromptWrap.classList.add('hidden');
+  elPreviewTextarea.value = '';
+  elAIResponseSection.classList.add('hidden');
+  elAIResponseTextarea.value = '';
+  elPreviewRunError.classList.add('hidden');
+  elBtnRunAI.disabled    = false;
+  elBtnRunAI.textContent = 'Run AI';
+
+  elStudentPickerWrap.classList.remove('hidden');
+  elPreviewPanel.classList.remove('hidden');
+  elPreviewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Load active sessions
+  elStudentPickerLoad.classList.remove('hidden');
+
+  var result = await sb
+    .from('active_sessions')
+    .select('session_id, student_id, teacher_id, series_id, lesson_book_id, students(safe_name)')
+    .order('student_id', { ascending: true });
+
+  elStudentPickerLoad.classList.add('hidden');
+
+  if (result.error || !result.data || result.data.length === 0) {
+    elStudentPickerNone.classList.remove('hidden');
+    return;
+  }
+
+  // Populate select
+  elStudentSelect.innerHTML = '<option value="">-- choose a student --</option>';
+  for (var i = 0; i < result.data.length; i++) {
+    var row   = result.data[i];
+    var name  = row.students ? row.students.safe_name : 'Student ' + i;
+    var opt   = document.createElement('option');
+    opt.value = JSON.stringify({
+      session_id:     row.session_id,
+      student_id:     row.student_id,
+      teacher_id:     row.teacher_id,
+      series_id:      row.series_id,
+      lesson_book_id: row.lesson_book_id,
+      student_name:   name
+    });
+    opt.textContent = name;
+    elStudentSelect.appendChild(opt);
+  }
+
+  elStudentSelect.classList.remove('hidden');
+  elBtnConfirmStudent.classList.remove('hidden');
+
+  elStudentSelect.addEventListener('change', function() {
+    elBtnConfirmStudent.disabled = !elStudentSelect.value;
+  });
+}
+
+// ── Confirm student and load assembled prompt ──────────────────────────
+elBtnConfirmStudent.addEventListener('click', async function() {
+  if (!elStudentSelect.value) { return; }
+
+  previewStudentRow = JSON.parse(elStudentSelect.value);
+  elPreviewFetchError.classList.add('hidden');
+  elBtnConfirmStudent.disabled    = true;
+  elBtnConfirmStudent.textContent = 'Loading...';
+
+  var sessionData = await sb.auth.getSession();
+  if (!sessionData.data.session) {
+    showPreviewError(elPreviewFetchError, 'Session expired. Please sign in again.');
+    elBtnConfirmStudent.disabled    = false;
+    elBtnConfirmStudent.textContent = 'Load prompt';
+    return;
+  }
+
+  var token = sessionData.data.session.access_token;
+
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session_id:     previewStudentRow.session_id,
+        teacher_id:     previewStudentRow.teacher_id,
+        student_id:     previewStudentRow.student_id,
+        series_id:      previewStudentRow.series_id,
+        lesson_book_id: previewStudentRow.lesson_book_id,
+        student_name:   previewStudentRow.student_name,
+        bypass_gate:    false,
+        dry_run:        true
+      })
+    });
+
+    var result = await response.json();
+
+    if (!result.success || !result.debug_prompts) {
+      showPreviewError(elPreviewFetchError, 'Could not assemble prompt: ' + (result.error || 'Unknown error'));
+      elBtnConfirmStudent.disabled    = false;
+      elBtnConfirmStudent.textContent = 'Load prompt';
+      return;
+    }
+
+    assembledPrompts = result.debug_prompts;
+
+    // Show the selected phase
+    var phaseKey  = getPhaseKey(previewPrompt.prompt_key);
+    var assembled = assembledPrompts[phaseKey] || '(prompt not found in response)';
+    elPreviewTextarea.value = assembled;
+
+    elPreviewStudent.textContent = 'Student: ' + previewStudentRow.student_name;
+    elPreviewStudent.classList.remove('hidden');
+    elStudentPickerWrap.classList.add('hidden');
+    elPreviewPromptWrap.classList.remove('hidden');
+
+  } catch (err) {
+    showPreviewError(elPreviewFetchError, 'Request failed: ' + err.message);
+    elBtnConfirmStudent.disabled    = false;
+    elBtnConfirmStudent.textContent = 'Load prompt';
+  }
+
+  elBtnConfirmStudent.disabled    = false;
+  elBtnConfirmStudent.textContent = 'Load prompt';
+});
+
+// ── Map prompt_key to debug_prompts field name ─────────────────────────
+function getPhaseKey(promptKey) {
+  var map = {
+    session_close_phase1: 'phase1',
+    session_close_phase2: 'phase2',
+    session_close_phase3: 'phase3',
+    session_close_phase4: 'phase4',
+    session_close_phase5: 'phase5'
+  };
+  return map[promptKey] || 'phase1';
+}
+
+// ── Download prompt .txt ───────────────────────────────────────────────
+elBtnDownloadPrompt.addEventListener('click', function() {
+  if (!previewPrompt || !previewStudentRow) { return; }
+  var label = previewPrompt.prompt_label || PHASE_LABELS[previewPrompt.prompt_key] || previewPrompt.prompt_key;
+  var content =
+    'CREATIVE NOTE -- PROMPT INSPECTOR\n' +
+    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
+    'Phase: ' + previewPrompt.prompt_key + '\n' +
+    'Prompt: ' + label + '\n' +
+    'Student: ' + previewStudentRow.student_name + '\n' +
+    '\n' +
+    '========================================\n' +
+    '\n' +
+    elPreviewTextarea.value;
+  downloadTxt(content, 'prompt_' + previewPrompt.prompt_key + '_' + sanitizeFilename(previewStudentRow.student_name) + '.txt');
+});
+
+// ── Run AI ─────────────────────────────────────────────────────────────
+elBtnRunAI.addEventListener('click', async function() {
+  if (!previewPrompt || !previewStudentRow || !elPreviewTextarea.value) { return; }
+
+  elPreviewRunError.classList.add('hidden');
+  elAIResponseSection.classList.add('hidden');
+  elBtnRunAI.disabled    = true;
+  elBtnRunAI.textContent = 'Running...';
+
+  var sessionData = await sb.auth.getSession();
+  if (!sessionData.data.session) {
+    showPreviewError(elPreviewRunError, 'Session expired. Please sign in again.');
+    elBtnRunAI.disabled    = false;
+    elBtnRunAI.textContent = 'Run AI';
+    return;
+  }
+
+  var token   = sessionData.data.session.access_token;
+  var phaseNum = getPhaseNumber(previewPrompt.prompt_key);
+
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        // Minimal required fields -- single_phase_run skips all data fetches
+        session_id:        previewStudentRow.session_id,
+        teacher_id:        previewStudentRow.teacher_id,
+        student_id:        previewStudentRow.student_id,
+        series_id:         previewStudentRow.series_id,
+        lesson_book_id:    previewStudentRow.lesson_book_id,
+        student_name:      previewStudentRow.student_name,
+        bypass_gate:       false,
+        single_phase_run:  true,
+        phase:             phaseNum,
+        assembled_prompt:  elPreviewTextarea.value
+      })
+    });
+
+    var result = await response.json();
+
+    if (!result.success || !result.ai_response) {
+      showPreviewError(elPreviewRunError, 'AI call failed: ' + (result.error || 'Unknown error'));
+      elBtnRunAI.disabled    = false;
+      elBtnRunAI.textContent = 'Run AI';
+      return;
+    }
+
+    elAIResponseTextarea.value = result.ai_response;
+    elAIResponseSection.classList.remove('hidden');
+    elAIResponseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showPreviewError(elPreviewRunError, 'Request failed: ' + err.message);
+  }
+
+  elBtnRunAI.disabled    = false;
+  elBtnRunAI.textContent = 'Run AI';
+});
+
+// ── Download AI response .txt ──────────────────────────────────────────
+elBtnDownloadResponse.addEventListener('click', function() {
+  if (!previewPrompt || !previewStudentRow) { return; }
+  var label = previewPrompt.prompt_label || PHASE_LABELS[previewPrompt.prompt_key] || previewPrompt.prompt_key;
+  var content =
+    'CREATIVE NOTE -- AI RESPONSE\n' +
+    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
+    'Phase: ' + previewPrompt.prompt_key + '\n' +
+    'Prompt: ' + label + '\n' +
+    'Student: ' + previewStudentRow.student_name + '\n' +
+    '\n' +
+    '========================================\n' +
+    '\n' +
+    elAIResponseTextarea.value;
+  downloadTxt(content, 'ai_response_' + previewPrompt.prompt_key + '_' + sanitizeFilename(previewStudentRow.student_name) + '.txt');
+});
+
+// ── Close preview ──────────────────────────────────────────────────────
+elBtnClosePreview.addEventListener('click', function() {
+  elPreviewPanel.classList.add('hidden');
+  previewPrompt     = null;
+  previewStudentRow = null;
+  assembledPrompts  = null;
+});
 
 // ── Chips ──────────────────────────────────────────────────────────────
 function renderChips() {
@@ -598,6 +1069,38 @@ function showLogin() {
 function setLoginError(msg) {
   elLoginError.textContent = msg;
   elLoginError.classList.remove('hidden');
+}
+
+function showPreviewError(el, msg) {
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function getPhaseNumber(promptKey) {
+  var map = {
+    session_close_phase1: 1,
+    session_close_phase2: 2,
+    session_close_phase3: 3,
+    session_close_phase4: 4,
+    session_close_phase5: 5
+  };
+  return map[promptKey] || 1;
+}
+
+function downloadTxt(content, filename) {
+  var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function sanitizeFilename(name) {
+  return (name || 'student').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 }
 
 function esc(str) {
