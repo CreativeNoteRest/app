@@ -678,7 +678,7 @@ async function openPreview(p) {
 
   var result = await sb
     .from('active_sessions')
-    .select('session_id, student_id, teacher_id, series_id, students(safe_name), sessions(lesson_book_id)')
+    .select('session_id, student_id, teacher_id, series_id, students(safe_name)')
     .order('student_id', { ascending: true });
 
   elStudentPickerLoad.classList.add('hidden');
@@ -695,12 +695,11 @@ async function openPreview(p) {
     var name  = row.students ? row.students.safe_name : 'Student ' + i;
     var opt   = document.createElement('option');
     opt.value = JSON.stringify({
-      session_id:     row.session_id,
-      student_id:     row.student_id,
-      teacher_id:     row.teacher_id,
-      series_id:      row.series_id,
-      lesson_book_id: row.sessions ? row.sessions.lesson_book_id : null,
-      student_name:   name
+      session_id:  row.session_id,
+      student_id:  row.student_id,
+      teacher_id:  row.teacher_id,
+      series_id:   row.series_id,
+      student_name: name
     });
     opt.textContent = name;
     elStudentSelect.appendChild(opt);
@@ -722,6 +721,22 @@ elBtnConfirmStudent.addEventListener('click', async function() {
   elPreviewFetchError.classList.add('hidden');
   elBtnConfirmStudent.disabled    = true;
   elBtnConfirmStudent.textContent = 'Loading...';
+
+  // Fetch lesson_book_id from sessions table using session_id
+  var sessionLookup = await sb
+    .from('sessions')
+    .select('lesson_book_id')
+    .eq('session_id', previewStudentRow.session_id)
+    .single();
+
+  if (sessionLookup.error || !sessionLookup.data || !sessionLookup.data.lesson_book_id) {
+    showPreviewError(elPreviewFetchError, 'Could not resolve lesson_book_id for this session.');
+    elBtnConfirmStudent.disabled    = false;
+    elBtnConfirmStudent.textContent = 'Load prompt';
+    return;
+  }
+
+  previewStudentRow.lesson_book_id = sessionLookup.data.lesson_book_id;
 
   var sessionData = await sb.auth.getSession();
   if (!sessionData.data.session) {
