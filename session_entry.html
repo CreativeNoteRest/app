@@ -518,6 +518,11 @@
       if (localHour === 2) { target = candidate; break; }
     }
 
+    // If 2am today is already in the past, advance to 2am tomorrow.
+    if (target && target <= now) {
+      target = new Date(target.getTime() + 24 * 3600000);
+    }
+
     return target ? target.toISOString()
       : new Date(Date.now() + 26 * 3600000).toISOString(); // safe fallback
   }
