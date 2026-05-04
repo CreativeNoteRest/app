@@ -26,6 +26,9 @@
       --success-light:  #F0FDF4;
       --success-border: #BBF7D0;
       --warn:           #F59E0B;
+      --info:           #2563EB;
+      --info-light:     #EFF6FF;
+      --info-border:    #BFDBFE;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
@@ -215,6 +218,67 @@
     .btn-confirm-student:hover { opacity: 0.88; }
     .btn-confirm-student:disabled { opacity: 0.45; cursor: not-allowed; }
 
+    /* ── Phase 1 sub-panel (phases 2-5 only) ────────────────────────────── */
+    .phase1-subpanel {
+      background: var(--info-light); border: 1.5px solid var(--info-border);
+      border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .phase1-subpanel-label {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--info); margin-bottom: 4px;
+    }
+    .phase1-subpanel-title {
+      font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--text); margin-bottom: 12px;
+    }
+    .phase1-subpanel-note { font-size: 0.78rem; color: var(--text-mid); margin-bottom: 14px; line-height: 1.5; }
+    .phase1-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .phase1-model-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-p1-model-pill {
+      height: 30px; padding: 0 12px;
+      border: 1.5px solid var(--info); border-radius: 20px;
+      background: var(--card); color: var(--info);
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-p1-model-pill:hover { background: var(--info-light); }
+    .btn-p1-model-pill.pill-active { background: var(--info); color: #fff; }
+    .phase1-thinking-row { display: flex; align-items: center; gap: 8px; }
+    .phase1-thinking-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-mid); white-space: nowrap;
+    }
+    .phase1-thinking-input {
+      width: 82px; height: 30px; padding: 0 10px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      text-align: center; color: var(--text); background: var(--surface); outline: none;
+      transition: border-color 0.15s;
+    }
+    .phase1-thinking-input:focus { border-color: var(--info); }
+    .thinking-hint { font-size: 0.72rem; color: var(--text-light); }
+    .btn-run-phase1 {
+      height: 36px; padding: 0 18px;
+      background: var(--info); color: #fff; border: none; border-radius: 8px;
+      font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-run-phase1:hover { opacity: 0.88; }
+    .btn-run-phase1:disabled { opacity: 0.45; cursor: not-allowed; }
+    .phase1-run-error { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-top: 10px; }
+    .phase1-output-wrap { margin-top: 14px; }
+    .phase1-output-label {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--success); margin-bottom: 6px;
+    }
+    .phase1-output-textarea {
+      width: 100%; min-height: 120px; padding: 12px 14px;
+      border: 1.5px solid var(--success-border); border-radius: 10px;
+      font-family: monospace; font-size: 0.78rem; line-height: 1.55;
+      color: var(--text); background: var(--success-light); resize: vertical;
+      outline: none;
+    }
+    .phase1-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 6px; }
+
     /* Assembled prompt display */
     .preview-prompt-section { margin-top: 4px; }
     .preview-section-label {
@@ -260,7 +324,6 @@
       transition: border-color 0.15s;
     }
     .thinking-input:focus { border-color: var(--brand); }
-    .thinking-hint { font-size: 0.72rem; color: var(--text-light); }
 
     /* Model used badge shown after AI run */
     .ai-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; }
@@ -343,7 +406,7 @@
     <div id="view-prompts" class="hidden">
       <div class="prompt-list" id="prompt-list"></div>
 
-      <!-- Preview panel: appears when Preview is clicked on any prompt item -->
+      <!-- Preview panel -->
       <div id="preview-panel" class="preview-panel hidden">
         <div class="preview-header">
           <div class="preview-title-block">
@@ -367,11 +430,44 @@
           <div id="preview-fetch-error" class="preview-msg msg-error hidden"></div>
         </div>
 
-        <!-- Step 2: assembled prompt and actions (hidden until student confirmed) -->
+        <!-- Step 2: assembled prompt and actions -->
         <div id="preview-prompt-wrap" class="preview-prompt-section hidden">
-          <div class="preview-section-label">Assembled prompt</div>
+
+          <!-- Phase 1 sub-panel: shown for phases 2-5 only -->
+          <div id="phase1-subpanel" class="phase1-subpanel hidden">
+            <div class="phase1-subpanel-label">Required first step</div>
+            <div class="phase1-subpanel-title">Run Phase 1</div>
+            <div class="phase1-subpanel-note">
+              Phases 2–5 depend on Phase 1 output. Run Phase 1 here first using the
+              model and thinking budget you want to test. Its output will be passed
+              into the phase below exactly as production would receive it.
+            </div>
+            <div class="phase1-controls">
+              <div class="phase1-model-pills" id="phase1-model-pills">
+                <button type="button" class="btn-p1-model-pill pill-active" data-model="gemini-2.5-flash-lite" id="p1-pill-flash-lite">Flash Lite</button>
+                <button type="button" class="btn-p1-model-pill" data-model="gemini-2.5-flash" id="p1-pill-flash">Flash</button>
+                <button type="button" class="btn-p1-model-pill" data-model="gemini-2.5-pro" id="p1-pill-pro">Pro</button>
+              </div>
+              <div class="phase1-thinking-row">
+                <span class="phase1-thinking-label">Thinking budget</span>
+                <input type="number" id="phase1-thinking-budget" class="phase1-thinking-input" value="1024" min="0" max="24576" step="256" />
+                <span class="thinking-hint">0 = off</span>
+              </div>
+              <button id="btn-run-phase1" class="btn-run-phase1">Run Phase 1</button>
+            </div>
+            <div id="phase1-run-error" class="phase1-run-error msg-error hidden"></div>
+            <div id="phase1-output-wrap" class="phase1-output-wrap hidden">
+              <div class="phase1-meta" id="phase1-meta"></div>
+              <div class="phase1-output-label">Phase 1 output (passed to phase below)</div>
+              <textarea id="phase1-output-textarea" class="phase1-output-textarea" readonly></textarea>
+            </div>
+          </div>
+
+          <!-- Assembled prompt for the selected phase -->
+          <div class="preview-section-label" id="assembled-prompt-label">Assembled prompt</div>
           <textarea id="preview-textarea" class="preview-textarea" readonly></textarea>
-          <!-- Model selector and thinking budget -- used by Run AI only -->
+
+          <!-- Model / budget for the selected phase -->
           <div class="model-selector">
             <div class="model-selector-label">Model</div>
             <div class="model-pills">
@@ -392,7 +488,7 @@
           </div>
           <div id="preview-run-error" class="preview-msg msg-error hidden"></div>
 
-          <!-- AI response: hidden until Run AI completes -->
+          <!-- AI response -->
           <div id="ai-response-section" class="ai-response-section hidden">
             <div class="ai-response-label">AI response</div>
             <div id="ai-meta" class="ai-meta"></div>
@@ -446,10 +542,17 @@ let selected     = null;
 let originalText = '';
 
 // Preview state
-let previewPrompt     = null;  // the prompt object being previewed
-let previewStudentRow = null;  // { student_id, teacher_id, session_id, series_id, lesson_book_id, student_name }
-let assembledPrompts  = null;  // debug_prompts object from dry_run response
+let previewPrompt     = null;   // prompt object being previewed
+let previewStudentRow = null;   // { session_id, student_id, teacher_id, series_id, lesson_book_id, student_name }
+let assembledPrompts  = null;   // debug_prompts from dry_run (phase1 key used for Phase 1 sub-panel)
+let phaseAIConfig     = null;   // phase_ai_config from dry_run (Config-driven defaults per phase)
+let phase1Output      = null;   // raw Phase 1 JSON string from a sub-panel run; null until run
 
+// In-memory Phase 1 parameter persistence across preview panels (resets on page reload)
+let lastPhase1Model  = null;
+let lastPhase1Budget = null;
+
+// ── DOM references ─────────────────────────────────────────────────────
 const elViewLogin    = document.getElementById('view-login');
 const elViewEditor   = document.getElementById('view-editor');
 const elViewLoading  = document.getElementById('view-loading');
@@ -498,8 +601,19 @@ const elAIResponseTextarea  = document.getElementById('ai-response-textarea');
 const elBtnDownloadResponse = document.getElementById('btn-download-response');
 const elModelPills          = document.querySelectorAll('.btn-model-pill');
 const elThinkingBudget      = document.getElementById('thinking-budget');
+const elAssembledPromptLabel = document.getElementById('assembled-prompt-label');
 
-// ── Model pill selection ───────────────────────────────────────────────
+// Phase 1 sub-panel elements
+const elPhase1Subpanel      = document.getElementById('phase1-subpanel');
+const elPhase1ModelPills    = document.querySelectorAll('.btn-p1-model-pill');
+const elPhase1ThinkingBudget = document.getElementById('phase1-thinking-budget');
+const elBtnRunPhase1        = document.getElementById('btn-run-phase1');
+const elPhase1RunError      = document.getElementById('phase1-run-error');
+const elPhase1OutputWrap    = document.getElementById('phase1-output-wrap');
+const elPhase1OutputTextarea = document.getElementById('phase1-output-textarea');
+const elPhase1Meta          = document.getElementById('phase1-meta');
+
+// ── Main model pill selection ──────────────────────────────────────────
 elModelPills.forEach(function(pill) {
   pill.addEventListener('click', function() {
     elModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
@@ -515,6 +629,38 @@ function getSelectedModel() {
 function getThinkingBudget() {
   var val = parseInt(elThinkingBudget.value, 10);
   return (isNaN(val) || val < 0) ? 0 : val;
+}
+
+// ── Phase 1 sub-panel pill selection ──────────────────────────────────
+elPhase1ModelPills.forEach(function(pill) {
+  pill.addEventListener('click', function() {
+    elPhase1ModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
+    pill.classList.add('pill-active');
+  });
+});
+
+function getPhase1SelectedModel() {
+  var active = document.querySelector('.btn-p1-model-pill.pill-active');
+  return active ? active.getAttribute('data-model') : 'gemini-2.5-flash-lite';
+}
+
+function getPhase1ThinkingBudget() {
+  var val = parseInt(elPhase1ThinkingBudget.value, 10);
+  return (isNaN(val) || val < 0) ? 0 : val;
+}
+
+// Set a model pill active by model string value
+function setModelPill(pills, modelStr) {
+  var found = false;
+  pills.forEach(function(p) {
+    p.classList.remove('pill-active');
+    if (p.getAttribute('data-model') === modelStr) {
+      p.classList.add('pill-active');
+      found = true;
+    }
+  });
+  // If model string not in pill set, default to first pill
+  if (!found && pills.length > 0) { pills[0].classList.add('pill-active'); }
 }
 
 // ── Startup ────────────────────────────────────────────────────────────
@@ -577,12 +723,16 @@ async function doLogin() {
 // ── Sign out ───────────────────────────────────────────────────────────
 document.getElementById('btn-signout').addEventListener('click', async function() {
   await sb.auth.signOut();
-  selected     = null;
-  originalText = '';
-  prompts      = [];
+  selected          = null;
+  originalText      = '';
+  prompts           = [];
   previewPrompt     = null;
   previewStudentRow = null;
   assembledPrompts  = null;
+  phaseAIConfig     = null;
+  phase1Output      = null;
+  lastPhase1Model   = null;
+  lastPhase1Budget  = null;
   elInpEmail.value    = '';
   elInpPassword.value = '';
   showLogin();
@@ -635,7 +785,6 @@ function renderList() {
     var div = document.createElement('div');
     div.className = 'prompt-item' + (isActive ? ' active' : '');
 
-    // Left side: click to select for editing
     var leftDiv = document.createElement('div');
     leftDiv.className = 'prompt-item-left';
     leftDiv.innerHTML =
@@ -643,7 +792,6 @@ function renderList() {
       '<div class="prompt-item-label">' + esc(label) + '</div>' +
       '<div class="prompt-item-meta">Last saved: ' + esc(updated) + '</div>';
 
-    // Right side: Preview button + chevron
     var actionsDiv = document.createElement('div');
     actionsDiv.className = 'prompt-item-actions';
 
@@ -667,7 +815,6 @@ function renderList() {
     div.appendChild(leftDiv);
     div.appendChild(actionsDiv);
 
-    // Clicking left side or chevron selects for editing
     (function(prompt) {
       leftDiv.addEventListener('click', function() { selectPrompt(prompt); });
       chevron.addEventListener('click', function() { selectPrompt(prompt); });
@@ -717,10 +864,12 @@ async function openPreview(p) {
   previewPrompt     = p;
   previewStudentRow = null;
   assembledPrompts  = null;
+  phaseAIConfig     = null;
+  phase1Output      = null;  // reset Phase 1 output when opening a new preview
 
   var label = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
 
-  elPreviewKey.textContent = p.prompt_key;
+  elPreviewKey.textContent   = p.prompt_key;
   elPreviewLabel.textContent = label;
   elPreviewStudent.textContent = '';
   elPreviewStudent.classList.add('hidden');
@@ -743,10 +892,14 @@ async function openPreview(p) {
   elBtnRunAI.disabled    = false;
   elBtnRunAI.textContent = 'Run AI';
 
-  // Reset model selector to default (Flash Lite) and thinking budget to 0
-  elModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
-  document.getElementById('pill-flash-lite').classList.add('pill-active');
-  elThinkingBudget.value = '0';
+  // Reset Phase 1 sub-panel
+  elPhase1Subpanel.classList.add('hidden');
+  elPhase1RunError.classList.add('hidden');
+  elPhase1OutputWrap.classList.add('hidden');
+  elPhase1OutputTextarea.value = '';
+  elPhase1Meta.textContent = '';
+  elBtnRunPhase1.disabled    = false;
+  elBtnRunPhase1.textContent = 'Run Phase 1';
 
   elStudentPickerWrap.classList.remove('hidden');
   elPreviewPanel.classList.remove('hidden');
@@ -767,7 +920,6 @@ async function openPreview(p) {
     return;
   }
 
-  // Fetch student names separately -- active_sessions has no FK to students in Supabase schema
   var studentIds = result.data.map(function(r) { return r.student_id; });
   var namesResult = await sb
     .from('students')
@@ -781,12 +933,11 @@ async function openPreview(p) {
     }
   }
 
-  // Populate select
   elStudentSelect.innerHTML = '<option value="">-- choose a student --</option>';
   for (var i = 0; i < result.data.length; i++) {
-    var row   = result.data[i];
-    var name  = nameMap[row.student_id] || 'Student ' + (i + 1);
-    var opt   = document.createElement('option');
+    var row  = result.data[i];
+    var name = nameMap[row.student_id] || 'Student ' + (i + 1);
+    var opt  = document.createElement('option');
     opt.value = JSON.stringify({
       session_id:   row.session_id,
       student_id:   row.student_id,
@@ -806,7 +957,7 @@ async function openPreview(p) {
   });
 }
 
-// ── Confirm student and load assembled prompt ──────────────────────────
+// ── Confirm student -- runs dry_run to get assembled prompts + AI config defaults ──
 elBtnConfirmStudent.addEventListener('click', async function() {
   if (!elStudentSelect.value) { return; }
 
@@ -815,7 +966,6 @@ elBtnConfirmStudent.addEventListener('click', async function() {
   elBtnConfirmStudent.disabled    = true;
   elBtnConfirmStudent.textContent = 'Loading...';
 
-  // Fetch lesson_book_id from sessions table using session_id
   var sessionLookup = await sb
     .from('sessions')
     .select('lesson_book_id')
@@ -844,10 +994,7 @@ elBtnConfirmStudent.addEventListener('click', async function() {
   try {
     var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id:     previewStudentRow.session_id,
         teacher_id:     previewStudentRow.teacher_id,
@@ -870,11 +1017,54 @@ elBtnConfirmStudent.addEventListener('click', async function() {
     }
 
     assembledPrompts = result.debug_prompts;
+    phaseAIConfig    = result.phase_ai_config || null;
 
-    // Show the selected phase
+    var phaseNum = getPhaseNumber(previewPrompt.prompt_key);
+    var isDownstreamPhase = phaseNum >= 2;
+
+    // Show Phase 1 assembled prompt in the sub-panel textarea (for Phase 1 run)
+    // Show selected phase assembled prompt in the main textarea
     var phaseKey  = getPhaseKey(previewPrompt.prompt_key);
     var assembled = assembledPrompts[phaseKey] || '(prompt not found in response)';
     elPreviewTextarea.value = assembled;
+
+    // Update assembled prompt label for downstream phases
+    if (isDownstreamPhase) {
+      elAssembledPromptLabel.textContent = 'Assembled prompt (preview -- Phase 1 placeholders shown)';
+    } else {
+      elAssembledPromptLabel.textContent = 'Assembled prompt';
+    }
+
+    // Apply Config-driven defaults to main phase model/budget controls
+    if (phaseAIConfig && phaseAIConfig['phase' + phaseNum]) {
+      var cfg = phaseAIConfig['phase' + phaseNum];
+      setModelPill(elModelPills, cfg.model);
+      elThinkingBudget.value = String(cfg.thinkingBudget);
+    } else {
+      // Fallback: Flash Lite, 0 budget
+      setModelPill(elModelPills, 'gemini-2.5-flash-lite');
+      elThinkingBudget.value = '0';
+    }
+
+    // Show or hide Phase 1 sub-panel
+    if (isDownstreamPhase) {
+      // Apply Phase 1 defaults: last used values take precedence over Config defaults
+      var p1cfg = (phaseAIConfig && phaseAIConfig.phase1) ? phaseAIConfig.phase1 : null;
+      var p1Model  = lastPhase1Model  !== null ? lastPhase1Model  : (p1cfg ? p1cfg.model  : 'gemini-2.5-flash-lite');
+      var p1Budget = lastPhase1Budget !== null ? lastPhase1Budget : (p1cfg ? p1cfg.thinkingBudget : 1024);
+      setModelPill(elPhase1ModelPills, p1Model);
+      elPhase1ThinkingBudget.value = String(p1Budget);
+
+      // Run AI button disabled until Phase 1 has run
+      elBtnRunAI.disabled = true;
+      elBtnRunAI.title    = 'Run Phase 1 first';
+
+      elPhase1Subpanel.classList.remove('hidden');
+    } else {
+      elPhase1Subpanel.classList.add('hidden');
+      elBtnRunAI.disabled = false;
+      elBtnRunAI.title    = '';
+    }
 
     elPreviewStudent.textContent = 'Student: ' + previewStudentRow.student_name;
     elPreviewStudent.classList.remove('hidden');
@@ -889,6 +1079,168 @@ elBtnConfirmStudent.addEventListener('click', async function() {
 
   elBtnConfirmStudent.disabled    = false;
   elBtnConfirmStudent.textContent = 'Load prompt';
+});
+
+// ── Run Phase 1 (sub-panel) ────────────────────────────────────────────
+elBtnRunPhase1.addEventListener('click', async function() {
+  if (!previewStudentRow || !assembledPrompts) { return; }
+
+  elPhase1RunError.classList.add('hidden');
+  elPhase1OutputWrap.classList.add('hidden');
+  elBtnRunPhase1.disabled    = true;
+  elBtnRunPhase1.textContent = 'Running...';
+
+  var sessionData = await sb.auth.getSession();
+  if (!sessionData.data.session) {
+    showPreviewError(elPhase1RunError, 'Session expired. Please sign in again.');
+    elBtnRunPhase1.disabled    = false;
+    elBtnRunPhase1.textContent = 'Run Phase 1';
+    return;
+  }
+
+  var token       = sessionData.data.session.access_token;
+  var p1Model     = getPhase1SelectedModel();
+  var p1Budget    = getPhase1ThinkingBudget();
+
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id:       previewStudentRow.session_id,
+        teacher_id:       previewStudentRow.teacher_id,
+        student_id:       previewStudentRow.student_id,
+        series_id:        previewStudentRow.series_id,
+        lesson_book_id:   previewStudentRow.lesson_book_id,
+        student_name:     previewStudentRow.student_name,
+        bypass_gate:      false,
+        single_phase_run: true,
+        phase:            1,
+        assembled_prompt: assembledPrompts.phase1,
+        model_override:   p1Model,
+        thinking_budget:  p1Budget
+      })
+    });
+
+    var result = await response.json();
+
+    if (!result.success || !result.ai_response) {
+      showPreviewError(elPhase1RunError, 'Phase 1 failed: ' + (result.error || 'Unknown error'));
+      elBtnRunPhase1.disabled    = false;
+      elBtnRunPhase1.textContent = 'Run Phase 1';
+      return;
+    }
+
+    // Store output and persist parameters for next sub-panel open
+    phase1Output     = result.ai_response;
+    lastPhase1Model  = p1Model;
+    lastPhase1Budget = p1Budget;
+
+    elPhase1OutputTextarea.value = phase1Output;
+    elPhase1Meta.textContent = 'Model: ' + (result.model_used || p1Model) +
+      '  |  Thinking budget: ' + (result.thinking_budget_used !== undefined ? result.thinking_budget_used : p1Budget);
+    elPhase1OutputWrap.classList.remove('hidden');
+
+    // Unlock main Run AI button
+    elBtnRunAI.disabled = false;
+    elBtnRunAI.title    = '';
+    elBtnRunPhase1.textContent = 'Re-run Phase 1';
+
+  } catch (err) {
+    showPreviewError(elPhase1RunError, 'Request failed: ' + err.message);
+    elBtnRunPhase1.textContent = 'Run Phase 1';
+  }
+
+  elBtnRunPhase1.disabled = false;
+});
+
+// ── Run AI (main phase) ────────────────────────────────────────────────
+elBtnRunAI.addEventListener('click', async function() {
+  if (!previewPrompt || !previewStudentRow) { return; }
+
+  var phaseNum          = getPhaseNumber(previewPrompt.prompt_key);
+  var isDownstreamPhase = phaseNum >= 2;
+
+  // Guard: downstream phases require Phase 1 output
+  if (isDownstreamPhase && !phase1Output) {
+    showPreviewError(elPreviewRunError, 'Run Phase 1 first using the panel above.');
+    return;
+  }
+
+  elPreviewRunError.classList.add('hidden');
+  elAIResponseSection.classList.add('hidden');
+  elBtnRunAI.disabled    = true;
+  elBtnRunAI.textContent = 'Running...';
+
+  var sessionData = await sb.auth.getSession();
+  if (!sessionData.data.session) {
+    showPreviewError(elPreviewRunError, 'Session expired. Please sign in again.');
+    elBtnRunAI.disabled    = false;
+    elBtnRunAI.textContent = 'Run AI';
+    return;
+  }
+
+  var token          = sessionData.data.session.access_token;
+  var modelOverride  = getSelectedModel();
+  var thinkingBudget = getThinkingBudget();
+
+  // Build request body -- Phase 1 uses assembled_prompt; phases 2-5 use phase1_output
+  var reqBody = {
+    session_id:       previewStudentRow.session_id,
+    teacher_id:       previewStudentRow.teacher_id,
+    student_id:       previewStudentRow.student_id,
+    series_id:        previewStudentRow.series_id,
+    lesson_book_id:   previewStudentRow.lesson_book_id,
+    student_name:     previewStudentRow.student_name,
+    bypass_gate:      false,
+    single_phase_run: true,
+    phase:            phaseNum,
+    model_override:   modelOverride,
+    thinking_budget:  thinkingBudget
+  };
+
+  if (isDownstreamPhase) {
+    reqBody.phase1_output = phase1Output;
+    // assembled_prompt not sent -- Edge Function assembles it using real data
+  } else {
+    reqBody.assembled_prompt = elPreviewTextarea.value;
+  }
+
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody)
+    });
+
+    var result = await response.json();
+
+    if (!result.success || !result.ai_response) {
+      showPreviewError(elPreviewRunError, 'AI call failed: ' + (result.error || 'Unknown error'));
+      elBtnRunAI.disabled    = false;
+      elBtnRunAI.textContent = 'Run AI';
+      return;
+    }
+
+    // For downstream phases, update the preview textarea with what was actually sent to Gemini
+    if (isDownstreamPhase && result.assembled_prompt_used) {
+      elPreviewTextarea.value = result.assembled_prompt_used;
+      elAssembledPromptLabel.textContent = 'Assembled prompt (as sent to AI)';
+    }
+
+    elAIResponseTextarea.value = result.ai_response;
+    var metaModel  = result.model_used || modelOverride;
+    var metaBudget = (result.thinking_budget_used !== undefined) ? result.thinking_budget_used : thinkingBudget;
+    elAIMeta.textContent = 'Model: ' + metaModel + '  |  Thinking budget: ' + metaBudget;
+    elAIResponseSection.classList.remove('hidden');
+    elAIResponseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showPreviewError(elPreviewRunError, 'Request failed: ' + err.message);
+  }
+
+  elBtnRunAI.disabled    = false;
+  elBtnRunAI.textContent = 'Run AI';
 });
 
 // ── Map prompt_key to debug_prompts field name ─────────────────────────
@@ -920,76 +1272,6 @@ elBtnDownloadPrompt.addEventListener('click', function() {
   downloadTxt(content, 'prompt_' + previewPrompt.prompt_key + '_' + sanitizeFilename(previewStudentRow.student_name) + '.txt');
 });
 
-// ── Run AI ─────────────────────────────────────────────────────────────
-elBtnRunAI.addEventListener('click', async function() {
-  if (!previewPrompt || !previewStudentRow || !elPreviewTextarea.value) { return; }
-
-  elPreviewRunError.classList.add('hidden');
-  elAIResponseSection.classList.add('hidden');
-  elBtnRunAI.disabled    = true;
-  elBtnRunAI.textContent = 'Running...';
-
-  var sessionData = await sb.auth.getSession();
-  if (!sessionData.data.session) {
-    showPreviewError(elPreviewRunError, 'Session expired. Please sign in again.');
-    elBtnRunAI.disabled    = false;
-    elBtnRunAI.textContent = 'Run AI';
-    return;
-  }
-
-  var token    = sessionData.data.session.access_token;
-  var phaseNum = getPhaseNumber(previewPrompt.prompt_key);
-  var modelOverride   = getSelectedModel();
-  var thinkingBudget  = getThinkingBudget();
-
-  try {
-    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        // Minimal required fields -- single_phase_run skips all data fetches
-        session_id:        previewStudentRow.session_id,
-        teacher_id:        previewStudentRow.teacher_id,
-        student_id:        previewStudentRow.student_id,
-        series_id:         previewStudentRow.series_id,
-        lesson_book_id:    previewStudentRow.lesson_book_id,
-        student_name:      previewStudentRow.student_name,
-        bypass_gate:       false,
-        single_phase_run:  true,
-        phase:             phaseNum,
-        assembled_prompt:  elPreviewTextarea.value,
-        model_override:    modelOverride,
-        thinking_budget:   thinkingBudget
-      })
-    });
-
-    var result = await response.json();
-
-    if (!result.success || !result.ai_response) {
-      showPreviewError(elPreviewRunError, 'AI call failed: ' + (result.error || 'Unknown error'));
-      elBtnRunAI.disabled    = false;
-      elBtnRunAI.textContent = 'Run AI';
-      return;
-    }
-
-    elAIResponseTextarea.value = result.ai_response;
-    var metaModel    = result.model_used || modelOverride;
-    var metaBudget   = (result.thinking_budget_used !== undefined) ? result.thinking_budget_used : thinkingBudget;
-    elAIMeta.textContent = 'Model: ' + metaModel + '  |  Thinking budget: ' + metaBudget;
-    elAIResponseSection.classList.remove('hidden');
-    elAIResponseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
-    showPreviewError(elPreviewRunError, 'Request failed: ' + err.message);
-  }
-
-  elBtnRunAI.disabled    = false;
-  elBtnRunAI.textContent = 'Run AI';
-});
-
 // ── Download AI response .txt ──────────────────────────────────────────
 elBtnDownloadResponse.addEventListener('click', function() {
   if (!previewPrompt || !previewStudentRow) { return; }
@@ -1015,6 +1297,8 @@ elBtnClosePreview.addEventListener('click', function() {
   previewPrompt     = null;
   previewStudentRow = null;
   assembledPrompts  = null;
+  phaseAIConfig     = null;
+  phase1Output      = null;
   elAIMeta.textContent = '';
 });
 
