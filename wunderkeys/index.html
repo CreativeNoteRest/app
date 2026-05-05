@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WunderKeys -- Sign In</title>
+  <title>WunderKeys — Sign In</title>
 
   <style>
     :root {
@@ -85,7 +85,8 @@
       color: var(--color-text);
     }
 
-    input {
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       height: 48px;
       border: 1px solid var(--color-border);
@@ -99,16 +100,10 @@
       margin-bottom: 16px;
     }
 
-    input:focus {
+    input[type="email"]:focus,
+    input[type="password"]:focus {
       outline: none;
       border-color: var(--color-accent);
-    }
-
-    input.code-input {
-      font-size: 1.8rem;
-      letter-spacing: 10px;
-      text-align: center;
-      font-family: var(--font-display);
     }
 
     .btn {
@@ -132,6 +127,129 @@
       cursor: not-allowed;
     }
 
+    /* OAuth buttons */
+    .btn-oauth {
+      width: 100%;
+      height: 48px;
+      background: #fff;
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn-oauth:hover {
+      background: #f5f5f5;
+      border-color: #ccc;
+    }
+
+    .btn-oauth:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-oauth.coming-soon {
+      opacity: 0.45;
+      cursor: default;
+      position: relative;
+    }
+
+    .btn-oauth.coming-soon:hover {
+      background: #fff;
+      border-color: var(--color-border);
+    }
+
+    .coming-soon-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--color-muted);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--color-muted);
+      font-size: 0.82rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-border);
+    }
+
+    /* Password row — label + forgot link side by side */
+    .password-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .password-label-row label {
+      margin-bottom: 0;
+    }
+
+    .forgot-link {
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font-body);
+      padding: 0;
+    }
+
+    .forgot-link:hover { color: var(--color-accent); }
+
+    /* Remember me */
+    .remember-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .remember-row input[type="checkbox"] {
+      width: auto;
+      height: auto;
+      margin-bottom: 0;
+      accent-color: var(--color-accent);
+      cursor: pointer;
+    }
+
+    .remember-row label {
+      font-size: 0.88rem;
+      font-weight: 400;
+      color: var(--color-muted);
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    /* Error and info boxes */
     .error-box {
       display: none;
       background: #fff0f0;
@@ -142,6 +260,42 @@
       color: #c0392b;
       margin-bottom: 16px;
       line-height: 1.5;
+    }
+
+    .info-box {
+      display: none;
+      background: var(--color-accent-soft);
+      border: 1px solid #f7c99a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: #7a3e06;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Bottom links */
+    .bottom-links {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--color-muted);
+    }
+
+    .bottom-links a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .bottom-links a:hover {
+      color: var(--color-accent-hover);
+    }
+
+    /* Forgot password panel */
+    #step-forgot {
+      display: none;
     }
 
     .back-link {
@@ -166,6 +320,13 @@
       color: var(--color-muted);
       text-align: center;
     }
+
+    /* OAuth provider SVG icons — inline for zero external dependencies */
+    .oauth-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -176,37 +337,80 @@
       <div class="brand-sub">Powered by Creative Note REST</div>
     </div>
 
-    <!-- Step 1: Email entry -->
-    <div id="step-email">
+    <!-- ── Main sign-in form ── -->
+    <div id="step-signin">
       <h1>Sign in to your account</h1>
-      <p class="step-description">Enter your email address and we will send you a 6-digit login code.</p>
+      <p class="step-description">Welcome back. Sign in with your email and password or use a connected account.</p>
 
-      <div id="error-email" class="error-box"></div>
+      <div id="error-signin" class="error-box"></div>
 
       <label for="email">Email address</label>
       <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
 
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-        <input type="checkbox" id="remember-me" checked style="width:auto; height:auto; margin-bottom:0; accent-color:var(--color-accent); cursor:pointer;" />
-        <label for="remember-me" style="font-size:0.88rem; font-weight:400; color:var(--color-muted); margin-bottom:0; cursor:pointer;">Remember my email address</label>
+      <div class="password-label-row">
+        <label for="password">Password</label>
+        <button class="forgot-link" id="btn-forgot-open">Forgot password?</button>
+      </div>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <div class="remember-row">
+        <input type="checkbox" id="remember-me" checked />
+        <label for="remember-me">Remember my email address</label>
       </div>
 
-      <button class="btn" id="btn-send">Send login code</button>
+      <button class="btn" id="btn-signin">Sign in</button>
+
+      <div class="divider">or continue with</div>
+
+      <!-- Google -->
+      <button class="btn-oauth" id="btn-google">
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <!-- Microsoft -->
+      <button class="btn-oauth" id="btn-microsoft">
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022"/>
+          <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00"/>
+          <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF"/>
+          <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900"/>
+        </svg>
+        Continue with Microsoft
+      </button>
+
+      <!-- Apple — coming soon stub -->
+      <button class="btn-oauth coming-soon" id="btn-apple" disabled>
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.38.07 2.33.75 3.13.8 1.18-.24 2.31-.95 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.52-1.32 3.02-2.58 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" fill="#000000"/>
+        </svg>
+        Continue with Apple
+        <span class="coming-soon-badge">Soon</span>
+      </button>
+
+      <div class="bottom-links">
+        Don't have an account? <a id="link-signup" href="/wunderkeys/signup.html">Create one free</a>
+      </div>
     </div>
 
-    <!-- Step 2: Code entry -->
-    <div id="step-code" style="display:none;">
-      <h1>Enter your login code</h1>
-      <p class="step-description" id="code-description">We sent a 6-digit code to your email address. Enter it below. The code expires in 2 minutes.</p>
+    <!-- ── Forgot password panel ── -->
+    <div id="step-forgot">
+      <h1>Reset your password</h1>
+      <p class="step-description">Enter your email address and we'll send you a link to reset your password.</p>
 
-      <div id="error-code" class="error-box"></div>
+      <div id="error-forgot" class="error-box"></div>
+      <div id="info-forgot" class="info-box"></div>
 
-      <form id="otp-form" action="#" method="post" onsubmit="return false;">
-        <label for="code">Login code</label>
-        <input type="text" id="code" name="code" class="code-input" placeholder="------" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
-        <button class="btn" id="btn-verify" type="submit">Sign in</button>
-      </form>
-      <button class="back-link" id="btn-back">Try a different email address</button>
+      <label for="forgot-email">Email address</label>
+      <input type="email" id="forgot-email" placeholder="you@example.com" autocomplete="email" />
+
+      <button class="btn" id="btn-forgot-send">Send reset link</button>
+      <button class="back-link" id="btn-forgot-back">Back to sign in</button>
     </div>
   </div>
 
@@ -215,154 +419,249 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+    // ── Series constants — update these two lines when copying to a new series ──
+    const SUPABASE_URL     = 'https://xaayekfrlphyyxenhcjl.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
-    const SERIES_SLUG = 'wunderkeys';
-    const SERIES_ID = '96c05aaa-0329-4582-a35c-51423afc21dd';
+    const SERIES_SLUG      = 'wunderkeys';
+    const SERIES_ID        = '96c05aaa-0329-4582-a35c-51423afc21dd';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Elements
-    const stepEmail = document.getElementById('step-email');
-    const stepCode = document.getElementById('step-code');
-    const emailInput = document.getElementById('email');
-    const codeInput = document.getElementById('code');
-    const btnSend = document.getElementById('btn-send');
-    const btnVerify = document.getElementById('btn-verify');
-    const btnBack = document.getElementById('btn-back');
-    const errorEmail = document.getElementById('error-email');
-    const errorCode = document.getElementById('error-code');
-    const codeDescription = document.getElementById('code-description');
-    const rememberMe = document.getElementById('remember-me');
+    // ── Elements ──
+    const stepSignin   = document.getElementById('step-signin');
+    const stepForgot   = document.getElementById('step-forgot');
+    const emailInput   = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const rememberMe   = document.getElementById('remember-me');
+    const btnSignin    = document.getElementById('btn-signin');
+    const btnGoogle    = document.getElementById('btn-google');
+    const btnMicrosoft = document.getElementById('btn-microsoft');
+    const btnForgotOpen = document.getElementById('btn-forgot-open');
+    const btnForgotBack = document.getElementById('btn-forgot-back');
+    const btnForgotSend = document.getElementById('btn-forgot-send');
+    const forgotEmailInput = document.getElementById('forgot-email');
+    const errorSignin  = document.getElementById('error-signin');
+    const errorForgot  = document.getElementById('error-forgot');
+    const infoForgot   = document.getElementById('info-forgot');
 
-    // Remember Me -- prefill on load
+    // ── Helpers ──
+    function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+    function clearError(el)     { el.textContent = '';  el.style.display = 'none';  }
+    function showInfo(el, msg)  { el.textContent = msg; el.style.display = 'block'; }
+
+    // ── Remember Me — prefill on load ──
     const savedEmail = localStorage.getItem('cn_remembered_email');
     if (savedEmail) {
       emailInput.value = savedEmail;
       rememberMe.checked = true;
     }
 
-    // Auto-submit when 6 digits entered in code field
-    codeInput.addEventListener('input', () => {
-      if (codeInput.value.trim().length === 6) btnVerify.click();
-    });
+    // ── Session handoff helper — shared by password and OAuth paths ──
+    async function completeSignIn(userId) {
+      let { data: teacherRows, error: teacherError } = await supabase
+        .from('teachers')
+        .select('teacher_id')
+        .eq('auth_user_id', userId)
+        .limit(1);
 
-    function showError(el, message) {
-      el.textContent = message;
-      el.style.display = 'block';
+      if (teacherError) {
+        return { error: 'Your account was found but your teacher record could not be loaded. Please contact your series administrator.' };
+      }
+
+      // No Teachers row — this is a first-time OAuth login.
+      // Create the Teachers and subscription rows now.
+      if (!teacherRows || teacherRows.length === 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const email    = user?.email ?? '';
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const { data: newTeacher, error: insertErr } = await supabase
+          .from('teachers')
+          .insert({
+            series_id:    SERIES_ID,
+            email:        email,
+            auth_user_id: userId,
+            timezone:     timezone,
+          })
+          .select('teacher_id')
+          .single();
+
+        if (insertErr || !newTeacher) {
+          return { error: 'Your account was found but your teacher profile could not be created. Please contact your series administrator.' };
+        }
+
+        // Insert free-trial subscription row — non-fatal if it fails
+        await supabase.from('series_subscriptions').insert({
+          teacher_id:           newTeacher.teacher_id,
+          series_id:            SERIES_ID,
+          changed_by:           'system',
+          subscription_tier:    'free',
+          subscription_status:  'active',
+          student_seat_limit:   1,
+          token_reset_date:     1,
+          stt_quality_override: false,
+          onboarding_complete:  true,
+          enrolled_via:         'series_site',
+          change_note:          'Free trial — OAuth signup via login page',
+        });
+
+        teacherRows = [{ teacher_id: newTeacher.teacher_id }];
+      }
+
+      sessionStorage.setItem('series_slug', SERIES_SLUG);
+      sessionStorage.setItem('series_id',   SERIES_ID);
+      sessionStorage.setItem('teacher_id',  teacherRows[0].teacher_id);
+      return { error: null };
     }
 
-    function clearError(el) {
-      el.textContent = '';
-      el.style.display = 'none';
-    }
+    // ── On page load — detect OAuth callback ──
+    // After Google/Microsoft OAuth, Supabase redirects back here with a session.
+    // Detect it and complete the sessionStorage handoff automatically.
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { error } = await completeSignIn(session.user.id);
+        if (!error) {
+          window.location.href = '/main_menu.html';
+        } else {
+          showError(errorSignin, error);
+        }
+      }
+    })();
 
-    // Step 1 -- Send OTP
-    btnSend.addEventListener('click', async () => {
-      clearError(errorEmail);
-      const email = emailInput.value.toLowerCase().trim();
+    // ── Password sign-in ──
+    btnSignin.addEventListener('click', async () => {
+      clearError(errorSignin);
+      const email    = emailInput.value.toLowerCase().trim();
+      const password = passwordInput.value;
 
       if (!email || !email.includes('@')) {
-        showError(errorEmail, 'Please enter a valid email address.');
+        showError(errorSignin, 'Please enter a valid email address.');
+        return;
+      }
+      if (!password) {
+        showError(errorSignin, 'Please enter your password.');
         return;
       }
 
-      btnSend.disabled = true;
-      btnSend.textContent = 'Sending...';
-
-      // Remember Me -- save or clear before sending
+      // Remember Me
       if (rememberMe.checked) {
         localStorage.setItem('cn_remembered_email', email);
       } else {
         localStorage.removeItem('cn_remembered_email');
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false }
-      });
+      btnSignin.disabled = true;
+      btnSignin.textContent = 'Signing in...';
 
-      btnSend.disabled = false;
-      btnSend.textContent = 'Send login code';
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        // Supabase returns a generic error when shouldCreateUser: false
-        // and the email does not exist -- show a friendly no-account message
-        showError(errorEmail, 'No account was found for that email address. Please check your email or contact your series administrator.');
-        return;
-      }
-
-      // Advance to code step
-      codeDescription.textContent = 'We sent a 6-digit code to ' + email + '. Enter it below. The code expires in 2 minutes. If you do not receive it within a minute, wait before requesting again.';
-      stepEmail.style.display = 'none';
-      stepCode.style.display = 'block';
-      codeInput.focus();
-    });
-
-    // Step 2 -- Verify OTP
-    btnVerify.addEventListener('click', async () => {
-      clearError(errorCode);
-      const email = emailInput.value.toLowerCase().trim();
-      const token = codeInput.value.trim();
-
-      if (token.length !== 6) {
-        showError(errorCode, 'Please enter the full 6-digit code.');
-        return;
-      }
-
-      btnVerify.disabled = true;
-      btnVerify.textContent = 'Signing in...';
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: 'magiclink'
-      });
-
-      btnVerify.disabled = false;
-      btnVerify.textContent = 'Sign in';
+      btnSignin.disabled = false;
+      btnSignin.textContent = 'Sign in';
 
       if (error) {
-        showError(errorCode, 'That code is incorrect or has expired. Please check the code and try again.');
+        // Supabase returns "Invalid login credentials" for both wrong password
+        // and unknown email — surface a single friendly message for both.
+        showError(errorSignin, 'The email or password you entered is incorrect. Please try again.');
         return;
       }
 
-      // Session established -- write sessionStorage and redirect
-      const authUserId = data.session.user.id;
-
-      // Fetch teacher_id from Teachers table using auth_user_id
-      const { data: teacherRows, error: teacherError } = await supabase
-        .from('teachers')
-        .select('teacher_id')
-        .eq('auth_user_id', authUserId)
-        .limit(1);
-
-      if (teacherError || !teacherRows || teacherRows.length === 0) {
-        showError(errorCode, 'Your account was found but your teacher record could not be loaded. Please contact your series administrator.');
-        return;
-      }
-
-      const teacherId = teacherRows[0].teacher_id;
-
-      sessionStorage.setItem('series_slug', SERIES_SLUG);
-      sessionStorage.setItem('series_id', SERIES_ID);
-      sessionStorage.setItem('teacher_id', teacherId);
-
+      const { error: handoffError } = await completeSignIn(data.user.id);
+      if (handoffError) { showError(errorSignin, handoffError); return; }
       window.location.href = '/main_menu.html';
     });
 
-    // Back link -- return to email step
-    btnBack.addEventListener('click', () => {
-      clearError(errorCode);
-      codeInput.value = '';
-      stepCode.style.display = 'none';
-      stepEmail.style.display = 'block';
-      emailInput.focus();
+    // ── Google OAuth ──
+    btnGoogle.addEventListener('click', async () => {
+      clearError(errorSignin);
+      btnGoogle.disabled = true;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.href  // returns to this page; session detected on load
+        }
+      });
+      if (error) {
+        showError(errorSignin, 'Could not connect to Google. Please try again.');
+        btnGoogle.disabled = false;
+      }
+      // On success, browser navigates away — no further action needed here.
     });
 
-    // Allow Enter key on inputs
-    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnSend.click(); });
-    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnVerify.click(); });
+    // ── Microsoft OAuth ──
+    btnMicrosoft.addEventListener('click', async () => {
+      clearError(errorSignin);
+      btnMicrosoft.disabled = true;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: window.location.href
+        }
+      });
+      if (error) {
+        showError(errorSignin, 'Could not connect to Microsoft. Please try again.');
+        btnMicrosoft.disabled = false;
+      }
+    });
+
+    // ── Forgot password — show panel ──
+    btnForgotOpen.addEventListener('click', () => {
+      clearError(errorSignin);
+      clearError(errorForgot);
+      clearError(infoForgot);
+      // Pre-fill forgot email from whatever is in the sign-in field
+      forgotEmailInput.value = emailInput.value;
+      stepSignin.style.display = 'none';
+      stepForgot.style.display = 'block';
+      forgotEmailInput.focus();
+    });
+
+    // ── Forgot password — back to sign in ──
+    btnForgotBack.addEventListener('click', () => {
+      clearError(errorForgot);
+      clearError(infoForgot);
+      stepForgot.style.display = 'none';
+      stepSignin.style.display = 'block';
+    });
+
+    // ── Forgot password — send reset link ──
+    btnForgotSend.addEventListener('click', async () => {
+      clearError(errorForgot);
+      clearError(infoForgot);
+      const email = forgotEmailInput.value.toLowerCase().trim();
+
+      if (!email || !email.includes('@')) {
+        showError(errorForgot, 'Please enter a valid email address.');
+        return;
+      }
+
+      btnForgotSend.disabled = true;
+      btnForgotSend.textContent = 'Sending...';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/wunderkeys/`
+      });
+
+      btnForgotSend.disabled = false;
+      btnForgotSend.textContent = 'Send reset link';
+
+      // Always show the same confirmation regardless of whether the email exists.
+      // This prevents email enumeration — don't reveal whether an account exists.
+      if (error) {
+        // Only surface an error for genuine failures (network, rate limit), not
+        // for unknown emails — Supabase silently succeeds for unknown addresses.
+        showError(errorForgot, 'Something went wrong. Please try again in a moment.');
+        return;
+      }
+
+      showInfo(infoForgot, 'If an account exists for that address, a password reset link is on its way. Check your inbox — it may take a minute.');
+      btnForgotSend.disabled = true;
+    });
+
+    // ── Enter key support ──
+    emailInput.addEventListener('keydown',    e => { if (e.key === 'Enter') passwordInput.focus(); });
+    passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnSignin.click(); });
+    forgotEmailInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnForgotSend.click(); });
   </script>
 
 </body>

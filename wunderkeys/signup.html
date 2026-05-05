@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WunderKeys — Create Account</title>
+
+  <style>
+    :root {
+      --color-accent: #f47c20;
+      --color-accent-hover: #de6e18;
+      --color-accent-soft: #fff3e8;
+      --color-text: #171717;
+      --color-muted: #666666;
+      --color-border: #e9e9e9;
+      --color-bg: #fafafa;
+      --font-display: Georgia, "Times New Roman", serif;
+      --font-body: Inter, Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .login-card {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--color-accent);
+    }
+
+    .brand-sub {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin-top: 4px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .step-description {
+      font-size: 0.95rem;
+      color: var(--color-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--color-text);
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 1rem;
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background: #fff;
+      transition: border-color 0.15s;
+      margin-bottom: 16px;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: var(--color-accent);
+    }
+
+    input.input-error {
+      border-color: #e74c3c;
+    }
+
+    .btn {
+      width: 100%;
+      height: 48px;
+      background: var(--color-accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: var(--font-body);
+    }
+
+    .btn:hover { background: var(--color-accent-hover); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* OAuth buttons */
+    .btn-oauth {
+      width: 100%;
+      height: 48px;
+      background: #fff;
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn-oauth:hover { background: #f5f5f5; border-color: #ccc; }
+    .btn-oauth:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-oauth.coming-soon {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .btn-oauth.coming-soon:hover {
+      background: #fff;
+      border-color: var(--color-border);
+    }
+
+    .coming-soon-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--color-muted);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--color-muted);
+      font-size: 0.82rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-border);
+    }
+
+    .error-box {
+      display: none;
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: #c0392b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Password hint — shown below confirm field */
+    .field-hint {
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      margin-top: -10px;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .field-hint.hint-error {
+      color: #c0392b;
+    }
+
+    /* Confirmation state — replaces the form after successful signup */
+    #step-confirm {
+      display: none;
+      text-align: center;
+    }
+
+    .confirm-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .confirm-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .confirm-body {
+      font-size: 0.95rem;
+      color: var(--color-muted);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .confirm-email-highlight {
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .confirm-link {
+      display: inline-block;
+      font-size: 0.88rem;
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .confirm-link:hover { color: var(--color-accent-hover); }
+
+    .bottom-links {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--color-muted);
+    }
+
+    .bottom-links a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .bottom-links a:hover { color: var(--color-accent-hover); }
+
+    .oauth-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      text-align: center;
+    }
+
+    /* Trial callout — brief, friendly, above the form */
+    .trial-callout {
+      background: var(--color-accent-soft);
+      border: 1px solid #f7c99a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: #7a3e06;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-name">WunderKeys</div>
+      <div class="brand-sub">Powered by Creative Note REST</div>
+    </div>
+
+    <!-- ── Signup form ── -->
+    <div id="step-signup">
+      <h1>Start your free trial</h1>
+      <p class="step-description">Create your teacher account. No credit card required.</p>
+
+      <div class="trial-callout">
+        🎹 &nbsp;Your trial includes <strong>1 student seat for 30 days</strong> — fully functional, no commitment.
+      </div>
+
+      <div id="error-signup" class="error-box"></div>
+
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password" />
+
+      <label for="confirm-password">Confirm password</label>
+      <input type="password" id="confirm-password" placeholder="Re-enter your password" autocomplete="new-password" />
+      <p class="field-hint" id="password-hint"></p>
+
+      <button class="btn" id="btn-signup">Create account</button>
+
+      <div class="divider">or sign up with</div>
+
+      <!-- Google -->
+      <button class="btn-oauth" id="btn-google">
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign up with Google
+      </button>
+
+      <!-- Microsoft -->
+      <button class="btn-oauth" id="btn-microsoft">
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022"/>
+          <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00"/>
+          <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF"/>
+          <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900"/>
+        </svg>
+        Sign up with Microsoft
+      </button>
+
+      <!-- Apple — coming soon stub -->
+      <button class="btn-oauth coming-soon" disabled>
+        <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.38.07 2.33.75 3.13.8 1.18-.24 2.31-.95 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.52-1.32 3.02-2.58 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" fill="#000000"/>
+        </svg>
+        Sign up with Apple
+        <span class="coming-soon-badge">Soon</span>
+      </button>
+
+      <div class="bottom-links">
+        Already have an account? <a href="/wunderkeys/">Sign in</a>
+      </div>
+    </div>
+
+    <!-- ── Confirmation state — shown after successful email+password signup ── -->
+    <div id="step-confirm">
+      <div class="confirm-icon">📬</div>
+      <div class="confirm-title">Check your inbox</div>
+      <p class="confirm-body">
+        We sent a confirmation link to<br>
+        <span class="confirm-email-highlight" id="confirm-email-display"></span><br><br>
+        Click the link in that email to activate your account, then return here to sign in.
+      </p>
+      <a href="/wunderkeys/" class="btn" style="display:inline-block; text-decoration:none; text-align:center; line-height:48px;">
+        Go to sign in
+      </a>
+      <br>
+      <a class="confirm-link" id="btn-resend">Didn't receive it? Resend confirmation email</a>
+    </div>
+  </div>
+
+  <div class="footer">Having trouble? Contact your series administrator.</div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    // ── Series constants — update these lines when copying to a new series ──
+    const SUPABASE_URL      = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
+    const SERIES_SLUG       = 'wunderkeys';
+    const SERIES_ID         = '96c05aaa-0329-4582-a35c-51423afc21dd';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ── Elements ──
+    const stepSignup         = document.getElementById('step-signup');
+    const stepConfirm        = document.getElementById('step-confirm');
+    const emailInput         = document.getElementById('email');
+    const passwordInput      = document.getElementById('password');
+    const confirmInput       = document.getElementById('confirm-password');
+    const passwordHint       = document.getElementById('password-hint');
+    const btnSignup          = document.getElementById('btn-signup');
+    const btnGoogle          = document.getElementById('btn-google');
+    const btnMicrosoft       = document.getElementById('btn-microsoft');
+    const errorSignup        = document.getElementById('error-signup');
+    const confirmEmailDisplay = document.getElementById('confirm-email-display');
+    const btnResend          = document.getElementById('btn-resend');
+
+    // ── Helpers ──
+    function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+    function clearError(el)     { el.textContent = '';  el.style.display = 'none'; }
+
+    // ── Live password match hint ──
+    confirmInput.addEventListener('input', () => {
+      const pw  = passwordInput.value;
+      const cpw = confirmInput.value;
+      if (!cpw) { passwordHint.textContent = ''; passwordHint.className = 'field-hint'; return; }
+      if (pw === cpw) {
+        passwordHint.textContent = '✓ Passwords match';
+        passwordHint.className = 'field-hint';
+        confirmInput.classList.remove('input-error');
+      } else {
+        passwordHint.textContent = 'Passwords do not match';
+        passwordHint.className = 'field-hint hint-error';
+        confirmInput.classList.add('input-error');
+      }
+    });
+
+    // ── Validate form before submit ──
+    function validate() {
+      const email = emailInput.value.toLowerCase().trim();
+      const pw    = passwordInput.value;
+      const cpw   = confirmInput.value;
+
+      if (!email || !email.includes('@')) {
+        showError(errorSignup, 'Please enter a valid email address.');
+        return false;
+      }
+      if (pw.length < 8) {
+        showError(errorSignup, 'Your password must be at least 8 characters.');
+        return false;
+      }
+      if (pw !== cpw) {
+        showError(errorSignup, 'Your passwords do not match. Please re-enter them.');
+        return false;
+      }
+      return true;
+    }
+
+    // ── Create teacher records helper ──
+    // Inserts Teachers row and free-trial Series_Subscriptions row.
+    // Called after email+password signUp. Uses the authenticated session
+    // returned by signUp (Supabase returns a session even before email confirmation
+    // when email confirmations are enabled — the session is valid for DB writes).
+    async function createTeacherRecords(userId, email, timezone) {
+      // Insert Teachers row
+      const { data: teacherRow, error: teacherErr } = await supabase
+        .from('teachers')
+        .insert({
+          series_id:    SERIES_ID,
+          email:        email,
+          auth_user_id: userId,
+          timezone:     timezone,
+        })
+        .select('teacher_id')
+        .single();
+
+      if (teacherErr) {
+        // Duplicate — teacher already exists (e.g. double-submit). Fetch existing row.
+        if (teacherErr.code === '23505') {
+          const { data: existing } = await supabase
+            .from('teachers')
+            .select('teacher_id')
+            .eq('auth_user_id', userId)
+            .single();
+          if (existing) return { teacherId: existing.teacher_id, error: null };
+        }
+        return { teacherId: null, error: teacherErr.message };
+      }
+
+      const teacherId = teacherRow.teacher_id;
+
+      // Insert free-trial Series_Subscriptions row
+      const { error: subErr } = await supabase
+        .from('series_subscriptions')
+        .insert({
+          teacher_id:           teacherId,
+          series_id:            SERIES_ID,
+          changed_by:           'system',
+          subscription_tier:    'free',
+          subscription_status:  'active',
+          student_seat_limit:   1,
+          token_reset_date:     1,
+          stt_quality_override: false,
+          onboarding_complete:  true,
+          enrolled_via:         'series_site',
+          change_note:          'Free trial — self-registered via signup page',
+        });
+
+      if (subErr) {
+        // Non-fatal — Teachers row created. Subscription can be fixed manually.
+        console.warn('Subscription row insert failed:', subErr.message);
+      }
+
+      return { teacherId, error: null };
+    }
+
+    // ── Email + password signup ──
+    btnSignup.addEventListener('click', async () => {
+      clearError(errorSignup);
+      if (!validate()) return;
+
+      const email    = emailInput.value.toLowerCase().trim();
+      const pw       = passwordInput.value;
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      btnSignup.disabled = true;
+      btnSignup.textContent = 'Creating account...';
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: pw,
+        options: {
+          emailRedirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+          data: { series_id: SERIES_ID, timezone }
+        }
+      });
+
+      if (error) {
+        btnSignup.disabled = false;
+        btnSignup.textContent = 'Create account';
+        if (error.message?.toLowerCase().includes('already registered') ||
+            error.message?.toLowerCase().includes('already been registered')) {
+          showError(errorSignup, 'An account with that email already exists. Try signing in instead, or use "Forgot password?" if you need to reset your password.');
+        } else {
+          showError(errorSignup, 'Something went wrong. Please try again in a moment.');
+        }
+        return;
+      }
+
+      // Create Teachers and subscription rows immediately.
+      // data.user is available even before email confirmation.
+      if (data?.user?.id) {
+        const { error: recordsError } = await createTeacherRecords(data.user.id, email, timezone);
+        if (recordsError) {
+          btnSignup.disabled = false;
+          btnSignup.textContent = 'Create account';
+          showError(errorSignup, 'Your account was created but your teacher profile could not be set up. Please contact your series administrator.');
+          return;
+        }
+      }
+
+      btnSignup.disabled = false;
+      btnSignup.textContent = 'Create account';
+
+      // Show confirmation state
+      confirmEmailDisplay.textContent = email;
+      stepSignup.style.display = 'none';
+      stepConfirm.style.display = 'block';
+    });
+
+    // ── Resend confirmation email ──
+    btnResend.addEventListener('click', async () => {
+      const email = emailInput.value.toLowerCase().trim();
+      if (!email) return;
+
+      btnResend.textContent = 'Sending...';
+      btnResend.style.pointerEvents = 'none';
+
+      await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+        }
+      });
+
+      // Always show confirmation regardless of result — same enumeration protection
+      // as forgot password. Supabase silently succeeds for unknown emails.
+      btnResend.textContent = 'Confirmation email sent';
+    });
+
+    // ── Google OAuth ──
+    btnGoogle.addEventListener('click', async () => {
+      clearError(errorSignup);
+      btnGoogle.disabled = true;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+        }
+      });
+      if (error) {
+        showError(errorSignup, 'Could not connect to Google. Please try again.');
+        btnGoogle.disabled = false;
+      }
+    });
+
+    // ── Microsoft OAuth ──
+    btnMicrosoft.addEventListener('click', async () => {
+      clearError(errorSignup);
+      btnMicrosoft.disabled = true;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+        }
+      });
+      if (error) {
+        showError(errorSignup, 'Could not connect to Microsoft. Please try again.');
+        btnMicrosoft.disabled = false;
+      }
+    });
+
+    // ── Enter key support ──
+    emailInput.addEventListener('keydown',   e => { if (e.key === 'Enter') passwordInput.focus(); });
+    passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') confirmInput.focus(); });
+    confirmInput.addEventListener('keydown',  e => { if (e.key === 'Enter') btnSignup.click(); });
+  </script>
+
+</body>
+</html>
