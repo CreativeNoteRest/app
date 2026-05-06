@@ -51,8 +51,8 @@ export function clearError(elementId) {
 // ------------------------------------------------------------
 // requireAuth()
 // Call at the top of every protected page.
-// Checks for a valid Supabase session.
-// Redirects to the series login page if not authenticated.
+// Checks for a valid Supabase session AND sessionStorage context.
+// Redirects to the series login page if either is missing.
 // Returns the session object if authenticated.
 // ------------------------------------------------------------
 export async function requireAuth() {
@@ -61,6 +61,14 @@ export async function requireAuth() {
   if (error || !session) {
     const seriesSlug = sessionStorage.getItem('series_slug') || 'wunderkeys';
     window.location.href = '/' + seriesSlug + '/';
+    return null;
+  }
+
+  // Supabase session exists but sessionStorage context is missing
+  // (e.g. page loaded from bookmark in a fresh tab or browser open).
+  // Redirect to login so completeSignIn() can re-run and repopulate it.
+  if (!sessionStorage.getItem('teacher_id')) {
+    window.location.href = '/wunderkeys/';
     return null;
   }
 
