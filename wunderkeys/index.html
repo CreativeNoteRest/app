@@ -460,7 +460,7 @@
     async function completeSignIn(userId) {
       let { data: teacherRows, error: teacherError } = await supabase
         .from('teachers')
-        .select('teacher_id, display_name')
+        .select('teacher_id, display_name, timezone')
         .eq('auth_user_id', userId)
         .limit(1);
 
@@ -512,6 +512,7 @@
       sessionStorage.setItem('series_id',            SERIES_ID);
       sessionStorage.setItem('teacher_id',           teacherRows[0].teacher_id);
       sessionStorage.setItem('teacher_display_name', teacherRows[0].display_name || '');
+      sessionStorage.setItem('teacher_timezone',     teacherRows[0].timezone     || '');
       return { error: null };
     }
 

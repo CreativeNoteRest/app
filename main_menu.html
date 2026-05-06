@@ -426,7 +426,7 @@
     }
 
     // ── Today's date in teacher timezone ─────────────────────────────
-    let teacherTimezone = 'America/Toronto';
+    let teacherTimezone = sessionStorage.getItem('teacher_timezone') || 'America/Toronto';
 
     function todayDate() {
       return new Intl.DateTimeFormat('en-CA', {
