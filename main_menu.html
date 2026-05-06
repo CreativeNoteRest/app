@@ -392,6 +392,13 @@
     const seriesEl = document.getElementById('series-name');
     if (seriesEl && nameMap[seriesSlug]) seriesEl.textContent = nameMap[seriesSlug];
 
+    // ── Teacher name — populate immediately from sessionStorage ─────
+    const displayName = sessionStorage.getItem('teacher_display_name') || '';
+    if (displayName) {
+      const nameEl = document.getElementById('header-teacher-name');
+      if (nameEl) nameEl.textContent = displayName;
+    }
+
     // ── Session context ──────────────────────────────────────────────
     const TEACHER_ID = sessionStorage.getItem('teacher_id') || '';
     const SERIES_ID  = sessionStorage.getItem('series_id')  || '';
@@ -527,15 +534,11 @@
       // Load teacher timezone (non-blocking -- use default if fails)
       const { data: tData } = await supabase
         .from('teachers')
-        .select('timezone, display_name')
+        .select('timezone')
         .eq('teacher_id', TEACHER_ID)
         .maybeSingle();
 
       if (tData?.timezone) teacherTimezone = tData.timezone;
-      if (tData?.display_name) {
-        const nameEl = document.getElementById('header-teacher-name');
-        if (nameEl) nameEl.textContent = tData.display_name;
-      }
 
       // Fetch active students for this teacher
       const { data: rawStudents, error: stuErr } = await supabase

@@ -460,7 +460,7 @@
     async function completeSignIn(userId) {
       let { data: teacherRows, error: teacherError } = await supabase
         .from('teachers')
-        .select('teacher_id')
+        .select('teacher_id, display_name')
         .eq('auth_user_id', userId)
         .limit(1);
 
@@ -508,9 +508,10 @@
         teacherRows = [{ teacher_id: newTeacher.teacher_id }];
       }
 
-      sessionStorage.setItem('series_slug', SERIES_SLUG);
-      sessionStorage.setItem('series_id',   SERIES_ID);
-      sessionStorage.setItem('teacher_id',  teacherRows[0].teacher_id);
+      sessionStorage.setItem('series_slug',          SERIES_SLUG);
+      sessionStorage.setItem('series_id',            SERIES_ID);
+      sessionStorage.setItem('teacher_id',           teacherRows[0].teacher_id);
+      sessionStorage.setItem('teacher_display_name', teacherRows[0].display_name || '');
       return { error: null };
     }
 
