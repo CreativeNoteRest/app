@@ -450,6 +450,163 @@
       margin-top: 12px; display: none; line-height: 1.5;
     }
 
+    /* ── Header flex layout (text + history button) ──────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .header-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── History button ───────────────────────────────────────────── */
+    .btn-history {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-history:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .btn-history svg { width: 18px; height: 18px; }
+
+    /* ── History modal ────────────────────────────────────────────── */
+    .history-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .history-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%; max-width: 680px;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+
+    .history-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--text-primary);
+    }
+
+    .btn-history-close {
+      width: 32px; height: 32px;
+      border: none; background: none;
+      color: var(--text-muted);
+      font-size: 16px; cursor: pointer;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-history-close:hover { background: var(--border); color: var(--text-primary); }
+
+    #history-modal-body {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 24px 28px;
+      flex: 1;
+    }
+
+    .history-date-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--surface);
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .history-date-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+    }
+
+    .history-content-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .history-content-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .history-content-body {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .history-content-body a {
+      color: var(--accent);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .history-content-empty {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .history-empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .history-loading {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -462,13 +619,22 @@
 
   <!-- Header -->
   <header class="page-header">
-    <div class="header-series" id="hdr-series">Creative Note</div>
-    <div class="header-student" id="hdr-student">Loading...</div>
-    <div class="header-meta" id="hdr-meta"></div>
-    <div class="hdr-book" id="hdr-book" style="display:none;">
-      <span id="hdr-book-name"></span>
-      <span class="book-change-link" id="book-change-link" role="button" tabindex="0">Change</span>
+    <div class="header-text">
+      <div class="header-series" id="hdr-series">Creative Note</div>
+      <div class="header-student" id="hdr-student">Loading...</div>
+      <div class="header-meta" id="hdr-meta"></div>
+      <div class="hdr-book" id="hdr-book" style="display:none;">
+        <span id="hdr-book-name"></span>
+        <span class="book-change-link" id="book-change-link" role="button" tabindex="0">Change</span>
+      </div>
     </div>
+    <button class="btn-history" id="btn-history" title="View past lessons" aria-label="View past lessons">
+      <!-- Clock/history icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </button>
   </header>
 
   <!-- Status bar (errors / feedback) -->
@@ -528,6 +694,19 @@
         <button class="btn-book-cancel" id="btn-book-cancel">Cancel</button>
       </div>
       <div class="book-modal-error" id="book-modal-error"></div>
+    </div>
+  </div>
+
+  <!-- History modal -->
+  <div id="history-modal" class="history-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-heading">
+    <div class="history-modal">
+      <div class="history-modal-header">
+        <div class="history-modal-heading" id="history-modal-heading">Past Lessons</div>
+        <button class="btn-history-close" id="btn-history-close" aria-label="Close">&#10005;</button>
+      </div>
+      <div id="history-modal-body">
+        <div class="history-loading">Loading…</div>
+      </div>
     </div>
   </div>
 
@@ -1140,6 +1319,134 @@
   document.getElementById('btn-book-confirm').addEventListener('click', confirmBookChange);
   document.getElementById('btn-book-cancel').addEventListener('click', function() {
     document.getElementById('book-modal').classList.add('hidden');
+  });
+
+  // 14. Past lessons history modal
+  let historySessions = []; // cache: up to 3 sessions with all content fields
+
+  async function openHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    const body  = document.getElementById('history-modal-body');
+
+    modal.classList.remove('hidden');
+    body.innerHTML = '<div class="history-loading">Loading…</div>';
+
+    try {
+      // Fetch up to 3 most recent approved sessions for this student
+      const { data: sessions, error: sessErr } = await supabase
+        .from('sessions')
+        .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement')
+        .eq('teacher_id', teacherId)
+        .eq('student_id', studentId)
+        .eq('session_status', 'approved')
+        .order('session_date', { ascending: false })
+        .limit(3);
+
+      if (sessErr) throw sessErr;
+
+      const rows = sessions || [];
+
+      if (rows.length === 0) {
+        body.innerHTML = '<div class="history-empty-state">No completed lessons yet for ' + escapeHtml(studentName || 'this student') + '.</div>';
+        historySessions = [];
+        return;
+      }
+
+      // Fetch book names for unique book IDs in one call
+      const bookIds = [...new Set(rows.map(s => s.lesson_book_id).filter(Boolean))];
+      const bookMap = {};
+      if (bookIds.length > 0) {
+        const { data: books } = await supabase
+          .from('books')
+          .select('book_id, full_display_name')
+          .in('book_id', bookIds);
+        (books || []).forEach(b => { bookMap[b.book_id] = b.full_display_name; });
+      }
+
+      rows.forEach(s => {
+        s.bookName = s.lesson_book_id ? (bookMap[s.lesson_book_id] || 'Unknown book') : 'Book not recorded';
+      });
+
+      historySessions = rows;
+      renderHistoryModal(0); // render most recent immediately
+
+    } catch (e) {
+      body.innerHTML = '<div class="history-empty-state">Could not load past lessons. Please try again.</div>';
+      console.warn('History modal load error:', e);
+    }
+  }
+
+  function renderHistoryModal(index) {
+    const body = document.getElementById('history-modal-body');
+    const s    = historySessions[index];
+    if (!s) return;
+
+    const dateStr = new Date(s.session_date).toLocaleDateString('en-CA', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Build date selector only if more than one session
+    let selectorHtml = '';
+    if (historySessions.length > 1) {
+      selectorHtml = '<select class="history-date-select" id="history-date-select" aria-label="Select lesson date">';
+      historySessions.forEach((row, i) => {
+        const label = new Date(row.session_date).toLocaleDateString('en-CA', {
+          year: 'numeric', month: 'long', day: 'numeric'
+        });
+        selectorHtml += '<option value="' + i + '"' + (i === index ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+      });
+      selectorHtml += '</select>';
+    }
+
+    const pageStr = s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded';
+
+    body.innerHTML =
+      selectorHtml +
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">' + escapeHtml(s.bookName) + ' · ' + escapeHtml(pageStr) + '</div>' +
+      historyContentBlock('Teacher Summary', s.ai_summ_teacher, false) +
+      historyContentBlock('Student Practice Plan', s.ai_summ_student, false) +
+      historyContentBlock('Recommended Supplements', historyTopThree(s.ai_summ_supplement), true);
+
+    // Wire selector change
+    const sel = document.getElementById('history-date-select');
+    if (sel) {
+      sel.addEventListener('change', function() {
+        renderHistoryModal(parseInt(this.value, 10));
+      });
+    }
+  }
+
+  function historyContentBlock(label, text, renderLinks) {
+    const isEmpty = !text || text.trim() === '';
+    const body    = isEmpty
+      ? '<div class="history-content-empty">Not recorded.</div>'
+      : '<div class="history-content-body">' + (renderLinks ? historyMarkdownLinks(escapeHtml(text)) : escapeHtml(text)) + '</div>';
+    return '<div class="history-content-block">' +
+      '<div class="history-content-label">' + label + '</div>' +
+      body + '</div>';
+  }
+
+  function historyTopThree(text) {
+    if (!text) return '';
+    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 3).join('\n');
+  }
+
+  function historyMarkdownLinks(escapedText) {
+    return escapedText.replace(
+      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+  }
+
+  document.getElementById('btn-history').addEventListener('click', openHistoryModal);
+
+  document.getElementById('btn-history-close').addEventListener('click', function() {
+    document.getElementById('history-modal').classList.add('hidden');
+  });
+
+  // Close on backdrop tap (tap outside the modal sheet)
+  document.getElementById('history-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
   });
 
 </script>
