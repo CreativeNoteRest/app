@@ -368,6 +368,72 @@
 
     /* ── Utility: hide/show ──────────────────────────────────────── */
     .hidden { display: none !important; }
+
+    /* ── PDF popup modal ─────────────────────────────────────────── */
+    .pdf-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .pdf-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%; max-width: 600px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+    .pdf-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem; color: var(--text);
+      letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+    .pdf-modal-body {
+      font-size: 0.88rem; color: var(--text-mid);
+      line-height: 1.6; margin-bottom: 20px;
+    }
+    .pdf-modal-body strong { color: var(--text); font-weight: 600; }
+    .pdf-modal-checkbox-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 6px;
+    }
+    .pdf-modal-checkbox-row input[type="checkbox"] {
+      width: 18px; height: 18px; margin-top: 1px;
+      accent-color: var(--brand); flex-shrink: 0; cursor: pointer;
+    }
+    .pdf-modal-checkbox-label {
+      font-size: 0.88rem; color: var(--text); cursor: pointer; line-height: 1.5;
+    }
+    .pdf-modal-checkbox-hint {
+      font-size: 0.75rem; color: var(--text-light);
+      margin-left: 28px; margin-bottom: 22px; line-height: 1.5;
+    }
+    .pdf-modal-actions { display: flex; gap: 10px; }
+    .btn-pdf-send {
+      flex: 2; height: 50px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(226,107,10,0.28);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    .btn-pdf-send:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(226,107,10,0.36); }
+    .btn-pdf-send:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-pdf-notnow {
+      flex: 1; height: 50px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-pdf-notnow:hover { border-color: var(--text-mid); color: var(--text); }
+    .btn-pdf-notnow:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pdf-modal-error {
+      font-size: 0.82rem; color: var(--danger);
+      margin-top: 12px; display: none; line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -509,6 +575,26 @@
     </div>
   </div>
 
+  <!-- PDF popup modal (shown after Write 5 if always_offer_pdf = true) -->
+  <div id="pdf-modal" class="pdf-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-heading">
+    <div class="pdf-modal">
+      <div class="pdf-modal-heading" id="pdf-modal-heading">Email the practice plan?</div>
+      <div class="pdf-modal-body" id="pdf-modal-body">
+        <!-- Populated by JS with student name and email address(es) -->
+      </div>
+      <div class="pdf-modal-checkbox-row">
+        <input type="checkbox" id="pdf-always-offer" checked />
+        <label class="pdf-modal-checkbox-label" for="pdf-always-offer">Always offer this after closing a lesson</label>
+      </div>
+      <div class="pdf-modal-checkbox-hint">This preference can be changed in Manage Account.</div>
+      <div class="pdf-modal-actions">
+        <button class="btn-pdf-send" id="btn-pdf-send" onclick="handlePdfSend()">Yes, Send</button>
+        <button class="btn-pdf-notnow" id="btn-pdf-notnow" onclick="handlePdfNotNow()">Not Now</button>
+      </div>
+      <div class="pdf-modal-error" id="pdf-modal-error"></div>
+    </div>
+  </div>
+
 <script type="module">
   import { supabase, requireAuth, applyBranding } from '/assets/app.js';
 
@@ -547,6 +633,30 @@
   let transitionBookId = null;   // new book_id if transition confirmed
   let allSupplements   = [];     // full supplement list from response
   let initialCount     = 3;      // how many to show before show-more
+
+  // PDF popup context (loaded at init)
+  let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
+  let studentEmailPrimary   = '';
+  let studentEmailSecondary = '';
+
+  // ── 5a. Fetch teacher preference + student emails in parallel ─────
+  // Non-blocking: if either fetch fails, defaults hold and popup still works.
+  // Runs concurrently with nothing (page is showing auth loading at this point).
+  (async () => {
+    try {
+      const [teacherRes, studentRes] = await Promise.all([
+        supabase.from('teachers').select('always_offer_pdf').eq('teacher_id', TEACHER_ID).single(),
+        supabase.from('students').select('email_primary, email_secondary').eq('student_id', STUDENT_ID).single()
+      ]);
+      if (teacherRes.data) alwaysOfferPdf = teacherRes.data.always_offer_pdf ?? true;
+      if (studentRes.data) {
+        studentEmailPrimary   = studentRes.data.email_primary   || '';
+        studentEmailSecondary = studentRes.data.email_secondary || '';
+      }
+    } catch (e) {
+      console.warn('PDF init fetch failed (non-blocking):', e);
+    }
+  })();
 
   // ── 6. Phase pip animation helpers ───────────────────────────────
   // The Edge Function runs five sequential AI phases.
@@ -944,8 +1054,12 @@
 
       if (w5Err) throw new Error(`Write 5 failed (active_sessions delete): ${w5Err.message}`);
 
-      // ── All writes complete -- navigate home ───────────────────
-      window.location.href = '/main_menu.html';
+      // ── All writes complete -- show PDF popup or navigate home ────
+      if (alwaysOfferPdf) {
+        showPdfPopup();
+      } else {
+        window.location.href = '/main_menu.html';
+      }
 
     } catch (err) {
       // Re-enable button so teacher can retry
@@ -959,6 +1073,78 @@
       // Scroll error into view
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  // ── 15a. PDF popup ────────────────────────────────────────────────
+  function showPdfPopup() {
+    // Build body text with actual email address(es)
+    let emailDisplay = studentEmailPrimary || 'their email address';
+    if (studentEmailSecondary) emailDisplay += ` and ${studentEmailSecondary}`;
+    document.getElementById('pdf-modal-body').innerHTML =
+      `Send <strong>${escHtml(STUDENT_NAME)}</strong>'s practice plan to ${escHtml(emailDisplay)}.`;
+
+    // Reset checkbox to match current preference
+    document.getElementById('pdf-always-offer').checked = true; // always_offer_pdf is true if we're here
+
+    document.getElementById('pdf-modal-error').style.display = 'none';
+    document.getElementById('pdf-modal').classList.remove('hidden');
+  }
+
+  async function navigateAfterPdf() {
+    // Write always_offer_pdf = false if checkbox was cleared (non-blocking)
+    const keepOffering = document.getElementById('pdf-always-offer').checked;
+    if (!keepOffering) {
+      try {
+        await supabase.from('teachers')
+          .update({ always_offer_pdf: false })
+          .eq('teacher_id', TEACHER_ID);
+      } catch (e) {
+        console.warn('always_offer_pdf update failed (non-blocking):', e);
+      }
+    }
+    window.location.href = '/main_menu.html';
+  }
+
+  window.handlePdfSend = async function() {
+    const sendBtn   = document.getElementById('btn-pdf-send');
+    const notnowBtn = document.getElementById('btn-pdf-notnow');
+    const errEl     = document.getElementById('pdf-modal-error');
+
+    sendBtn.disabled   = true;
+    notnowBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    errEl.style.display = 'none';
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
+        body: { session_id: SESSION_ID, send_type: 'auto', teacher_id: TEACHER_ID }
+      });
+
+      if (error || !data?.success) {
+        const msg = data?.error || error?.message || 'Email could not be sent.';
+        errEl.textContent = `${msg} You can resend from Lesson History.`;
+        errEl.style.display = 'block';
+        sendBtn.disabled   = false;
+        notnowBtn.disabled = false;
+        sendBtn.textContent = 'Yes, Send';
+        return;
+      }
+
+      // Success — brief confirmation then navigate
+      sendBtn.textContent = 'Sent!';
+      setTimeout(() => navigateAfterPdf(), 1500);
+
+    } catch (e) {
+      errEl.textContent = 'An unexpected error occurred. You can resend from Lesson History.';
+      errEl.style.display = 'block';
+      sendBtn.disabled   = false;
+      notnowBtn.disabled = false;
+      sendBtn.textContent = 'Yes, Send';
+    }
+  };
+
+  window.handlePdfNotNow = async function() {
+    await navigateAfterPdf();
   };
 
   // ── 16. XSS helper ───────────────────────────────────────────────
