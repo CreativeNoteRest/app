@@ -355,6 +355,101 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Book display + change modal ─────────────────────────────── */
+    .hdr-book {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .book-change-link {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-left: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .book-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .book-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%; max-width: 680px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+
+    .book-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem; color: var(--text-primary);
+      letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+
+    .book-modal-body {
+      font-size: 0.88rem; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: 16px;
+    }
+
+    .book-modal-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--surface);
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .book-modal-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+    }
+
+    .book-modal-actions { display: flex; gap: 10px; }
+
+    .btn-book-confirm {
+      flex: 2; height: 50px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(224,123,42,0.28);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+
+    .btn-book-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(224,123,42,0.36); }
+    .btn-book-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-book-cancel {
+      flex: 1; height: 50px;
+      background: var(--card); color: var(--text-secondary);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-book-cancel:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    .book-modal-error {
+      font-size: 0.82rem; color: var(--danger);
+      margin-top: 12px; display: none; line-height: 1.5;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -369,6 +464,10 @@
     <div class="header-series" id="hdr-series">Creative Note</div>
     <div class="header-student" id="hdr-student">Loading...</div>
     <div class="header-meta" id="hdr-meta"></div>
+    <div class="hdr-book" id="hdr-book" style="display:none;">
+      <span id="hdr-book-name"></span>
+      <span class="book-change-link" id="book-change-link" role="button" tabindex="0">Change</span>
+    </div>
   </header>
 
   <!-- Status bar (errors / feedback) -->
@@ -415,6 +514,20 @@
   <!-- Footer: Close Lesson stub -->
   <div class="footer-bar">
     <button class="btn-close-lesson" id="btn-close-lesson">Close Lesson</button>
+  </div>
+
+  <!-- Book change modal -->
+  <div id="book-modal" class="book-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="book-modal-heading">
+    <div class="book-modal">
+      <div class="book-modal-heading" id="book-modal-heading">Change Workbook</div>
+      <div class="book-modal-body" id="book-modal-body"></div>
+      <select class="book-modal-select" id="book-modal-select" aria-label="Select workbook"></select>
+      <div class="book-modal-actions">
+        <button class="btn-book-confirm" id="btn-book-confirm">Confirm Change</button>
+        <button class="btn-book-cancel" id="btn-book-cancel">Cancel</button>
+      </div>
+      <div class="book-modal-error" id="book-modal-error"></div>
+    </div>
   </div>
 
 </div><!-- /app-shell -->
@@ -884,6 +997,148 @@
   // 12. Close Lesson (stub)
   document.getElementById('btn-close-lesson').addEventListener('click', function() {
       window.location.href = '/session_close.html';
+  });
+
+  // 13. Book display + change
+  let currentBookId   = sessionStorage.getItem('lesson_book_id') || null;
+  let currentBookName = '';
+
+  // Fetch and display the current book name on page load
+  if (currentBookId) {
+    try {
+      const { data: bookData, error: bookErr } = await supabase
+        .from('books')
+        .select('full_display_name')
+        .eq('book_id', currentBookId)
+        .single();
+
+      if (!bookErr && bookData) {
+        currentBookName = bookData.full_display_name;
+        document.getElementById('hdr-book-name').textContent = currentBookName;
+        document.getElementById('hdr-book').style.display = 'block';
+      }
+    } catch (e) {
+      console.warn('Could not fetch book name:', e);
+    }
+  }
+
+  // Open the book change modal
+  async function openBookModal() {
+    const errEl    = document.getElementById('book-modal-error');
+    const select   = document.getElementById('book-modal-select');
+    const confirmBtn = document.getElementById('btn-book-confirm');
+
+    errEl.style.display  = 'none';
+    confirmBtn.disabled  = false;
+    select.innerHTML     = '';
+
+    // Fetch all active books for this series
+    try {
+      const { data: books, error: booksErr } = await supabase
+        .from('books')
+        .select('book_id, full_display_name')
+        .eq('series_id', seriesId)
+        .eq('is_active', true)
+        .order('sequence_number', { ascending: true });
+
+      if (booksErr || !books || books.length === 0) {
+        errEl.textContent    = 'Could not load book list. Please try again.';
+        errEl.style.display  = 'block';
+        document.getElementById('book-modal').classList.remove('hidden');
+        return;
+      }
+
+      books.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value       = b.book_id;
+        opt.textContent = b.full_display_name;
+        if (b.book_id === currentBookId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+    } catch (e) {
+      errEl.textContent   = 'Could not load book list. Please try again.';
+      errEl.style.display = 'block';
+      document.getElementById('book-modal').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('book-modal-body').textContent =
+      'Select the workbook for this session. This will update the session record and ' +
+      studentName + '\u2019s profile.';
+
+    document.getElementById('book-modal').classList.remove('hidden');
+  }
+
+  // Confirm the book change — writes Sessions + Students, updates sessionStorage + header
+  async function confirmBookChange() {
+    const select     = document.getElementById('book-modal-select');
+    const confirmBtn = document.getElementById('btn-book-confirm');
+    const cancelBtn  = document.getElementById('btn-book-cancel');
+    const errEl      = document.getElementById('book-modal-error');
+
+    const selectedId   = select.value;
+    const selectedName = select.options[select.selectedIndex].text;
+
+    if (!selectedId) return;
+
+    confirmBtn.disabled = true;
+    cancelBtn.disabled  = true;
+    confirmBtn.textContent = 'Saving\u2026';
+    errEl.style.display = 'none';
+
+    try {
+      const [sessErr, stuErr] = await Promise.all([
+        supabase.from('sessions')
+          .update({ lesson_book_id: selectedId })
+          .eq('session_id', sessionId)
+          .then(r => r.error),
+
+        supabase.from('students')
+          .update({ current_book: selectedId })
+          .eq('student_id', studentId)
+          .then(r => r.error)
+      ]);
+
+      if (sessErr || stuErr) {
+        const msg = sessErr?.message || stuErr?.message || 'Unknown error';
+        errEl.textContent   = 'Could not save book change: ' + msg + '. Please try again.';
+        errEl.style.display = 'block';
+        confirmBtn.disabled    = false;
+        cancelBtn.disabled     = false;
+        confirmBtn.textContent = 'Confirm Change';
+        return;
+      }
+
+      // Update in-memory state, sessionStorage, and header
+      currentBookId   = selectedId;
+      currentBookName = selectedName;
+      sessionStorage.setItem('lesson_book_id', selectedId);
+      document.getElementById('hdr-book-name').textContent = selectedName;
+      document.getElementById('hdr-book').style.display    = 'block';
+
+      document.getElementById('book-modal').classList.add('hidden');
+      confirmBtn.disabled    = false;
+      cancelBtn.disabled     = false;
+      confirmBtn.textContent = 'Confirm Change';
+
+    } catch (e) {
+      errEl.textContent   = 'An unexpected error occurred. Please try again.';
+      errEl.style.display = 'block';
+      confirmBtn.disabled    = false;
+      cancelBtn.disabled     = false;
+      confirmBtn.textContent = 'Confirm Change';
+    }
+  }
+
+  // Wire up modal buttons and Change link
+  document.getElementById('book-change-link').addEventListener('click', openBookModal);
+  document.getElementById('book-change-link').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') openBookModal();
+  });
+  document.getElementById('btn-book-confirm').addEventListener('click', confirmBookChange);
+  document.getElementById('btn-book-cancel').addEventListener('click', function() {
+    document.getElementById('book-modal').classList.add('hidden');
   });
 
 </script>
