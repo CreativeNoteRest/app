@@ -309,7 +309,7 @@
     <div class="header-brand">
       <span class="header-series-name" id="series-name">Creative Note</span>
       <span class="header-dot"></span>
-      <span class="header-app-name">Teacher</span>
+      <span class="header-app-name" id="header-teacher-name">Teacher</span>
     </div>
     <div>
       <button class="btn-icon" aria-label="Account" onclick="goAccount()">
@@ -527,11 +527,15 @@
       // Load teacher timezone (non-blocking -- use default if fails)
       const { data: tData } = await supabase
         .from('teachers')
-        .select('timezone')
+        .select('timezone, display_name')
         .eq('teacher_id', TEACHER_ID)
         .maybeSingle();
 
       if (tData?.timezone) teacherTimezone = tData.timezone;
+      if (tData?.display_name) {
+        const nameEl = document.getElementById('header-teacher-name');
+        if (nameEl) nameEl.textContent = tData.display_name;
+      }
 
       // Fetch active students for this teacher
       const { data: rawStudents, error: stuErr } = await supabase
