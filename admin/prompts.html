@@ -587,9 +587,44 @@ function setDsView(mode) {
 
 elDsTabTemplate.addEventListener('click', () => { setDsView('template'); });
 
-elDsTabResolved.addEventListener('click', () => {
-  if (!dsResolvedText) { return; } // button should be disabled but guard anyway
-  setDsView('resolved');
+elDsTabResolved.addEventListener('click', async () => {
+  if (!studentRow || !phase1Output || !dsPhase) { return; }
+  // If already fetched, just switch view
+  if (dsResolvedText) { setDsView('resolved'); return; }
+  // Fetch resolved prompt via prompt_only (no Gemini call)
+  elDsTabResolved.disabled    = true;
+  elDsTabResolved.textContent = 'Resolving…';
+  elDsTabResolved.classList.add('toggle-loading');
+  const sd = await sb.auth.getSession();
+  if (!sd.data.session) {
+    elDsTabResolved.disabled    = false;
+    elDsTabResolved.textContent = 'Resolved';
+    elDsTabResolved.classList.remove('toggle-loading');
+    elDsRunError.textContent = 'Session expired. Please sign in again.';
+    elDsRunError.classList.remove('hidden');
+    return;
+  }
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, bypass_gate: false, single_phase_run: true, phase: dsPhase, phase1_output: phase1Output, prompt_only: true })
+    });
+    const result = await res.json();
+    if (!result.success || !result.assembled_prompt_used) {
+      elDsRunError.textContent = 'Could not resolve prompt: ' + (result.error || 'Unknown error');
+      elDsRunError.classList.remove('hidden');
+    } else {
+      dsResolvedText = result.assembled_prompt_used;
+      setDsView('resolved');
+    }
+  } catch (err) {
+    elDsRunError.textContent = 'Request failed: ' + err.message;
+    elDsRunError.classList.remove('hidden');
+  }
+  elDsTabResolved.disabled    = false;
+  elDsTabResolved.textContent = 'Resolved';
+  elDsTabResolved.classList.remove('toggle-loading');
 });
 
 // ══════════════════════════════════════════════════════════════════════
@@ -887,8 +922,8 @@ elDsPhaseSelect.addEventListener('change', () => {
   dsOrigText         = p?.prompt_text || '';
   dsResolvedText     = null;
   dsViewMode         = 'template';
-  elDsTabResolved.disabled = true;
-  elDsTabResolved.title    = 'Run AI to see resolved prompt';
+  elDsTabResolved.disabled = false;
+  elDsTabResolved.title    = 'View resolved prompt (uses Phase 1 output)';
   setDsView('template');
 
   elDsBtnRestore.disabled = !(p?.prompt_text_previous);
@@ -910,10 +945,15 @@ function clearDsResults() {
   elDsBtnDlPrompt.classList.add('hidden');
   elDsBtnDlResp.classList.add('hidden');
   elDsRunError.classList.add('hidden');
-  // Reset resolved tab
-  dsResolvedText           = null;
-  elDsTabResolved.disabled = true;
-  elDsTabResolved.title    = 'Run AI to see resolved prompt';
+  // Reset cached resolved text -- tab stays enabled if phase1Output is in memory
+  dsResolvedText = null;
+  if (dsPhase !== null && phase1Output) {
+    elDsTabResolved.disabled = false;
+    elDsTabResolved.title    = 'View resolved prompt (uses Phase 1 output)';
+  } else {
+    elDsTabResolved.disabled = true;
+    elDsTabResolved.title    = 'Run Phase 1 first';
+  }
   if (dsViewMode === 'resolved') { setDsView('template'); }
 }
 
@@ -1010,11 +1050,9 @@ elDsBtnRun.addEventListener('click', async () => {
       return;
     }
 
-    // Store resolved prompt and unlock Resolved tab
+    // Store resolved prompt (also available via Resolved tab without running AI)
     if (result.assembled_prompt_used) {
-      dsResolvedText           = result.assembled_prompt_used;
-      elDsTabResolved.disabled = false;
-      elDsTabResolved.title    = '';
+      dsResolvedText = result.assembled_prompt_used;
       elDsBtnDlPrompt.classList.remove('hidden');
     }
 
