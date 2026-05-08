@@ -46,347 +46,108 @@
     .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
     .header-right { display: flex; align-items: center; gap: 12px; }
     .header-email { font-size: 0.78rem; color: var(--text-light); }
-    .btn-signout {
-      font-size: 0.78rem; font-weight: 600; color: var(--text-mid);
-      background: none; border: 1px solid var(--border); border-radius: 8px;
-      padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    }
+    .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
     .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
 
-    .login-wrap {
-      min-height: calc(100vh - 56px);
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-    }
-    .login-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 36px 32px;
-      width: 100%; max-width: 400px; box-shadow: var(--shadow);
-    }
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
     .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
     .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
-    .field-label {
-      display: block; font-size: 0.72rem; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
-    }
-    .field-input {
-      width: 100%; height: 46px; padding: 0 14px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
-      color: var(--text); background: var(--surface);
-      outline: none; margin-bottom: 16px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
+    .field-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .field-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; margin-bottom: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
     .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
-    .btn-login {
-      width: 100%; height: 48px; margin-top: 8px;
-      background: var(--brand); color: #fff; border: none; border-radius: 10px;
-      font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s;
-    }
+    .btn-login { width: 100%; height: 48px; margin-top: 8px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s; }
     .btn-login:hover { opacity: 0.88; }
     .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
-    .login-error {
-      margin-top: 14px; padding: 10px 14px;
-      background: var(--danger-light); border: 1px solid var(--danger-border);
-      border-radius: 8px; font-size: 0.82rem; color: var(--danger);
-    }
+    .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
 
-    .main { max-width: 860px; margin: 0 auto; padding: 32px 24px 60px; }
+    .main { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
     .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
     .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
     .page-title em { color: var(--brand); font-style: italic; }
-    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 32px; line-height: 1.5; }
 
-    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-wrap { display: flex; flex-direction: column; align-items: center; padding: 60px 0; gap: 14px; }
-    .loading-text { font-size: 0.85rem; color: var(--text-light); }
 
-    /* ── Prompt list ─────────────────────────────────────────────────────── */
-    .prompt-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-    .prompt-item {
-      background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
-      padding: 16px 18px;
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      transition: border-color 0.15s, box-shadow 0.15s; user-select: none;
-    }
-    .prompt-item:hover { border-color: var(--brand); box-shadow: var(--shadow); }
-    .prompt-item.active { border-color: var(--brand); background: #FFFAF6; }
-    .prompt-item-left { flex: 1; cursor: pointer; min-width: 0; }
-    .prompt-item-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 3px; }
-    .prompt-item-label { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-    .prompt-item-meta { font-size: 0.72rem; color: var(--text-light); margin-top: 3px; }
-    .prompt-item-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .chevron { color: var(--text-light); flex-shrink: 0; transition: color 0.15s; cursor: pointer; }
-    .prompt-item:hover .chevron, .prompt-item.active .chevron { color: var(--brand); }
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--text); margin-bottom: 18px; }
 
-    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+    /* ── Student selector ────────────────────────────────────────────────── */
+    .student-select { width: 100%; height: 44px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; }
+    .student-select:focus { border-color: var(--brand); }
+    .student-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── Editor panel ────────────────────────────────────────────────────── */
-    .editor-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
-    .editor-key { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
-    .editor-label { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
-    .editor-updated { font-size: 0.72rem; color: var(--text-light); margin-top: 4px; margin-bottom: 18px; }
+    /* ── Prompt textarea ─────────────────────────────────────────────────── */
+    .field-section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+    .prompt-textarea { width: 100%; min-height: 320px; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', monospace; font-size: 0.88rem; line-height: 1.65; color: var(--text); background: var(--surface); resize: vertical; outline: none; transition: border-color 0.15s, box-shadow 0.15s; margin-bottom: 6px; }
+    .prompt-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .prompt-textarea:disabled { opacity: 0.55; cursor: not-allowed; }
+    .char-count { font-size: 0.72rem; color: var(--text-light); text-align: right; margin-bottom: 14px; }
+
+    /* assembled prompt — read-only, shown after Run AI for downstream */
+    .assembled-textarea { width: 100%; min-height: 240px; padding: 14px 16px; border: 1.5px solid var(--info-border); border-radius: 10px; font-family: monospace; font-size: 0.82rem; line-height: 1.65; color: var(--text); background: var(--info-light); resize: vertical; outline: none; margin-bottom: 14px; }
+
+    /* ── Variable chips ──────────────────────────────────────────────────── */
     .vars-heading { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
     .vars-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
     .var-chip { font-size: 0.72rem; font-weight: 600; font-family: monospace; background: var(--brand-light); color: var(--brand); border-radius: 6px; padding: 3px 9px; }
     .var-chip.missing { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
     .vars-none { font-size: 0.78rem; color: var(--text-light); }
 
-    .prompt-textarea {
-      width: 100%; min-height: 360px; padding: 14px 16px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', monospace; font-size: 0.88rem; line-height: 1.65;
-      color: var(--text); background: var(--surface); resize: vertical; outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s; margin-bottom: 6px;
-    }
-    .prompt-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
-    .char-count { font-size: 0.72rem; color: var(--text-light); text-align: right; margin-bottom: 16px; }
-
-    .msg-box { padding: 12px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 14px; }
-    .msg-error { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
-    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
-
-    .editor-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .btn-save {
-      height: 46px; padding: 0 28px; background: var(--brand); color: #fff; border: none;
-      border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.05rem;
-      cursor: pointer; box-shadow: 0 4px 14px rgba(226,107,10,0.26); transition: opacity 0.15s;
-    }
-    .btn-save:hover { opacity: 0.88; }
-    .btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-undo {
-      height: 46px; padding: 0 20px; background: var(--card); color: var(--text-mid);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-undo:hover { border-color: var(--warn); color: var(--warn); }
-    .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-discard {
-      height: 46px; padding: 0 16px; background: none; border: none;
-      font-size: 0.88rem; font-weight: 600; color: var(--text-light); cursor: pointer; transition: color 0.15s;
-    }
-    .btn-discard:hover { color: var(--danger); }
-
-    /* ── Session panel (page-level student + Phase 1) ─────────────────── */
-    .session-panel {
-      background: var(--card); border: 1.5px solid var(--brand);
-      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-    .session-panel-header {
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px;
-    }
-    .session-panel-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
-    .session-panel-sub { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
-    .btn-close-session {
-      flex-shrink: 0; height: 34px; padding: 0 14px;
-      background: none; border: 1.5px solid var(--border); border-radius: 8px;
-      font-size: 0.82rem; font-weight: 600; color: var(--text-mid);
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-close-session:hover { border-color: var(--danger); color: var(--danger); }
-
-    /* Student picker */
-    .student-picker-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
-    .student-picker-loading { font-size: 0.82rem; color: var(--text-light); padding: 8px 0; }
-    .student-select {
-      width: 100%; height: 44px; padding: 0 12px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
-      color: var(--text); background: var(--surface); outline: none;
-      transition: border-color 0.15s;
-    }
-    .student-select:focus { border-color: var(--brand); }
-    .btn-confirm-student {
-      margin-top: 10px; height: 40px; padding: 0 20px;
-      background: var(--brand); color: #fff; border: none; border-radius: 9px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
-    }
-    .btn-confirm-student:hover { opacity: 0.88; }
-    .btn-confirm-student:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    /* Student confirmed badge */
-    .student-confirmed-bar {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      background: var(--success-light); border: 1px solid var(--success-border);
-      border-radius: 9px; padding: 10px 14px; margin-bottom: 18px;
-    }
-    .student-confirmed-name { font-size: 0.88rem; font-weight: 600; color: var(--success); }
-    .btn-change-student {
-      font-size: 0.75rem; font-weight: 600; color: var(--text-mid);
-      background: none; border: 1px solid var(--border); border-radius: 7px;
-      padding: 4px 10px; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap;
-    }
-    .btn-change-student:hover { border-color: var(--brand); color: var(--brand); }
-
-    /* Phase 1 panel within session panel */
-    .phase1-section { border-top: 1px solid var(--border); padding-top: 18px; }
-    .phase1-section-label {
-      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
-      text-transform: uppercase; color: var(--brand); margin-bottom: 3px;
-    }
-    .phase1-section-title {
-      font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--text); margin-bottom: 12px;
-    }
-
-    /* Assembled prompt textarea (Phase 1) */
-    .preview-textarea {
-      width: 100%; min-height: 200px; padding: 14px 16px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: monospace; font-size: 0.82rem; line-height: 1.65;
-      color: var(--text); background: var(--surface); resize: vertical;
-      outline: none; margin-bottom: 14px;
-    }
-    .preview-section-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
-    }
-
-    /* Model selector */
-    .model-selector-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
-    }
-    .model-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-    .btn-model-pill {
-      height: 32px; padding: 0 14px;
-      border: 1.5px solid var(--brand); border-radius: 20px;
-      background: var(--card); color: var(--brand);
-      font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
+    /* ── Model / budget ──────────────────────────────────────────────────── */
+    .controls-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px; margin-bottom: 16px; }
+    .control-group { display: flex; flex-direction: column; gap: 8px; }
+    .control-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); }
+    .model-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-model-pill { height: 32px; padding: 0 14px; border: 1.5px solid var(--brand); border-radius: 20px; background: var(--card); color: var(--brand); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; }
     .btn-model-pill:hover { background: var(--brand-light); }
     .btn-model-pill.pill-active { background: var(--brand); color: #fff; }
-
-    /* Thinking budget */
-    .thinking-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .thinking-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-mid); white-space: nowrap;
-    }
-    .thinking-input {
-      width: 82px; height: 32px; padding: 0 10px;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
-      text-align: center; color: var(--text); background: var(--surface); outline: none;
-      transition: border-color 0.15s;
-    }
+    .btn-model-pill:disabled { opacity: 0.4; cursor: not-allowed; }
+    .thinking-row { display: flex; align-items: center; gap: 8px; }
+    .thinking-input { width: 82px; height: 32px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; text-align: center; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
     .thinking-input:focus { border-color: var(--brand); }
+    .thinking-input:disabled { opacity: 0.4; cursor: not-allowed; }
     .thinking-hint { font-size: 0.72rem; color: var(--text-light); }
 
-    /* Phase 1 action bar */
-    .phase1-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-    .btn-run-phase1 {
-      height: 40px; padding: 0 22px;
-      background: var(--brand); color: #fff; border: none; border-radius: 9px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      box-shadow: 0 3px 10px rgba(226,107,10,0.22); transition: opacity 0.15s;
-    }
-    .btn-run-phase1:hover { opacity: 0.88; }
-    .btn-run-phase1:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-download-p1 {
-      height: 40px; padding: 0 18px;
-      background: var(--card); color: var(--text-mid);
-      border: 1.5px solid var(--border); border-radius: 9px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-download-p1:hover { border-color: var(--brand); color: var(--brand); }
+    /* ── Action bars ─────────────────────────────────────────────────────── */
+    .action-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .btn-save { height: 44px; padding: 0 24px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(226,107,10,0.26); transition: opacity 0.15s; }
+    .btn-save:hover { opacity: 0.88; }
+    .btn-save:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    .btn-restore { height: 44px; padding: 0 18px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-restore:hover { border-color: var(--warn); color: var(--warn); }
+    .btn-restore:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-discard { height: 44px; padding: 0 14px; background: none; border: none; font-size: 0.88rem; font-weight: 600; color: var(--text-light); cursor: pointer; transition: color 0.15s; }
+    .btn-discard:hover { color: var(--danger); }
+    .btn-discard:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-run { height: 44px; padding: 0 24px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; box-shadow: 0 3px 10px rgba(226,107,10,0.22); transition: opacity 0.15s; }
+    .btn-run:hover { opacity: 0.88; }
+    .btn-run:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    .btn-dl { height: 38px; padding: 0 16px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-dl:hover { border-color: var(--brand); color: var(--brand); }
 
-    /* Phase 1 status / output */
-    .phase1-status {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
-      margin-bottom: 12px;
-    }
-    .phase1-status.ready { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
-    .phase1-status.pending { background: var(--info-light); border: 1px solid var(--info-border); color: var(--info); }
-    .phase1-status-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; }
+    /* ── Section divider ─────────────────────────────────────────────────── */
+    .sec-divider { height: 1px; background: var(--border); margin: 20px 0; }
 
-    .phase1-output-wrap { margin-top: 6px; }
-    .phase1-output-label {
-      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
-      text-transform: uppercase; color: var(--success); margin-bottom: 6px;
-    }
-    .phase1-output-textarea {
-      width: 100%; min-height: 120px; padding: 12px 14px;
-      border: 1.5px solid var(--success-border); border-radius: 10px;
-      font-family: monospace; font-size: 0.78rem; line-height: 1.55;
-      color: var(--text); background: var(--success-light); resize: vertical;
-      outline: none;
-    }
+    /* ── Messages ────────────────────────────────────────────────────────── */
+    .msg { padding: 12px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 14px; }
+    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .msg-info    { background: var(--info-light);    border: 1px solid var(--info-border);    color: var(--info); }
 
-    /* ── Downstream phase panel ───────────────────────────────────────── */
-    .downstream-panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-    .downstream-panel-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); margin-bottom: 14px; }
-    .downstream-locked {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 14px; border-radius: 8px; font-size: 0.85rem;
-      background: var(--info-light); border: 1px solid var(--info-border); color: var(--info);
-    }
+    /* ── AI result ───────────────────────────────────────────────────────── */
+    .result-section { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 6px; }
+    .result-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .result-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; }
+    .result-textarea { width: 100%; min-height: 220px; padding: 14px 16px; border: 1.5px solid var(--success-border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; line-height: 1.65; color: var(--text); background: var(--success-light); resize: vertical; outline: none; margin-bottom: 12px; }
 
-    /* Phase dropdown */
-    .phase-dropdown-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
-    .phase-select {
-      width: 100%; height: 46px; padding: 0 14px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
-      color: var(--text); background: var(--surface); outline: none;
-      transition: border-color 0.15s; margin-bottom: 18px; cursor: pointer;
-    }
+    /* ── Phase dropdown ──────────────────────────────────────────────────── */
+    .phase-select { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; margin-bottom: 20px; }
     .phase-select:focus { border-color: var(--brand); }
-
-    /* Downstream assembled prompt */
-    .downstream-prompt-wrap { margin-top: 4px; }
-    .downstream-prompt-placeholder {
-      padding: 20px; border: 1.5px dashed var(--border); border-radius: 10px;
-      font-size: 0.85rem; color: var(--text-light); text-align: center; margin-bottom: 14px;
-    }
-
-    /* Downstream model/budget/actions */
-    .downstream-controls { margin-top: 4px; }
-    .ai-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; }
-    .downstream-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
-    .btn-download {
-      height: 40px; padding: 0 18px;
-      background: var(--card); color: var(--text-mid);
-      border: 1.5px solid var(--border); border-radius: 9px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-download:hover { border-color: var(--brand); color: var(--brand); }
-    .btn-run-ai {
-      height: 40px; padding: 0 22px;
-      background: var(--brand); color: #fff; border: none; border-radius: 9px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      box-shadow: 0 3px 10px rgba(226,107,10,0.22); transition: opacity 0.15s;
-    }
-    .btn-run-ai:hover { opacity: 0.88; }
-    .btn-run-ai:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    /* AI response section */
-    .ai-response-section { border-top: 1px solid var(--border); padding-top: 18px; }
-    .ai-response-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
-    }
-    .ai-response-textarea {
-      width: 100%; min-height: 220px; padding: 14px 16px;
-      border: 1.5px solid var(--success-border); border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; line-height: 1.65;
-      color: var(--text); background: var(--success-light); resize: vertical;
-      outline: none; margin-bottom: 14px;
-    }
-    .ai-response-actions { display: flex; gap: 10px; }
-
-    .preview-msg { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
-
-    /* ── Editor panel (unchanged) ───────────────────────────────────────── */
+    .phase-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .hidden { display: none !important; }
   </style>
@@ -405,10 +166,11 @@
   </div>
 </header>
 
+<!-- Login -->
 <div id="view-login" class="login-wrap">
   <div class="login-card">
     <div class="login-title">Admin sign in</div>
-    <div class="login-sub">Creative Note prompt editor. Access is restricted to approved administrators.</div>
+    <div class="login-sub">Creative Note prompt editor. Access restricted to approved administrators.</div>
     <label class="field-label" for="inp-email">Email</label>
     <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
     <label class="field-label" for="inp-password">Password</label>
@@ -418,183 +180,160 @@
   </div>
 </div>
 
+<!-- Editor -->
 <div id="view-editor" class="hidden">
   <main class="main">
     <div class="page-label">Session close</div>
     <h1 class="page-title">Prompt <em>editor</em></h1>
-    <p class="page-subtitle">Select a prompt to edit and save. Use the test session panel below to run phases against live data.</p>
+    <p class="page-subtitle">Edit, test, and save session-close prompts against live session data.</p>
 
-    <div id="view-loading" class="loading-wrap">
-      <div class="spinner"></div>
-      <div class="loading-text">Loading prompts...</div>
+    <!-- ── 1. Student selector ──────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-tag">Active session</div>
+      <div class="card-title" style="margin-bottom:12px">Select student</div>
+      <div id="student-loading" style="font-size:0.85rem;color:var(--text-light);padding:4px 0">Loading active sessions…</div>
+      <select id="student-select" class="student-select hidden"><option value="">-- select a student --</option></select>
+      <div id="student-none"  class="hidden" style="font-size:0.85rem;color:var(--text-light);padding:8px 0">No active sessions found.</div>
+      <div id="student-error" class="msg msg-error hidden"></div>
     </div>
 
-    <div id="view-prompts" class="hidden">
+    <!-- ── 2. Phase 1 ────────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-tag">Phase 1</div>
+      <div class="card-title">Working Position and Book Transition</div>
 
-      <!-- ── Prompt list ──────────────────────────────────────────────── -->
-      <div class="prompt-list" id="prompt-list"></div>
+      <div class="field-section-label">Prompt</div>
+      <textarea id="p1-textarea" class="prompt-textarea" placeholder="Prompt text…" disabled></textarea>
+      <div class="char-count" id="p1-char-count">0 characters</div>
 
-      <!-- ── Editor panel ─────────────────────────────────────────────── -->
-      <div class="divider hidden" id="editor-divider"></div>
-      <div id="editor-panel" class="editor-panel hidden">
-        <div class="editor-key" id="editor-key"></div>
-        <div class="editor-label" id="editor-label"></div>
-        <div class="editor-updated" id="editor-updated"></div>
-        <div class="vars-heading">Required variables -- all must appear in the prompt text</div>
-        <div class="vars-row" id="vars-row"></div>
-        <textarea class="prompt-textarea" id="prompt-textarea" placeholder="Prompt text..."></textarea>
-        <div class="char-count" id="char-count">0 characters</div>
-        <div id="msg-error" class="msg-box msg-error hidden"></div>
-        <div id="msg-success" class="msg-box msg-success hidden"></div>
-        <div class="editor-actions">
-          <button class="btn-save" id="btn-save">Save prompt</button>
-          <button class="btn-undo" id="btn-undo">Restore previous</button>
-          <button class="btn-discard" id="btn-discard">Discard changes</button>
-        </div>
-      </div>
+      <div class="vars-heading">Required variables</div>
+      <div class="vars-row" id="p1-vars-row"><span class="vars-none">Loading…</span></div>
 
-      <div class="divider" style="margin-top:32px;"></div>
-
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- SESSION TEST PANEL                                             -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-
-      <!-- ── Session panel: student picker + Phase 1 ─────────────────── -->
-      <div class="session-panel" id="session-panel">
-        <div class="session-panel-header">
-          <div>
-            <div class="session-panel-title">Test session</div>
-            <div class="session-panel-sub">Select a student, then run Phase 1. All downstream phases use Phase 1 output.</div>
-          </div>
-        </div>
-
-        <!-- Student picker (initial state) -->
-        <div id="student-picker-wrap">
-          <div class="student-picker-label">Active session</div>
-          <div id="student-picker-loading" class="student-picker-loading hidden">Loading active sessions...</div>
-          <select id="student-select" class="student-select hidden">
-            <option value="">-- choose a student --</option>
-          </select>
-          <div id="student-picker-none" class="student-picker-loading hidden">No active sessions found.</div>
-          <br />
-          <button id="btn-confirm-student" class="btn-confirm-student hidden" disabled>Confirm student</button>
-          <div id="student-fetch-error" class="preview-msg msg-error hidden"></div>
-        </div>
-
-        <!-- Student confirmed bar (shown after confirm) -->
-        <div id="student-confirmed-bar" class="student-confirmed-bar hidden">
-          <span id="student-confirmed-name" class="student-confirmed-name"></span>
-          <button id="btn-change-student" class="btn-change-student">Change student</button>
-        </div>
-
-        <!-- Phase 1 (shown after student confirmed) -->
-        <div id="phase1-section" class="phase1-section hidden">
-          <div class="phase1-section-label">Phase 1</div>
-          <div class="phase1-section-title">Working Position and Book Transition</div>
-
-          <div class="preview-section-label" id="p1-prompt-label">Assembled prompt</div>
-          <textarea id="p1-prompt-textarea" class="preview-textarea" readonly></textarea>
-
-          <div class="model-selector-label">Model</div>
+      <div class="controls-row">
+        <div class="control-group">
+          <div class="control-label">Model</div>
           <div class="model-pills" id="p1-model-pills">
-            <button type="button" class="btn-model-pill pill-active" data-model="gemini-2.5-flash-lite">Flash Lite</button>
-            <button type="button" class="btn-model-pill" data-model="gemini-2.5-flash">Flash</button>
-            <button type="button" class="btn-model-pill" data-model="gemini-2.5-pro">Pro</button>
+            <button type="button" class="btn-model-pill pill-active" data-model="gemini-2.5-flash-lite" disabled>Flash Lite</button>
+            <button type="button" class="btn-model-pill" data-model="gemini-2.5-flash" disabled>Flash</button>
+            <button type="button" class="btn-model-pill" data-model="gemini-2.5-pro" disabled>Pro</button>
           </div>
+        </div>
+        <div class="control-group">
+          <div class="control-label">Thinking budget</div>
           <div class="thinking-row">
-            <span class="thinking-label">Thinking budget</span>
-            <input type="number" id="p1-thinking-budget" class="thinking-input" value="1024" min="0" max="24576" step="256" />
+            <input type="number" id="p1-thinking" class="thinking-input" value="1024" min="0" max="24576" step="256" disabled />
             <span class="thinking-hint">0 = off</span>
           </div>
-
-          <div id="p1-status" class="phase1-status pending hidden">
-            <span id="p1-status-text"></span>
-          </div>
-          <div id="p1-status-meta" class="phase1-status-meta hidden"></div>
-
-          <div class="phase1-actions">
-            <button id="btn-run-phase1" class="btn-run-phase1">Run AI — Phase 1</button>
-            <button id="btn-download-p1-prompt" class="btn-download-p1 hidden">Download prompt .txt</button>
-          </div>
-          <div id="p1-run-error" class="preview-msg msg-error hidden"></div>
-
-          <div id="p1-output-wrap" class="phase1-output-wrap hidden">
-            <div class="phase1-output-label">Phase 1 output — passed to all downstream phases</div>
-            <textarea id="p1-output-textarea" class="phase1-output-textarea" readonly></textarea>
-            <div class="ai-response-actions" style="margin-top:10px;">
-              <button id="btn-download-p1-response" class="btn-download">Download AI response .txt</button>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- ── Downstream phase panel ────────────────────────────────────── -->
-      <div class="downstream-panel" id="downstream-panel">
-        <div class="downstream-panel-title">Downstream phases</div>
-
-        <!-- Locked state -->
-        <div id="downstream-locked" class="downstream-locked">
-          <span>Run Phase 1 above to unlock phases 2–5.</span>
-        </div>
-
-        <!-- Unlocked content -->
-        <div id="downstream-content" class="hidden">
-
-          <div id="p1-rerun-notice" class="preview-msg hidden" style="background:var(--info-light);border:1px solid var(--info-border);color:var(--info);"></div>
-
-          <div class="phase-dropdown-label">Select phase</div>
-          <select id="phase-select" class="phase-select">
-            <option value="">-- select a phase --</option>
-            <option value="2">Phase 2 — Quality Gate</option>
-            <option value="3">Phase 3 — Supplement Selection</option>
-            <option value="4">Phase 4 — Teacher Summary</option>
-            <option value="5">Phase 5 — Student Summary</option>
-          </select>
-
-          <!-- Prompt display (populated after Run AI) -->
-          <div id="downstream-prompt-wrap" class="downstream-prompt-wrap hidden">
-            <div class="preview-section-label" id="downstream-prompt-label">Assembled prompt (as sent to AI)</div>
-            <textarea id="downstream-prompt-textarea" class="preview-textarea" readonly></textarea>
-          </div>
-          <div id="downstream-prompt-placeholder" class="downstream-prompt-placeholder hidden">
-            Select a phase and click Run AI to see the assembled prompt.
-          </div>
-
-          <!-- Model / budget for selected downstream phase -->
-          <div id="downstream-controls" class="downstream-controls hidden">
-            <div class="model-selector-label">Model</div>
-            <div class="model-pills" id="ds-model-pills">
-              <button type="button" class="btn-model-pill pill-active" data-model="gemini-2.5-flash-lite">Flash Lite</button>
-              <button type="button" class="btn-model-pill" data-model="gemini-2.5-flash">Flash</button>
-              <button type="button" class="btn-model-pill" data-model="gemini-2.5-pro">Pro</button>
-            </div>
-            <div class="thinking-row">
-              <span class="thinking-label">Thinking budget</span>
-              <input type="number" id="ds-thinking-budget" class="thinking-input" value="0" min="0" max="24576" step="256" />
-              <span class="thinking-hint">0 = off</span>
-            </div>
-            <div id="ds-ai-meta" class="ai-meta hidden"></div>
-            <div class="downstream-actions">
-              <button id="btn-download-ds-prompt" class="btn-download hidden">Download prompt .txt</button>
-              <button id="btn-run-ai" class="btn-run-ai">Run AI</button>
-            </div>
-            <div id="ds-run-error" class="preview-msg msg-error hidden"></div>
-          </div>
-
-          <!-- AI response -->
-          <div id="ds-ai-response-section" class="ai-response-section hidden">
-            <div class="ai-response-label">AI response</div>
-            <textarea id="ds-ai-response-textarea" class="ai-response-textarea" readonly></textarea>
-            <div class="ai-response-actions">
-              <button id="btn-download-ds-response" class="btn-download">Download AI response .txt</button>
-            </div>
-          </div>
-        </div>
+      <div id="p1-msg-error"   class="msg msg-error   hidden"></div>
+      <div id="p1-msg-success" class="msg msg-success hidden"></div>
+      <div class="action-bar">
+        <button id="p1-btn-save"    class="btn-save"    disabled>Save prompt</button>
+        <button id="p1-btn-restore" class="btn-restore" disabled>Restore previous</button>
+        <button id="p1-btn-discard" class="btn-discard" disabled>Discard changes</button>
       </div>
 
-    </div><!-- /view-prompts -->
+      <div class="sec-divider"></div>
+
+      <div id="p1-run-error" class="msg msg-error hidden"></div>
+      <div class="action-bar">
+        <button id="p1-btn-run" class="btn-run" disabled>Run AI — Phase 1</button>
+        <button id="p1-btn-dl-prompt" class="btn-dl hidden">Download prompt .txt</button>
+      </div>
+
+      <!-- Phase 1 result -->
+      <div id="p1-result" class="result-section hidden">
+        <div class="result-label">Phase 1 output — input for all downstream phases</div>
+        <div id="p1-result-meta" class="result-meta"></div>
+        <textarea id="p1-result-textarea" class="result-textarea" readonly></textarea>
+        <button id="p1-btn-dl-response" class="btn-dl">Download AI response .txt</button>
+      </div>
+    </div>
+
+    <!-- ── 3. Downstream phases ──────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-tag">Downstream phases</div>
+      <div class="card-title">Phases 2 – 5</div>
+
+      <div id="ds-locked" class="msg msg-info">Run Phase 1 above to unlock downstream phases.</div>
+
+      <div id="ds-content" class="hidden">
+        <div id="ds-rerun-notice" class="msg msg-info hidden"></div>
+
+        <div class="field-section-label">Select phase</div>
+        <select id="ds-phase-select" class="phase-select">
+          <option value="">-- select a phase --</option>
+          <option value="2">Phase 2 — Quality Gate</option>
+          <option value="3">Phase 3 — Supplement Selection</option>
+          <option value="4">Phase 4 — Teacher Summary</option>
+          <option value="5">Phase 5 — Student Summary</option>
+        </select>
+
+        <div id="ds-phase-content" class="hidden">
+
+          <div class="field-section-label">Prompt template</div>
+          <textarea id="ds-textarea" class="prompt-textarea" placeholder="Prompt text…"></textarea>
+          <div class="char-count" id="ds-char-count">0 characters</div>
+
+          <div class="vars-heading">Required variables</div>
+          <div class="vars-row" id="ds-vars-row"></div>
+
+          <div class="controls-row">
+            <div class="control-group">
+              <div class="control-label">Model</div>
+              <div class="model-pills" id="ds-model-pills">
+                <button type="button" class="btn-model-pill pill-active" data-model="gemini-2.5-flash-lite">Flash Lite</button>
+                <button type="button" class="btn-model-pill" data-model="gemini-2.5-flash">Flash</button>
+                <button type="button" class="btn-model-pill" data-model="gemini-2.5-pro">Pro</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-label">Thinking budget</div>
+              <div class="thinking-row">
+                <input type="number" id="ds-thinking" class="thinking-input" value="0" min="0" max="24576" step="256" />
+                <span class="thinking-hint">0 = off</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="ds-msg-error"   class="msg msg-error   hidden"></div>
+          <div id="ds-msg-success" class="msg msg-success hidden"></div>
+          <div class="action-bar">
+            <button id="ds-btn-save"    class="btn-save">Save prompt</button>
+            <button id="ds-btn-restore" class="btn-restore" disabled>Restore previous</button>
+            <button id="ds-btn-discard" class="btn-discard">Discard changes</button>
+          </div>
+
+          <div class="sec-divider"></div>
+
+          <div id="ds-run-error" class="msg msg-error hidden"></div>
+          <div class="action-bar">
+            <button id="ds-btn-run" class="btn-run">Run AI</button>
+            <button id="ds-btn-dl-prompt" class="btn-dl hidden">Download assembled prompt .txt</button>
+          </div>
+
+          <!-- Assembled prompt (what Gemini actually received) -->
+          <div id="ds-assembled" class="hidden">
+            <div class="field-section-label" id="ds-assembled-label">Assembled prompt (as sent to AI)</div>
+            <textarea id="ds-assembled-textarea" class="assembled-textarea" readonly></textarea>
+          </div>
+
+          <!-- AI result -->
+          <div id="ds-result" class="result-section hidden">
+            <div class="result-label" id="ds-result-label">AI response</div>
+            <div id="ds-result-meta" class="result-meta"></div>
+            <textarea id="ds-result-textarea" class="result-textarea" readonly></textarea>
+            <button id="ds-btn-dl-response" class="btn-dl">Download AI response .txt</button>
+          </div>
+
+        </div><!-- /ds-phase-content -->
+      </div><!-- /ds-content -->
+    </div><!-- /ds card -->
+
   </main>
-</div>
+</div><!-- /view-editor -->
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -602,873 +341,156 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
 const ADMIN_EMAILS = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
-const PHASE_LABELS = {
-  session_close_phase1: 'Phase 1 -- Working Position and Book Transition',
-  session_close_phase2: 'Phase 2 -- Quality Gate',
-  session_close_phase3: 'Phase 3 -- Supplement Selection',
-  session_close_phase4: 'Phase 4 -- Teacher Summary',
-  session_close_phase5: 'Phase 5 -- Student Summary'
-};
+const PHASE_KEYS   = { 1:'session_close_phase1', 2:'session_close_phase2', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Editor state ───────────────────────────────────────────────────────
-let prompts      = [];
-let selected     = null;
-let originalText = '';
+// ── State ──────────────────────────────────────────────────────────────
+let prompts        = {};   // { 1: promptObj, 2: ..., 5: promptObj }
+let studentRow     = null; // { session_id, student_id, teacher_id, series_id, lesson_book_id, student_name }
+let phaseAIConfig  = null; // from dry_run
+let phase1Output   = null; // raw Phase 1 JSON after Run AI
+let p1OrigText     = '';
+let dsPhase        = null; // selected downstream phase number
+let dsOrigText     = '';
 
-// ── Session test state (page-level, persists across phase interactions) ─
-let studentRow     = null;   // { session_id, student_id, teacher_id, series_id, lesson_book_id, student_name }
-let assembledP1    = null;   // Phase 1 assembled prompt string from dry_run
-let phaseAIConfig  = null;   // phase_ai_config from dry_run
-let phase1Output   = null;   // raw Phase 1 JSON string after running; null until Run AI Phase 1
-let selectedDsPhase = null;  // currently selected downstream phase number (2-5)
+// ── DOM ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const elHeaderRight   = $('header-right');
+const elHeaderEmail   = $('header-email');
+const elViewLogin     = $('view-login');
+const elViewEditor    = $('view-editor');
+const elLoginError    = $('login-error');
+const elBtnLogin      = $('btn-login');
+const elInpEmail      = $('inp-email');
+const elInpPassword   = $('inp-password');
 
-// ── DOM — header / login ───────────────────────────────────────────────
-const elViewLogin   = document.getElementById('view-login');
-const elViewEditor  = document.getElementById('view-editor');
-const elHeaderRight = document.getElementById('header-right');
-const elHeaderEmail = document.getElementById('header-email');
-const elLoginError  = document.getElementById('login-error');
-const elBtnLogin    = document.getElementById('btn-login');
-const elInpEmail    = document.getElementById('inp-email');
-const elInpPassword = document.getElementById('inp-password');
+const elStudentLoading = $('student-loading');
+const elStudentSelect  = $('student-select');
+const elStudentNone    = $('student-none');
+const elStudentError   = $('student-error');
 
-// ── DOM — prompts view ─────────────────────────────────────────────────
-const elViewLoading = document.getElementById('view-loading');
-const elViewPrompts = document.getElementById('view-prompts');
-const elPromptList  = document.getElementById('prompt-list');
+const elP1Textarea    = $('p1-textarea');
+const elP1CharCount   = $('p1-char-count');
+const elP1VarsRow     = $('p1-vars-row');
+const elP1Thinking    = $('p1-thinking');
+const elP1MsgError    = $('p1-msg-error');
+const elP1MsgSuccess  = $('p1-msg-success');
+const elP1BtnSave     = $('p1-btn-save');
+const elP1BtnRestore  = $('p1-btn-restore');
+const elP1BtnDiscard  = $('p1-btn-discard');
+const elP1RunError    = $('p1-run-error');
+const elP1BtnRun      = $('p1-btn-run');
+const elP1BtnDlPrompt = $('p1-btn-dl-prompt');
+const elP1Result      = $('p1-result');
+const elP1ResultMeta  = $('p1-result-meta');
+const elP1ResultTA    = $('p1-result-textarea');
+const elP1BtnDlResp   = $('p1-btn-dl-response');
+const elP1Pills       = document.querySelectorAll('#p1-model-pills .btn-model-pill');
 
-// ── DOM — editor panel ─────────────────────────────────────────────────
-const elEditorDiv   = document.getElementById('editor-divider');
-const elEditorPanel = document.getElementById('editor-panel');
-const elEditorKey   = document.getElementById('editor-key');
-const elEditorLabel = document.getElementById('editor-label');
-const elEditorUpd   = document.getElementById('editor-updated');
-const elVarsRow     = document.getElementById('vars-row');
-const elTextarea    = document.getElementById('prompt-textarea');
-const elCharCount   = document.getElementById('char-count');
-const elMsgError    = document.getElementById('msg-error');
-const elMsgSuccess  = document.getElementById('msg-success');
-const elBtnSave     = document.getElementById('btn-save');
-const elBtnUndo     = document.getElementById('btn-undo');
-const elBtnDiscard  = document.getElementById('btn-discard');
-
-// ── DOM — student picker ───────────────────────────────────────────────
-const elStudentPickerWrap  = document.getElementById('student-picker-wrap');
-const elStudentPickerLoad  = document.getElementById('student-picker-loading');
-const elStudentSelect      = document.getElementById('student-select');
-const elStudentPickerNone  = document.getElementById('student-picker-none');
-const elBtnConfirmStudent  = document.getElementById('btn-confirm-student');
-const elStudentFetchError  = document.getElementById('student-fetch-error');
-const elStudentConfirmedBar = document.getElementById('student-confirmed-bar');
-const elStudentConfirmedName = document.getElementById('student-confirmed-name');
-const elBtnChangeStudent   = document.getElementById('btn-change-student');
-
-// ── DOM — Phase 1 ─────────────────────────────────────────────────────
-const elPhase1Section      = document.getElementById('phase1-section');
-const elP1PromptLabel      = document.getElementById('p1-prompt-label');
-const elP1PromptTextarea   = document.getElementById('p1-prompt-textarea');
-const elP1ModelPills       = document.querySelectorAll('#p1-model-pills .btn-model-pill');
-const elP1ThinkingBudget   = document.getElementById('p1-thinking-budget');
-const elP1Status           = document.getElementById('p1-status');
-const elP1StatusText       = document.getElementById('p1-status-text');
-const elP1StatusMeta       = document.getElementById('p1-status-meta');
-const elBtnRunPhase1       = document.getElementById('btn-run-phase1');
-const elBtnDownloadP1Prompt = document.getElementById('btn-download-p1-prompt');
-const elP1RunError         = document.getElementById('p1-run-error');
-const elP1OutputWrap       = document.getElementById('p1-output-wrap');
-const elP1OutputTextarea   = document.getElementById('p1-output-textarea');
-const elBtnDownloadP1Response = document.getElementById('btn-download-p1-response');
-
-// ── DOM — downstream panel ─────────────────────────────────────────────
-const elDownstreamLocked   = document.getElementById('downstream-locked');
-const elDownstreamContent  = document.getElementById('downstream-content');
-const elP1RerunNotice      = document.getElementById('p1-rerun-notice');
-const elPhaseSelect        = document.getElementById('phase-select');
-const elDsPromptWrap       = document.getElementById('downstream-prompt-wrap');
-const elDsPromptLabel      = document.getElementById('downstream-prompt-label');
-const elDsPromptTextarea   = document.getElementById('downstream-prompt-textarea');
-const elDsPromptPlaceholder = document.getElementById('downstream-prompt-placeholder');
-const elDsControls         = document.getElementById('downstream-controls');
-const elDsModelPills       = document.querySelectorAll('#ds-model-pills .btn-model-pill');
-const elDsThinkingBudget   = document.getElementById('ds-thinking-budget');
-const elDsAiMeta           = document.getElementById('ds-ai-meta');
-const elBtnDownloadDsPrompt = document.getElementById('btn-download-ds-prompt');
-const elBtnRunAI           = document.getElementById('btn-run-ai');
-const elDsRunError         = document.getElementById('ds-run-error');
-const elDsAiResponseSection = document.getElementById('ds-ai-response-section');
-const elDsAiResponseTextarea = document.getElementById('ds-ai-response-textarea');
-const elBtnDownloadDsResponse = document.getElementById('btn-download-ds-response');
+const elDsLocked      = $('ds-locked');
+const elDsContent     = $('ds-content');
+const elDsRerunNotice = $('ds-rerun-notice');
+const elDsPhaseSelect = $('ds-phase-select');
+const elDsPhaseContent= $('ds-phase-content');
+const elDsTextarea    = $('ds-textarea');
+const elDsCharCount   = $('ds-char-count');
+const elDsVarsRow     = $('ds-vars-row');
+const elDsThinking    = $('ds-thinking');
+const elDsMsgError    = $('ds-msg-error');
+const elDsMsgSuccess  = $('ds-msg-success');
+const elDsBtnSave     = $('ds-btn-save');
+const elDsBtnRestore  = $('ds-btn-restore');
+const elDsBtnDiscard  = $('ds-btn-discard');
+const elDsRunError    = $('ds-run-error');
+const elDsBtnRun      = $('ds-btn-run');
+const elDsBtnDlPrompt = $('ds-btn-dl-prompt');
+const elDsAssembled   = $('ds-assembled');
+const elDsAssembledLbl= $('ds-assembled-label');
+const elDsAssembledTA = $('ds-assembled-textarea');
+const elDsResult      = $('ds-result');
+const elDsResultLbl   = $('ds-result-label');
+const elDsResultMeta  = $('ds-result-meta');
+const elDsResultTA    = $('ds-result-textarea');
+const elDsBtnDlResp   = $('ds-btn-dl-response');
+const elDsPills       = document.querySelectorAll('#ds-model-pills .btn-model-pill');
 
 // ── Model pill helpers ─────────────────────────────────────────────────
+function bindPills(pills) {
+  pills.forEach(pill => pill.addEventListener('click', () => {
+    if (pill.disabled) { return; }
+    pills.forEach(p => p.classList.remove('pill-active'));
+    pill.classList.add('pill-active');
+  }));
+}
+bindPills(elP1Pills);
+bindPills(elDsPills);
+
 function setModelPill(pills, modelStr) {
-  var found = false;
-  pills.forEach(function(p) {
-    p.classList.remove('pill-active');
-    if (p.getAttribute('data-model') === modelStr) { p.classList.add('pill-active'); found = true; }
-  });
-  if (!found && pills.length > 0) { pills[0].classList.add('pill-active'); }
+  let found = false;
+  pills.forEach(p => { p.classList.remove('pill-active'); if (p.dataset.model === modelStr) { p.classList.add('pill-active'); found = true; } });
+  if (!found && pills.length) { pills[0].classList.add('pill-active'); }
+}
+function getModelPill(pills) {
+  let a = null;
+  pills.forEach(p => { if (p.classList.contains('pill-active')) { a = p; } });
+  return a ? a.dataset.model : 'gemini-2.5-flash-lite';
 }
 
-function getSelectedModel(pills) {
-  var active = null;
-  pills.forEach(function(p) { if (p.classList.contains('pill-active')) { active = p; } });
-  return active ? active.getAttribute('data-model') : 'gemini-2.5-flash-lite';
+function setP1Enabled(on) {
+  elP1Textarea.disabled  = !on;
+  elP1Thinking.disabled  = !on;
+  elP1BtnSave.disabled   = !on;
+  elP1BtnDiscard.disabled= !on;
+  elP1BtnRun.disabled    = !on;
+  elP1Pills.forEach(p => { p.disabled = !on; });
+  elP1BtnRestore.disabled = !on || !(prompts[1] && prompts[1].prompt_text_previous);
 }
 
-elP1ModelPills.forEach(function(pill) {
-  pill.addEventListener('click', function() {
-    elP1ModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
-    pill.classList.add('pill-active');
-  });
-});
-
-elDsModelPills.forEach(function(pill) {
-  pill.addEventListener('click', function() {
-    elDsModelPills.forEach(function(p) { p.classList.remove('pill-active'); });
-    pill.classList.add('pill-active');
-  });
-});
-
-function getP1ThinkingBudget() {
-  var val = parseInt(elP1ThinkingBudget.value, 10);
-  return (isNaN(val) || val < 0) ? 0 : val;
-}
-
-function getDsThinkingBudget() {
-  var val = parseInt(elDsThinkingBudget.value, 10);
-  return (isNaN(val) || val < 0) ? 0 : val;
-}
-
-// ── Startup ────────────────────────────────────────────────────────────
-const sessionResult = await sb.auth.getSession();
-const existingSession = sessionResult.data.session;
-if (existingSession && ADMIN_EMAILS.indexOf(existingSession.user.email) !== -1) {
-  enterEditor(existingSession.user.email);
+// ══════════════════════════════════════════════════════════════════════
+// STARTUP / AUTH
+// ══════════════════════════════════════════════════════════════════════
+const initSession = await sb.auth.getSession();
+if (initSession.data.session && ADMIN_EMAILS.includes(initSession.data.session.user.email)) {
+  enterEditor(initSession.data.session.user.email);
 } else {
-  if (existingSession) { await sb.auth.signOut(); }
+  if (initSession.data.session) { await sb.auth.signOut(); }
   showLogin();
 }
 
-// ── Login ──────────────────────────────────────────────────────────────
 elBtnLogin.addEventListener('click', doLogin);
-elInpPassword.addEventListener('keydown', function(e) { if (e.key === 'Enter') { doLogin(); } });
+elInpPassword.addEventListener('keydown', e => { if (e.key === 'Enter') { doLogin(); } });
 
 async function doLogin() {
-  var email = elInpEmail.value.trim();
-  var pass  = elInpPassword.value;
+  const email = elInpEmail.value.trim();
+  const pass  = elInpPassword.value;
   elLoginError.classList.add('hidden');
-  if (!email || !pass) { setLoginError('Please enter your email and password.'); return; }
+  if (!email || !pass) { showLoginErr('Please enter your email and password.'); return; }
   elBtnLogin.disabled    = true;
-  elBtnLogin.textContent = 'Signing in...';
-  var result = await sb.auth.signInWithPassword({ email: email, password: pass });
-  var signInData  = result.data;
-  var signInError = result.error;
-  if (signInError || !signInData.session) {
+  elBtnLogin.textContent = 'Signing in…';
+  const r = await sb.auth.signInWithPassword({ email, password: pass });
+  if (r.error || !r.data.session) {
     elBtnLogin.disabled    = false;
     elBtnLogin.textContent = 'Sign in';
-    var msg = 'Sign in failed.';
-    if (signInError && signInError.message === 'Invalid login credentials') {
-      msg = 'Incorrect email or password. Please try again.';
-    } else if (signInError) {
-      msg = 'Sign in failed: ' + signInError.message;
-    }
-    setLoginError(msg);
+    showLoginErr(r.error?.message === 'Invalid login credentials' ? 'Incorrect email or password.' : 'Sign in failed: ' + (r.error?.message || 'Unknown error'));
     return;
   }
-  if (ADMIN_EMAILS.indexOf(signInData.user.email) === -1) {
+  if (!ADMIN_EMAILS.includes(r.data.user.email)) {
     await sb.auth.signOut();
     elBtnLogin.disabled    = false;
     elBtnLogin.textContent = 'Sign in';
-    setLoginError('This account does not have admin access.');
+    showLoginErr('This account does not have admin access.');
     return;
   }
-  enterEditor(signInData.user.email);
+  enterEditor(r.data.user.email);
 }
 
-// ── Sign out ───────────────────────────────────────────────────────────
-document.getElementById('btn-signout').addEventListener('click', async function() {
+$('btn-signout').addEventListener('click', async () => {
   await sb.auth.signOut();
-  resetAllState();
-  elInpEmail.value    = '';
-  elInpPassword.value = '';
+  resetAll();
+  elInpEmail.value = elInpPassword.value = '';
   showLogin();
 });
-
-function resetAllState() {
-  selected       = null;
-  originalText   = '';
-  prompts        = [];
-  studentRow     = null;
-  assembledP1    = null;
-  phaseAIConfig  = null;
-  phase1Output   = null;
-  selectedDsPhase = null;
-}
-
-// ── Enter editor ───────────────────────────────────────────────────────
-function enterEditor(email) {
-  elHeaderEmail.textContent = email;
-  elHeaderRight.classList.remove('hidden');
-  elViewLogin.classList.add('hidden');
-  elViewEditor.classList.remove('hidden');
-  loadPrompts();
-  loadStudents();
-}
-
-// ── Load prompts ───────────────────────────────────────────────────────
-async function loadPrompts() {
-  elViewLoading.classList.remove('hidden');
-  elViewPrompts.classList.add('hidden');
-  var result = await sb
-    .from('prompts')
-    .select('prompt_id, prompt_key, prompt_label, prompt_text, prompt_text_previous, required_variables, updated_at')
-    .order('prompt_key', { ascending: true });
-  elViewLoading.classList.add('hidden');
-  if (result.error || !result.data) {
-    elViewPrompts.classList.remove('hidden');
-    elPromptList.innerHTML = '<p style="color:var(--danger);font-size:0.88rem;padding:20px 0">Could not load prompts: ' +
-      esc(result.error ? result.error.message : 'Unknown error') + '</p>';
-    return;
-  }
-  prompts = result.data;
-  renderList();
-  elViewPrompts.classList.remove('hidden');
-}
-
-// ── Render list ────────────────────────────────────────────────────────
-function renderList() {
-  elPromptList.innerHTML = '';
-  for (var i = 0; i < prompts.length; i++) {
-    var p       = prompts[i];
-    var label   = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
-    var updated = p.updated_at
-      ? new Date(p.updated_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
-      : 'Never saved';
-    var isActive = selected && selected.prompt_id === p.prompt_id;
-
-    var div = document.createElement('div');
-    div.className = 'prompt-item' + (isActive ? ' active' : '');
-
-    var leftDiv = document.createElement('div');
-    leftDiv.className = 'prompt-item-left';
-    leftDiv.innerHTML =
-      '<div class="prompt-item-key">' + esc(p.prompt_key) + '</div>' +
-      '<div class="prompt-item-label">' + esc(label) + '</div>' +
-      '<div class="prompt-item-meta">Last saved: ' + esc(updated) + '</div>';
-
-    var actionsDiv = document.createElement('div');
-    actionsDiv.className = 'prompt-item-actions';
-
-    var chevron = document.createElement('svg');
-    chevron.setAttribute('class', 'chevron');
-    chevron.setAttribute('viewBox', '0 0 24 24');
-    chevron.setAttribute('width', '18');
-    chevron.setAttribute('height', '18');
-    chevron.setAttribute('fill', 'none');
-    chevron.setAttribute('stroke', 'currentColor');
-    chevron.setAttribute('stroke-width', '2');
-    chevron.setAttribute('stroke-linecap', 'round');
-    chevron.innerHTML = '<path d="M9 18l6-6-6-6"/>';
-
-    actionsDiv.appendChild(chevron);
-    div.appendChild(leftDiv);
-    div.appendChild(actionsDiv);
-
-    (function(prompt) {
-      leftDiv.addEventListener('click', function() { selectPrompt(prompt); });
-      chevron.addEventListener('click', function() { selectPrompt(prompt); });
-    })(p);
-
-    elPromptList.appendChild(div);
-  }
-}
-
-// ── Select prompt (editor) ─────────────────────────────────────────────
-function selectPrompt(p) {
-  if (selected && elTextarea.value !== originalText) {
-    if (!confirm('You have unsaved changes. Discard them and switch prompts?')) { return; }
-  }
-  selected     = p;
-  originalText = p.prompt_text || '';
-  renderList();
-  var label = p.prompt_label || PHASE_LABELS[p.prompt_key] || p.prompt_key;
-  elEditorKey.textContent   = p.prompt_key;
-  elEditorLabel.textContent = label;
-  elEditorUpd.textContent   = p.updated_at
-    ? 'Last saved: ' + new Date(p.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' })
-    : 'Not yet saved';
-  elTextarea.value = originalText;
-  updateCharCount();
-  renderChips();
-  elBtnUndo.disabled = !p.prompt_text_previous;
-  elMsgError.classList.add('hidden');
-  elMsgSuccess.classList.add('hidden');
-  elEditorDiv.classList.remove('hidden');
-  elEditorPanel.classList.remove('hidden');
-  elEditorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// STUDENT PICKER (page-level)
-// ══════════════════════════════════════════════════════════════════════
-
-async function loadStudents() {
-  elStudentPickerLoad.classList.remove('hidden');
-  elStudentSelect.classList.add('hidden');
-  elStudentPickerNone.classList.add('hidden');
-  elBtnConfirmStudent.classList.add('hidden');
-
-  var result = await sb
-    .from('active_sessions')
-    .select('session_id, student_id, teacher_id, series_id')
-    .order('student_id', { ascending: true });
-
-  elStudentPickerLoad.classList.add('hidden');
-
-  if (result.error || !result.data || result.data.length === 0) {
-    elStudentPickerNone.classList.remove('hidden');
-    return;
-  }
-
-  var studentIds  = result.data.map(function(r) { return r.student_id; });
-  var namesResult = await sb.from('students').select('student_id, safe_name').in('student_id', studentIds);
-  var nameMap = {};
-  if (namesResult.data) {
-    namesResult.data.forEach(function(n) { nameMap[n.student_id] = n.safe_name; });
-  }
-
-  elStudentSelect.innerHTML = '<option value="">-- choose a student --</option>';
-  for (var i = 0; i < result.data.length; i++) {
-    var row  = result.data[i];
-    var name = nameMap[row.student_id] || 'Student ' + (i + 1);
-    var opt  = document.createElement('option');
-    opt.value = JSON.stringify({
-      session_id:   row.session_id,
-      student_id:   row.student_id,
-      teacher_id:   row.teacher_id,
-      series_id:    row.series_id,
-      student_name: name
-    });
-    opt.textContent = name;
-    elStudentSelect.appendChild(opt);
-  }
-
-  elStudentSelect.classList.remove('hidden');
-  elBtnConfirmStudent.classList.remove('hidden');
-}
-
-elStudentSelect.addEventListener('change', function() {
-  elBtnConfirmStudent.disabled = !elStudentSelect.value;
-});
-
-elBtnConfirmStudent.addEventListener('click', async function() {
-  if (!elStudentSelect.value) { return; }
-  elStudentFetchError.classList.add('hidden');
-  elBtnConfirmStudent.disabled    = true;
-  elBtnConfirmStudent.textContent = 'Loading...';
-
-  var parsed = JSON.parse(elStudentSelect.value);
-
-  // Resolve lesson_book_id
-  var sessionLookup = await sb
-    .from('sessions')
-    .select('lesson_book_id')
-    .eq('session_id', parsed.session_id)
-    .single();
-
-  if (sessionLookup.error || !sessionLookup.data || !sessionLookup.data.lesson_book_id) {
-    elStudentFetchError.textContent = 'Could not resolve lesson_book_id for this session.';
-    elStudentFetchError.classList.remove('hidden');
-    elBtnConfirmStudent.disabled    = false;
-    elBtnConfirmStudent.textContent = 'Confirm student';
-    return;
-  }
-
-  parsed.lesson_book_id = sessionLookup.data.lesson_book_id;
-
-  // Run dry_run to get assembled prompts + AI config
-  var sessionData = await sb.auth.getSession();
-  if (!sessionData.data.session) {
-    elStudentFetchError.textContent = 'Session expired. Please sign in again.';
-    elStudentFetchError.classList.remove('hidden');
-    elBtnConfirmStudent.disabled    = false;
-    elBtnConfirmStudent.textContent = 'Confirm student';
-    return;
-  }
-
-  var token = sessionData.data.session.access_token;
-
-  try {
-    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id:     parsed.session_id,
-        teacher_id:     parsed.teacher_id,
-        student_id:     parsed.student_id,
-        series_id:      parsed.series_id,
-        lesson_book_id: parsed.lesson_book_id,
-        student_name:   parsed.student_name,
-        bypass_gate:    false,
-        dry_run:        true
-      })
-    });
-
-    var result = await response.json();
-
-    if (!result.success || !result.debug_prompts) {
-      elStudentFetchError.textContent = 'Could not load session data: ' + (result.error || 'Unknown error');
-      elStudentFetchError.classList.remove('hidden');
-      elBtnConfirmStudent.disabled    = false;
-      elBtnConfirmStudent.textContent = 'Confirm student';
-      return;
-    }
-
-    // Store page-level state
-    studentRow    = parsed;
-    assembledP1   = result.debug_prompts.phase1 || '';
-    phaseAIConfig = result.phase_ai_config || null;
-    phase1Output  = null;  // reset Phase 1 output for new student
-
-    // Apply Phase 1 Config defaults to model/budget
-    if (phaseAIConfig && phaseAIConfig.phase1) {
-      setModelPill(elP1ModelPills, phaseAIConfig.phase1.model);
-      elP1ThinkingBudget.value = String(phaseAIConfig.phase1.thinkingBudget);
-    }
-
-    // Show confirmed bar, hide picker
-    elStudentConfirmedName.textContent = '✓ ' + parsed.student_name;
-    elStudentPickerWrap.classList.add('hidden');
-    elStudentConfirmedBar.classList.remove('hidden');
-
-    // Show Phase 1 section
-    elP1PromptTextarea.value = assembledP1;
-    elP1Status.classList.add('hidden');
-    elP1StatusMeta.classList.add('hidden');
-    elP1OutputWrap.classList.add('hidden');
-    elP1RunError.classList.add('hidden');
-    elBtnDownloadP1Prompt.classList.remove('hidden');
-    elBtnRunPhase1.textContent = 'Run AI — Phase 1';
-    elBtnRunPhase1.disabled    = false;
-    elPhase1Section.classList.remove('hidden');
-
-    // Reset downstream panel
-    resetDownstream();
-
-  } catch (err) {
-    elStudentFetchError.textContent = 'Request failed: ' + err.message;
-    elStudentFetchError.classList.remove('hidden');
-  }
-
-  elBtnConfirmStudent.disabled    = false;
-  elBtnConfirmStudent.textContent = 'Confirm student';
-});
-
-// Change student — reset everything
-elBtnChangeStudent.addEventListener('click', function() {
-  studentRow    = null;
-  assembledP1   = null;
-  phaseAIConfig = null;
-  phase1Output  = null;
-  selectedDsPhase = null;
-
-  elStudentConfirmedBar.classList.add('hidden');
-  elPhase1Section.classList.add('hidden');
-  elStudentPickerWrap.classList.remove('hidden');
-  elStudentSelect.value = '';
-  elBtnConfirmStudent.disabled = true;
-  elStudentFetchError.classList.add('hidden');
-
-  resetDownstream();
-});
-
-// ══════════════════════════════════════════════════════════════════════
-// PHASE 1 — Run AI
-// ══════════════════════════════════════════════════════════════════════
-
-elBtnRunPhase1.addEventListener('click', async function() {
-  if (!studentRow || !assembledP1) { return; }
-
-  elP1RunError.classList.add('hidden');
-  elP1OutputWrap.classList.add('hidden');
-  elP1Status.classList.add('hidden');
-  elP1StatusMeta.classList.add('hidden');
-  elBtnRunPhase1.disabled    = true;
-  elBtnRunPhase1.textContent = 'Running...';
-
-  var sessionData = await sb.auth.getSession();
-  if (!sessionData.data.session) {
-    elP1RunError.textContent = 'Session expired. Please sign in again.';
-    elP1RunError.classList.remove('hidden');
-    elBtnRunPhase1.disabled    = false;
-    elBtnRunPhase1.textContent = 'Run AI — Phase 1';
-    return;
-  }
-
-  var token    = sessionData.data.session.access_token;
-  var p1Model  = getSelectedModel(elP1ModelPills);
-  var p1Budget = getP1ThinkingBudget();
-
-  try {
-    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id:       studentRow.session_id,
-        teacher_id:       studentRow.teacher_id,
-        student_id:       studentRow.student_id,
-        series_id:        studentRow.series_id,
-        lesson_book_id:   studentRow.lesson_book_id,
-        student_name:     studentRow.student_name,
-        bypass_gate:      false,
-        single_phase_run: true,
-        phase:            1,
-        assembled_prompt: elP1PromptTextarea.value,
-        model_override:   p1Model,
-        thinking_budget:  p1Budget
-      })
-    });
-
-    var result = await response.json();
-
-    if (!result.success || !result.ai_response) {
-      elP1RunError.textContent = 'Phase 1 failed: ' + (result.error || 'Unknown error');
-      elP1RunError.classList.remove('hidden');
-      elBtnRunPhase1.disabled    = false;
-      elBtnRunPhase1.textContent = 'Re-run AI — Phase 1';
-      return;
-    }
-
-    phase1Output = result.ai_response;
-    var modelUsed  = result.model_used || p1Model;
-    var budgetUsed = (result.thinking_budget_used !== undefined) ? result.thinking_budget_used : p1Budget;
-
-    // Show output
-    elP1OutputTextarea.value = phase1Output;
-    elP1OutputWrap.classList.remove('hidden');
-
-    // Show ready status
-    elP1Status.className = 'phase1-status ready';
-    elP1StatusText.textContent = '✓ Phase 1 complete — downstream phases ready';
-    elP1Status.classList.remove('hidden');
-    elP1StatusMeta.textContent = 'Model: ' + modelUsed + '  |  Thinking budget: ' + budgetUsed;
-    elP1StatusMeta.classList.remove('hidden');
-
-    elBtnRunPhase1.disabled    = false;
-    elBtnRunPhase1.textContent = 'Re-run AI — Phase 1';
-
-    // Unlock downstream panel
-    elDownstreamLocked.classList.add('hidden');
-    elDownstreamContent.classList.remove('hidden');
-
-    // If a phase was already selected, show re-run notice and reset its response
-    if (selectedDsPhase !== null) {
-      elP1RerunNotice.textContent = 'Phase 1 was re-run. Click Run AI to regenerate Phase ' + selectedDsPhase + ' with the new output.';
-      elP1RerunNotice.classList.remove('hidden');
-      clearDsResponse();
-      // Clear prompt textarea since it's now stale
-      elDsPromptWrap.classList.add('hidden');
-      elDsPromptPlaceholder.classList.remove('hidden');
-      elBtnDownloadDsPrompt.classList.add('hidden');
-    }
-
-  } catch (err) {
-    elP1RunError.textContent = 'Request failed: ' + err.message;
-    elP1RunError.classList.remove('hidden');
-    elBtnRunPhase1.disabled    = false;
-    elBtnRunPhase1.textContent = 'Re-run AI — Phase 1';
-  }
-});
-
-// ══════════════════════════════════════════════════════════════════════
-// DOWNSTREAM PHASE SELECTOR
-// ══════════════════════════════════════════════════════════════════════
-
-elPhaseSelect.addEventListener('change', function() {
-  var val = elPhaseSelect.value;
-  if (!val) {
-    selectedDsPhase = null;
-    elDsControls.classList.add('hidden');
-    elDsPromptWrap.classList.add('hidden');
-    elDsPromptPlaceholder.classList.add('hidden');
-    clearDsResponse();
-    return;
-  }
-
-  selectedDsPhase = parseInt(val, 10);
-  elP1RerunNotice.classList.add('hidden');
-
-  // Apply Config defaults for selected phase
-  if (phaseAIConfig && phaseAIConfig['phase' + selectedDsPhase]) {
-    var cfg = phaseAIConfig['phase' + selectedDsPhase];
-    setModelPill(elDsModelPills, cfg.model);
-    elDsThinkingBudget.value = String(cfg.thinkingBudget);
-  } else {
-    setModelPill(elDsModelPills, 'gemini-2.5-flash-lite');
-    elDsThinkingBudget.value = '0';
-  }
-
-  // Clear response and prompt from prior selection
-  clearDsResponse();
-  elDsPromptWrap.classList.add('hidden');
-  elDsPromptPlaceholder.classList.remove('hidden');
-  elBtnDownloadDsPrompt.classList.add('hidden');
-  elDsAiMeta.classList.add('hidden');
-  elDsRunError.classList.add('hidden');
-
-  elDsControls.classList.remove('hidden');
-});
-
-function clearDsResponse() {
-  elDsAiResponseSection.classList.add('hidden');
-  elDsAiResponseTextarea.value = '';
-  elDsAiMeta.classList.add('hidden');
-  elDsRunError.classList.add('hidden');
-}
-
-function resetDownstream() {
-  selectedDsPhase = null;
-  elPhaseSelect.value = '';
-  elDownstreamLocked.classList.remove('hidden');
-  elDownstreamContent.classList.add('hidden');
-  elDsControls.classList.add('hidden');
-  elDsPromptWrap.classList.add('hidden');
-  elDsPromptPlaceholder.classList.add('hidden');
-  elBtnDownloadDsPrompt.classList.add('hidden');
-  elP1RerunNotice.classList.add('hidden');
-  clearDsResponse();
-}
-
-// ── Run AI (downstream) ────────────────────────────────────────────────
-elBtnRunAI.addEventListener('click', async function() {
-  if (!studentRow || !phase1Output || !selectedDsPhase) { return; }
-
-  elDsRunError.classList.add('hidden');
-  clearDsResponse();
-  elBtnRunAI.disabled    = true;
-  elBtnRunAI.textContent = 'Running...';
-
-  var sessionData = await sb.auth.getSession();
-  if (!sessionData.data.session) {
-    elDsRunError.textContent = 'Session expired. Please sign in again.';
-    elDsRunError.classList.remove('hidden');
-    elBtnRunAI.disabled    = false;
-    elBtnRunAI.textContent = 'Run AI';
-    return;
-  }
-
-  var token    = sessionData.data.session.access_token;
-  var dsModel  = getSelectedModel(elDsModelPills);
-  var dsBudget = getDsThinkingBudget();
-
-  try {
-    var response = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id:       studentRow.session_id,
-        teacher_id:       studentRow.teacher_id,
-        student_id:       studentRow.student_id,
-        series_id:        studentRow.series_id,
-        lesson_book_id:   studentRow.lesson_book_id,
-        student_name:     studentRow.student_name,
-        bypass_gate:      false,
-        single_phase_run: true,
-        phase:            selectedDsPhase,
-        phase1_output:    phase1Output,
-        model_override:   dsModel,
-        thinking_budget:  dsBudget
-      })
-    });
-
-    var result = await response.json();
-
-    if (!result.success || !result.ai_response) {
-      elDsRunError.textContent = 'Phase ' + selectedDsPhase + ' failed: ' + (result.error || 'Unknown error');
-      elDsRunError.classList.remove('hidden');
-      elBtnRunAI.disabled    = false;
-      elBtnRunAI.textContent = 'Run AI';
-      return;
-    }
-
-    // Show assembled_prompt_used
-    if (result.assembled_prompt_used) {
-      elDsPromptTextarea.value = result.assembled_prompt_used;
-      elDsPromptLabel.textContent = 'Assembled prompt (as sent to AI) — Phase ' + selectedDsPhase;
-      elDsPromptPlaceholder.classList.add('hidden');
-      elDsPromptWrap.classList.remove('hidden');
-      elBtnDownloadDsPrompt.classList.remove('hidden');
-    }
-
-    // Show AI response
-    elDsAiResponseTextarea.value = result.ai_response;
-    var metaModel  = result.model_used || dsModel;
-    var metaBudget = (result.thinking_budget_used !== undefined) ? result.thinking_budget_used : dsBudget;
-    elDsAiMeta.textContent = 'Model: ' + metaModel + '  |  Thinking budget: ' + metaBudget;
-    elDsAiMeta.classList.remove('hidden');
-    elDsAiResponseSection.classList.remove('hidden');
-    elDsAiResponseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
-    elDsRunError.textContent = 'Request failed: ' + err.message;
-    elDsRunError.classList.remove('hidden');
-  }
-
-  elBtnRunAI.disabled    = false;
-  elBtnRunAI.textContent = 'Run AI';
-});
-
-// ══════════════════════════════════════════════════════════════════════
-// EDITOR — Save / Undo / Discard
-// ══════════════════════════════════════════════════════════════════════
-
-elBtnSave.addEventListener('click', async function() {
-  if (!selected) { return; }
-  elMsgError.classList.add('hidden');
-  elMsgSuccess.classList.add('hidden');
-  var text   = elTextarea.value;
-  var errors = validate(text, selected.required_variables || []);
-  if (errors.length > 0) {
-    var lines = '';
-    for (var i = 0; i < errors.length; i++) {
-      lines += (i > 0 ? '<br>' : '') + '- ' + esc(errors[i]);
-    }
-    elMsgError.innerHTML = lines;
-    elMsgError.classList.remove('hidden');
-    elMsgError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    return;
-  }
-  elBtnSave.disabled    = true;
-  elBtnSave.textContent = 'Saving...';
-  var sessionResult2 = await sb.auth.getSession();
-  if (!sessionResult2.data.session) {
-    elMsgError.textContent = 'Your session has expired. Please sign in again.';
-    elMsgError.classList.remove('hidden');
-    elBtnSave.disabled    = false;
-    elBtnSave.textContent = 'Save prompt';
-    showLogin();
-    return;
-  }
-  var invokeResult = await sb.functions.invoke('admin-prompt-save', {
-    body: {
-      prompt_id:            selected.prompt_id,
-      prompt_key:           selected.prompt_key,
-      prompt_text:          text,
-      prompt_text_previous: selected.prompt_text || null
-    }
-  });
-  elBtnSave.disabled    = false;
-  elBtnSave.textContent = 'Save prompt';
-  var invokeData  = invokeResult.data;
-  var invokeError = invokeResult.error;
-  if (invokeError || !invokeData || !invokeData.success) {
-    var errMsg = 'Unknown error';
-    if (invokeData && invokeData.error) { errMsg = invokeData.error; }
-    else if (invokeError) { errMsg = invokeError.message; }
-    elMsgError.textContent = 'Save failed: ' + errMsg;
-    elMsgError.classList.remove('hidden');
-    return;
-  }
-  if (invokeData.prompt) {
-    for (var j = 0; j < prompts.length; j++) {
-      if (prompts[j].prompt_id === selected.prompt_id) { prompts[j] = invokeData.prompt; break; }
-    }
-    selected     = invokeData.prompt;
-    originalText = invokeData.prompt.prompt_text;
-    renderList();
-    elEditorUpd.textContent = 'Last saved: ' +
-      new Date(invokeData.prompt.updated_at).toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' });
-    elBtnUndo.disabled = !invokeData.prompt.prompt_text_previous;
-  } else {
-    originalText = text;
-  }
-  elMsgSuccess.textContent = 'Prompt saved successfully.';
-  elMsgSuccess.classList.remove('hidden');
-  elMsgSuccess.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-});
-
-elBtnUndo.addEventListener('click', function() {
-  if (!selected || !selected.prompt_text_previous) { return; }
-  if (!confirm('Restore the previous version? Your current text will be lost.')) { return; }
-  elTextarea.value = selected.prompt_text_previous;
-  updateCharCount();
-  renderChips();
-  elMsgSuccess.classList.add('hidden');
-  elMsgError.classList.add('hidden');
-});
-
-elBtnDiscard.addEventListener('click', function() {
-  if (!selected) { return; }
-  if (elTextarea.value === originalText) { return; }
-  if (!confirm('Discard all changes and revert to the last saved version?')) { return; }
-  elTextarea.value = originalText;
-  updateCharCount();
-  renderChips();
-  elMsgSuccess.classList.add('hidden');
-  elMsgError.classList.add('hidden');
-});
-
-// ══════════════════════════════════════════════════════════════════════
-// DOWNLOADS
-// ══════════════════════════════════════════════════════════════════════
-
-elBtnDownloadP1Prompt.addEventListener('click', function() {
-  if (!studentRow) { return; }
-  var content =
-    'CREATIVE NOTE -- PROMPT INSPECTOR\n' +
-    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
-    'Phase: session_close_phase1\n' +
-    'Student: ' + studentRow.student_name + '\n' +
-    '\n========================================\n\n' +
-    elP1PromptTextarea.value;
-  downloadTxt(content, 'prompt_phase1_' + sanitizeFilename(studentRow.student_name) + '.txt');
-});
-
-elBtnDownloadP1Response.addEventListener('click', function() {
-  if (!studentRow) { return; }
-  var content =
-    'CREATIVE NOTE -- AI RESPONSE\n' +
-    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
-    'Phase: session_close_phase1\n' +
-    'Student: ' + studentRow.student_name + '\n' +
-    'Model: ' + getSelectedModel(elP1ModelPills) + '\n' +
-    'Thinking budget: ' + getP1ThinkingBudget() + '\n' +
-    '\n========================================\n\n' +
-    elP1OutputTextarea.value;
-  downloadTxt(content, 'ai_response_phase1_' + sanitizeFilename(studentRow.student_name) + '.txt');
-});
-
-elBtnDownloadDsPrompt.addEventListener('click', function() {
-  if (!studentRow || !selectedDsPhase) { return; }
-  var content =
-    'CREATIVE NOTE -- PROMPT INSPECTOR\n' +
-    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
-    'Phase: session_close_phase' + selectedDsPhase + '\n' +
-    'Student: ' + studentRow.student_name + '\n' +
-    '\n========================================\n\n' +
-    elDsPromptTextarea.value;
-  downloadTxt(content, 'prompt_phase' + selectedDsPhase + '_' + sanitizeFilename(studentRow.student_name) + '.txt');
-});
-
-elBtnDownloadDsResponse.addEventListener('click', function() {
-  if (!studentRow || !selectedDsPhase) { return; }
-  var content =
-    'CREATIVE NOTE -- AI RESPONSE\n' +
-    'Generated: ' + new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }) + '\n' +
-    'Phase: session_close_phase' + selectedDsPhase + '\n' +
-    'Student: ' + studentRow.student_name + '\n' +
-    'Model: ' + getSelectedModel(elDsModelPills) + '\n' +
-    'Thinking budget: ' + getDsThinkingBudget() + '\n' +
-    '\n========================================\n\n' +
-    elDsAiResponseTextarea.value;
-  downloadTxt(content, 'ai_response_phase' + selectedDsPhase + '_' + sanitizeFilename(studentRow.student_name) + '.txt');
-});
-
-// ══════════════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════════════
 
 function showLogin() {
   elViewLogin.classList.remove('hidden');
@@ -1476,83 +498,419 @@ function showLogin() {
   elHeaderRight.classList.add('hidden');
   elBtnLogin.disabled    = false;
   elBtnLogin.textContent = 'Sign in';
-  elLoginError.classList.add('hidden');
+}
+function showLoginErr(msg) { elLoginError.textContent = msg; elLoginError.classList.remove('hidden'); }
+
+async function enterEditor(email) {
+  elHeaderEmail.textContent = email;
+  elHeaderRight.classList.remove('hidden');
+  elViewLogin.classList.add('hidden');
+  elViewEditor.classList.remove('hidden');
+  await Promise.all([ loadPrompts(), loadStudents() ]);
 }
 
-function setLoginError(msg) {
-  elLoginError.textContent = msg;
-  elLoginError.classList.remove('hidden');
-}
-
-function validate(text, requiredVars) {
-  var errors = [];
-  if (!text.trim()) { errors.push('Prompt text cannot be empty.'); return errors; }
-  var vars = requiredVars || [];
-  for (var i = 0; i < vars.length; i++) {
-    var placeholder = '{{' + vars[i] + '}}';
-    if (text.indexOf(placeholder) === -1) { errors.push('Missing required variable: ' + placeholder); }
-  }
-  return errors;
-}
-
-function renderChips() {
-  elVarsRow.innerHTML = '';
-  var vars = (selected && selected.required_variables) ? selected.required_variables : [];
-  if (vars.length === 0) {
-    var span = document.createElement('span');
-    span.className   = 'vars-none';
-    span.textContent = 'No required variables defined for this prompt.';
-    elVarsRow.appendChild(span);
+// ══════════════════════════════════════════════════════════════════════
+// LOAD PROMPTS
+// ══════════════════════════════════════════════════════════════════════
+async function loadPrompts() {
+  const r = await sb.from('prompts')
+    .select('prompt_id,prompt_key,prompt_label,prompt_text,prompt_text_previous,required_variables,updated_at')
+    .in('prompt_key', Object.values(PHASE_KEYS));
+  if (r.error || !r.data) {
+    elP1MsgError.textContent = 'Could not load prompts: ' + (r.error?.message || 'Unknown error');
+    elP1MsgError.classList.remove('hidden');
     return;
   }
-  var currentText = elTextarea.value;
-  for (var i = 0; i < vars.length; i++) {
-    var placeholder = '{{' + vars[i] + '}}';
-    var present     = currentText.indexOf(placeholder) !== -1;
-    var chip        = document.createElement('span');
-    chip.className  = 'var-chip' + (present ? '' : ' missing');
-    chip.textContent = placeholder;
-    chip.title       = present ? 'Present in prompt' : 'MISSING from prompt text';
-    elVarsRow.appendChild(chip);
+  r.data.forEach(p => {
+    for (let n = 1; n <= 5; n++) { if (PHASE_KEYS[n] === p.prompt_key) { prompts[n] = p; } }
+  });
+  if (prompts[1]) {
+    p1OrigText          = prompts[1].prompt_text || '';
+    elP1Textarea.value  = p1OrigText;
+    updateCC(elP1Textarea, elP1CharCount);
+    renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value);
   }
 }
 
-elTextarea.addEventListener('input', function() {
-  updateCharCount();
-  renderChips();
-  elMsgSuccess.classList.add('hidden');
+// ══════════════════════════════════════════════════════════════════════
+// LOAD STUDENTS
+// ══════════════════════════════════════════════════════════════════════
+async function loadStudents() {
+  elStudentLoading.classList.remove('hidden');
+  const r = await sb.from('active_sessions').select('session_id,student_id,teacher_id,series_id').order('student_id');
+  elStudentLoading.classList.add('hidden');
+  if (r.error || !r.data || !r.data.length) { elStudentNone.classList.remove('hidden'); return; }
+
+  const ids = r.data.map(x => x.student_id);
+  const nr  = await sb.from('students').select('student_id,safe_name').in('student_id', ids);
+  const nm  = {};
+  if (nr.data) { nr.data.forEach(n => { nm[n.student_id] = n.safe_name; }); }
+
+  elStudentSelect.innerHTML = '<option value="">-- select a student --</option>';
+  r.data.forEach((row, i) => {
+    const name = nm[row.student_id] || 'Student ' + (i + 1);
+    const opt  = document.createElement('option');
+    opt.value       = JSON.stringify({ session_id: row.session_id, student_id: row.student_id, teacher_id: row.teacher_id, series_id: row.series_id, student_name: name });
+    opt.textContent = name;
+    elStudentSelect.appendChild(opt);
+  });
+  elStudentSelect.classList.remove('hidden');
+}
+
+// ── Student change ─────────────────────────────────────────────────────
+elStudentSelect.addEventListener('change', async () => {
+  elStudentError.classList.add('hidden');
+  setP1Enabled(false);
+  phase1Output  = null;
+  studentRow    = null;
+  phaseAIConfig = null;
+  elP1BtnDlPrompt.classList.add('hidden');
+  elP1Result.classList.add('hidden');
+  elP1ResultTA.value = '';
+  elP1RunError.classList.add('hidden');
+  elP1BtnRun.textContent = 'Run AI — Phase 1';
+  resetDownstream();
+
+  if (!elStudentSelect.value) { return; }
+  const parsed = JSON.parse(elStudentSelect.value);
+
+  // Resolve lesson_book_id
+  const lk = await sb.from('sessions').select('lesson_book_id').eq('session_id', parsed.session_id).single();
+  if (lk.error || !lk.data?.lesson_book_id) {
+    elStudentError.textContent = 'Could not resolve lesson_book_id for this session.';
+    elStudentError.classList.remove('hidden');
+    return;
+  }
+  parsed.lesson_book_id = lk.data.lesson_book_id;
+
+  // dry_run to get phaseAIConfig
+  const sd = await sb.auth.getSession();
+  if (!sd.data.session) { elStudentError.textContent = 'Session expired.'; elStudentError.classList.remove('hidden'); return; }
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: parsed.session_id, teacher_id: parsed.teacher_id, student_id: parsed.student_id, series_id: parsed.series_id, lesson_book_id: parsed.lesson_book_id, student_name: parsed.student_name, bypass_gate: false, dry_run: true })
+    });
+    const result = await res.json();
+    if (!result.success) { elStudentError.textContent = 'Could not load session: ' + (result.error || 'Unknown error'); elStudentError.classList.remove('hidden'); return; }
+
+    studentRow    = parsed;
+    phaseAIConfig = result.phase_ai_config || null;
+
+    // Apply Phase 1 config defaults
+    if (phaseAIConfig?.phase1) {
+      setModelPill(elP1Pills, phaseAIConfig.phase1.model);
+      elP1Thinking.value = String(phaseAIConfig.phase1.thinkingBudget);
+    }
+    setP1Enabled(true);
+    elP1BtnDlPrompt.classList.remove('hidden');
+  } catch (err) {
+    elStudentError.textContent = 'Request failed: ' + err.message;
+    elStudentError.classList.remove('hidden');
+  }
 });
 
-function updateCharCount() {
-  elCharCount.textContent = elTextarea.value.length.toLocaleString() + ' characters';
+// ══════════════════════════════════════════════════════════════════════
+// PHASE 1 — EDITOR
+// ══════════════════════════════════════════════════════════════════════
+elP1Textarea.addEventListener('input', () => {
+  updateCC(elP1Textarea, elP1CharCount);
+  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value); }
+  elP1MsgSuccess.classList.add('hidden');
+});
+
+elP1BtnSave.addEventListener('click', async () => {
+  if (!prompts[1]) { return; }
+  elP1MsgError.classList.add('hidden'); elP1MsgSuccess.classList.add('hidden');
+  const errs = validatePrompt(elP1Textarea.value, prompts[1].required_variables || []);
+  if (errs.length) { elP1MsgError.innerHTML = errs.map(e => '- ' + esc(e)).join('<br>'); elP1MsgError.classList.remove('hidden'); return; }
+  elP1BtnSave.disabled    = true;
+  elP1BtnSave.textContent = 'Saving…';
+  const saved = await savePrompt(prompts[1], elP1Textarea.value);
+  elP1BtnSave.disabled    = false;
+  elP1BtnSave.textContent = 'Save prompt';
+  if (saved.error) { elP1MsgError.textContent = 'Save failed: ' + saved.error; elP1MsgError.classList.remove('hidden'); }
+  else { prompts[1] = saved.prompt; p1OrigText = saved.prompt.prompt_text; elP1BtnRestore.disabled = !saved.prompt.prompt_text_previous; elP1MsgSuccess.textContent = 'Prompt saved.'; elP1MsgSuccess.classList.remove('hidden'); }
+});
+
+elP1BtnRestore.addEventListener('click', () => {
+  if (!prompts[1]?.prompt_text_previous) { return; }
+  if (!confirm('Restore the previous version? Your current text will be lost.')) { return; }
+  elP1Textarea.value = prompts[1].prompt_text_previous;
+  updateCC(elP1Textarea, elP1CharCount);
+  renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value);
+  elP1MsgError.classList.add('hidden'); elP1MsgSuccess.classList.add('hidden');
+});
+
+elP1BtnDiscard.addEventListener('click', () => {
+  if (elP1Textarea.value === p1OrigText) { return; }
+  if (!confirm('Discard changes and revert to the last saved version?')) { return; }
+  elP1Textarea.value = p1OrigText;
+  updateCC(elP1Textarea, elP1CharCount);
+  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value); }
+  elP1MsgError.classList.add('hidden'); elP1MsgSuccess.classList.add('hidden');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// PHASE 1 — RUN AI
+// ══════════════════════════════════════════════════════════════════════
+elP1BtnRun.addEventListener('click', async () => {
+  if (!studentRow) { return; }
+  elP1RunError.classList.add('hidden');
+  elP1Result.classList.add('hidden');
+  elP1BtnRun.disabled    = true;
+  elP1BtnRun.textContent = 'Running…';
+
+  const sd = await sb.auth.getSession();
+  if (!sd.data.session) { elP1RunError.textContent = 'Session expired.'; elP1RunError.classList.remove('hidden'); elP1BtnRun.disabled = false; elP1BtnRun.textContent = 'Run AI — Phase 1'; return; }
+
+  const model  = getModelPill(elP1Pills);
+  const budget = parseInt(elP1Thinking.value, 10) || 0;
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, bypass_gate: false, single_phase_run: true, phase: 1, assembled_prompt: elP1Textarea.value, model_override: model, thinking_budget: budget })
+    });
+    const result = await res.json();
+    if (!result.success || !result.ai_response) {
+      elP1RunError.textContent = 'Phase 1 failed: ' + (result.error || 'Unknown error');
+      elP1RunError.classList.remove('hidden');
+      elP1BtnRun.disabled    = false;
+      elP1BtnRun.textContent = 'Re-run AI — Phase 1';
+      return;
+    }
+    phase1Output = result.ai_response;
+    elP1ResultTA.value  = phase1Output;
+    elP1ResultMeta.textContent = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
+    elP1Result.classList.remove('hidden');
+    elP1BtnRun.textContent = 'Re-run AI — Phase 1';
+
+    // Unlock downstream
+    elDsLocked.classList.add('hidden');
+    elDsContent.classList.remove('hidden');
+
+    if (dsPhase !== null) {
+      elDsRerunNotice.textContent = 'Phase 1 was re-run. Click Run AI to regenerate Phase ' + dsPhase + ' with the new output.';
+      elDsRerunNotice.classList.remove('hidden');
+      clearDsResults();
+    }
+  } catch (err) {
+    elP1RunError.textContent = 'Request failed: ' + err.message;
+    elP1RunError.classList.remove('hidden');
+    elP1BtnRun.textContent = 'Re-run AI — Phase 1';
+  }
+  elP1BtnRun.disabled = false;
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// DOWNSTREAM — PHASE SELECT
+// ══════════════════════════════════════════════════════════════════════
+elDsPhaseSelect.addEventListener('change', () => {
+  elDsRerunNotice.classList.add('hidden');
+  clearDsResults();
+  elDsMsgError.classList.add('hidden');
+  elDsMsgSuccess.classList.add('hidden');
+
+  if (!elDsPhaseSelect.value) { dsPhase = null; elDsPhaseContent.classList.add('hidden'); return; }
+  dsPhase = parseInt(elDsPhaseSelect.value, 10);
+  const p = prompts[dsPhase];
+
+  dsOrigText          = p ? (p.prompt_text || '') : '';
+  elDsTextarea.value  = dsOrigText;
+  updateCC(elDsTextarea, elDsCharCount);
+  renderChips(elDsVarsRow, p?.required_variables || [], elDsTextarea.value);
+  elDsBtnRestore.disabled = !(p?.prompt_text_previous);
+
+  if (phaseAIConfig?.['phase' + dsPhase]) {
+    setModelPill(elDsPills, phaseAIConfig['phase' + dsPhase].model);
+    elDsThinking.value = String(phaseAIConfig['phase' + dsPhase].thinkingBudget);
+  } else {
+    setModelPill(elDsPills, 'gemini-2.5-flash-lite');
+    elDsThinking.value = '0';
+  }
+  elDsPhaseContent.classList.remove('hidden');
+});
+
+function clearDsResults() {
+  elDsResult.classList.add('hidden');
+  elDsResultTA.value = '';
+  elDsResultMeta.textContent = '';
+  elDsAssembled.classList.add('hidden');
+  elDsAssembledTA.value = '';
+  elDsBtnDlPrompt.classList.add('hidden');
+  elDsRunError.classList.add('hidden');
 }
 
-function downloadTxt(content, filename) {
-  var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href     = url;
+function resetDownstream() {
+  dsPhase = null;
+  elDsPhaseSelect.value = '';
+  elDsLocked.classList.remove('hidden');
+  elDsContent.classList.add('hidden');
+  elDsPhaseContent.classList.add('hidden');
+  elDsRerunNotice.classList.add('hidden');
+  clearDsResults();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DOWNSTREAM — EDITOR
+// ══════════════════════════════════════════════════════════════════════
+elDsTextarea.addEventListener('input', () => {
+  updateCC(elDsTextarea, elDsCharCount);
+  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value); }
+  elDsMsgSuccess.classList.add('hidden');
+});
+
+elDsBtnSave.addEventListener('click', async () => {
+  if (!dsPhase || !prompts[dsPhase]) { return; }
+  elDsMsgError.classList.add('hidden'); elDsMsgSuccess.classList.add('hidden');
+  const errs = validatePrompt(elDsTextarea.value, prompts[dsPhase].required_variables || []);
+  if (errs.length) { elDsMsgError.innerHTML = errs.map(e => '- ' + esc(e)).join('<br>'); elDsMsgError.classList.remove('hidden'); return; }
+  elDsBtnSave.disabled    = true;
+  elDsBtnSave.textContent = 'Saving…';
+  const saved = await savePrompt(prompts[dsPhase], elDsTextarea.value);
+  elDsBtnSave.disabled    = false;
+  elDsBtnSave.textContent = 'Save prompt';
+  if (saved.error) { elDsMsgError.textContent = 'Save failed: ' + saved.error; elDsMsgError.classList.remove('hidden'); }
+  else { prompts[dsPhase] = saved.prompt; dsOrigText = saved.prompt.prompt_text; elDsBtnRestore.disabled = !saved.prompt.prompt_text_previous; elDsMsgSuccess.textContent = 'Prompt saved.'; elDsMsgSuccess.classList.remove('hidden'); }
+});
+
+elDsBtnRestore.addEventListener('click', () => {
+  if (!dsPhase || !prompts[dsPhase]?.prompt_text_previous) { return; }
+  if (!confirm('Restore the previous version? Your current text will be lost.')) { return; }
+  elDsTextarea.value = prompts[dsPhase].prompt_text_previous;
+  updateCC(elDsTextarea, elDsCharCount);
+  renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value);
+  elDsMsgError.classList.add('hidden'); elDsMsgSuccess.classList.add('hidden');
+});
+
+elDsBtnDiscard.addEventListener('click', () => {
+  if (elDsTextarea.value === dsOrigText) { return; }
+  if (!confirm('Discard changes and revert to the last saved version?')) { return; }
+  elDsTextarea.value = dsOrigText;
+  updateCC(elDsTextarea, elDsCharCount);
+  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value); }
+  elDsMsgError.classList.add('hidden'); elDsMsgSuccess.classList.add('hidden');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// DOWNSTREAM — RUN AI
+// ══════════════════════════════════════════════════════════════════════
+elDsBtnRun.addEventListener('click', async () => {
+  if (!studentRow || !phase1Output || !dsPhase) { return; }
+  elDsRunError.classList.add('hidden');
+  clearDsResults();
+  elDsBtnRun.disabled    = true;
+  elDsBtnRun.textContent = 'Running…';
+
+  const sd = await sb.auth.getSession();
+  if (!sd.data.session) { elDsRunError.textContent = 'Session expired.'; elDsRunError.classList.remove('hidden'); elDsBtnRun.disabled = false; elDsBtnRun.textContent = 'Run AI'; return; }
+
+  const model  = getModelPill(elDsPills);
+  const budget = parseInt(elDsThinking.value, 10) || 0;
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, bypass_gate: false, single_phase_run: true, phase: dsPhase, phase1_output: phase1Output, model_override: model, thinking_budget: budget })
+    });
+    const result = await res.json();
+    if (!result.success || !result.ai_response) {
+      elDsRunError.textContent = 'Phase ' + dsPhase + ' failed: ' + (result.error || 'Unknown error');
+      elDsRunError.classList.remove('hidden');
+      elDsBtnRun.disabled    = false;
+      elDsBtnRun.textContent = 'Run AI';
+      return;
+    }
+    if (result.assembled_prompt_used) {
+      elDsAssembledLbl.textContent = 'Assembled prompt (as sent to AI) — Phase ' + dsPhase;
+      elDsAssembledTA.value        = result.assembled_prompt_used;
+      elDsAssembled.classList.remove('hidden');
+      elDsBtnDlPrompt.classList.remove('hidden');
+    }
+    elDsResultLbl.textContent  = 'AI response — Phase ' + dsPhase;
+    elDsResultMeta.textContent = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
+    elDsResultTA.value         = result.ai_response;
+    elDsResult.classList.remove('hidden');
+    elDsRerunNotice.classList.add('hidden');
+    elDsResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    elDsRunError.textContent = 'Request failed: ' + err.message;
+    elDsRunError.classList.remove('hidden');
+  }
+  elDsBtnRun.disabled    = false;
+  elDsBtnRun.textContent = 'Run AI';
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// DOWNLOADS
+// ══════════════════════════════════════════════════════════════════════
+elP1BtnDlPrompt.addEventListener('click', () => {
+  if (!studentRow) { return; }
+  dl('CREATIVE NOTE -- PROMPT INSPECTOR\nGenerated: ' + nowStr() + '\nPhase: session_close_phase1\nStudent: ' + studentRow.student_name + '\n\n========================================\n\n' + elP1Textarea.value, 'prompt_phase1_' + san(studentRow.student_name) + '.txt');
+});
+elP1BtnDlResp.addEventListener('click', () => {
+  if (!studentRow) { return; }
+  dl('CREATIVE NOTE -- AI RESPONSE\nGenerated: ' + nowStr() + '\nPhase: session_close_phase1\nStudent: ' + studentRow.student_name + '\nModel: ' + getModelPill(elP1Pills) + '\nThinking budget: ' + (parseInt(elP1Thinking.value,10)||0) + '\n\n========================================\n\n' + elP1ResultTA.value, 'ai_response_phase1_' + san(studentRow.student_name) + '.txt');
+});
+elDsBtnDlPrompt.addEventListener('click', () => {
+  if (!studentRow || !dsPhase) { return; }
+  dl('CREATIVE NOTE -- PROMPT INSPECTOR\nGenerated: ' + nowStr() + '\nPhase: session_close_phase' + dsPhase + '\nStudent: ' + studentRow.student_name + '\n\n========================================\n\n' + elDsAssembledTA.value, 'prompt_phase' + dsPhase + '_' + san(studentRow.student_name) + '.txt');
+});
+elDsBtnDlResp.addEventListener('click', () => {
+  if (!studentRow || !dsPhase) { return; }
+  dl('CREATIVE NOTE -- AI RESPONSE\nGenerated: ' + nowStr() + '\nPhase: session_close_phase' + dsPhase + '\nStudent: ' + studentRow.student_name + '\nModel: ' + getModelPill(elDsPills) + '\nThinking budget: ' + (parseInt(elDsThinking.value,10)||0) + '\n\n========================================\n\n' + elDsResultTA.value, 'ai_response_phase' + dsPhase + '_' + san(studentRow.student_name) + '.txt');
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// SHARED HELPERS
+// ══════════════════════════════════════════════════════════════════════
+async function savePrompt(promptObj, text) {
+  const sd = await sb.auth.getSession();
+  if (!sd.data.session) { return { error: 'Session expired.' }; }
+  const r = await sb.functions.invoke('admin-prompt-save', { body: { prompt_id: promptObj.prompt_id, prompt_key: promptObj.prompt_key, prompt_text: text, prompt_text_previous: promptObj.prompt_text || null } });
+  if (r.error || !r.data?.success) { return { error: r.data?.error || r.error?.message || 'Unknown error' }; }
+  return { prompt: r.data.prompt };
+}
+
+function validatePrompt(text, vars) {
+  const errs = [];
+  if (!text.trim()) { errs.push('Prompt text cannot be empty.'); return errs; }
+  (vars || []).forEach(v => { if (!text.includes('{{' + v + '}}')) { errs.push('Missing required variable: {{' + v + '}}'); } });
+  return errs;
+}
+
+function renderChips(container, vars, currentText) {
+  container.innerHTML = '';
+  if (!vars?.length) { container.innerHTML = '<span class="vars-none">No required variables defined.</span>'; return; }
+  vars.forEach(v => {
+    const ph   = '{{' + v + '}}';
+    const ok   = currentText.includes(ph);
+    const chip = document.createElement('span');
+    chip.className   = 'var-chip' + (ok ? '' : ' missing');
+    chip.textContent = ph;
+    chip.title       = ok ? 'Present in prompt' : 'MISSING from prompt text';
+    container.appendChild(chip);
+  });
+}
+
+function updateCC(ta, counter) { counter.textContent = ta.value.length.toLocaleString() + ' characters'; }
+
+function resetAll() { prompts = {}; studentRow = null; phaseAIConfig = null; phase1Output = null; p1OrigText = ''; dsPhase = null; dsOrigText = ''; }
+
+function dl(content, filename) {
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
   a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
-
-function sanitizeFilename(name) {
-  return (name || 'student').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-}
-
-function esc(str) {
-  if (!str) { return ''; }
-  var s = String(str);
-  s = s.replace(/&/g, '&amp;');
-  s = s.replace(/</g, '&lt;');
-  s = s.replace(/>/g, '&gt;');
-  s = s.replace(/"/g, '&quot;');
-  return s;
-}
+function nowStr() { return new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' }); }
+function san(name) { return (name||'student').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
-
 </body>
 </html>
