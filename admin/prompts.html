@@ -198,8 +198,8 @@
 
     <!-- ── 2. Phase 1 ────────────────────────────────────────────────── -->
     <div class="card">
-      <div class="card-tag">Phase 1</div>
-      <div class="card-title">Working Position and Book Transition</div>
+      <div class="card-tag">Piece Correlation</div>
+      <div class="card-title">Piece Correlation</div>
 
       <!-- Template / Resolved toggle -->
       <div class="view-toggle">
@@ -266,21 +266,20 @@
 
     <!-- ── 3. Downstream phases ──────────────────────────────────────── -->
     <div class="card">
-      <div class="card-tag">Downstream phases</div>
-      <div class="card-title">Phases 2 – 5</div>
+      <div class="card-tag">Additional Summaries</div>
+      <div class="card-title">Additional Summaries</div>
 
-      <div id="ds-locked" class="msg msg-info">Run Phase 1 above to unlock downstream phases.</div>
+      <div id="ds-locked" class="msg msg-info">Run Piece Correlation above to unlock additional summaries.</div>
 
       <div id="ds-content" class="hidden">
         <div id="ds-rerun-notice" class="msg msg-info hidden"></div>
 
-        <div class="section-label">Select phase</div>
+        <div class="section-label">Select summary</div>
         <select id="ds-phase-select" class="phase-select">
-          <option value="">-- select a phase --</option>
-          <option value="2">Phase 2 — Quality Gate</option>
-          <option value="3">Phase 3 — Supplement Selection</option>
-          <option value="4">Phase 4 — Teacher Summary</option>
-          <option value="5">Phase 5 — Student Summary</option>
+          <option value="">-- select a summary --</option>
+          <option value="3">Supplement Selection</option>
+          <option value="4">Teacher Summary</option>
+          <option value="5">Student Practice Plan</option>
         </select>
 
         <div id="ds-phase-content" class="hidden">
@@ -360,7 +359,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
 const ADMIN_EMAILS = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
-const PHASE_KEYS   = { 1:'session_close_phase1', 2:'session_close_phase2', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
+const PHASE_KEYS   = { 1:'session_close_phase1', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
+const DS_PHASE_LABELS = { 3:'Supplement Selection', 4:'Teacher Summary', 5:'Student Practice Plan' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -876,10 +876,10 @@ elP1BtnRun.addEventListener('click', async () => {
     });
     const result = await res.json();
     if (!result.success || !result.raw_output) {
-      elP1RunError.textContent = 'Phase 1 failed: ' + (result.error || 'Unknown error');
+      elP1RunError.textContent = 'Piece Correlation failed: ' + (result.error || 'Unknown error');
       elP1RunError.classList.remove('hidden');
       elP1BtnRun.disabled    = false;
-      elP1BtnRun.textContent = 'Re-run AI — Phase 1';
+      elP1BtnRun.textContent = 'Re-run AI';
       return;
     }
     // Store as parsed object for downstream phases; display raw string in textarea
@@ -887,7 +887,7 @@ elP1BtnRun.addEventListener('click', async () => {
     elP1ResultTA.value         = result.raw_output;
     elP1ResultMeta.textContent = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
     elP1Result.classList.remove('hidden');
-    elP1BtnRun.textContent = 'Re-run AI — Phase 1';
+    elP1BtnRun.textContent = 'Re-run AI';
     elP1BtnDlResp.classList.remove('hidden');
 
     // Unlock downstream
@@ -895,7 +895,7 @@ elP1BtnRun.addEventListener('click', async () => {
     elDsContent.classList.remove('hidden');
 
     if (dsPhase !== null) {
-      elDsRerunNotice.textContent = 'Phase 1 was re-run. Click Run AI to regenerate Phase ' + dsPhase + ' with the new output.';
+      elDsRerunNotice.textContent = 'Piece Correlation was re-run. Click Run AI to regenerate the selected summary with the new output.';
       elDsRerunNotice.classList.remove('hidden');
       clearDsResults();
     }
@@ -1044,7 +1044,7 @@ elDsBtnRun.addEventListener('click', async () => {
     });
     const result = await res.json();
     if (!result.success || !result.raw_output) {
-      elDsRunError.textContent = 'Phase ' + dsPhase + ' failed: ' + (result.error || 'Unknown error');
+      elDsRunError.textContent = (DS_PHASE_LABELS[dsPhase] || 'Phase') + ' failed: ' + (result.error || 'Unknown error');
       elDsRunError.classList.remove('hidden');
       elDsBtnRun.disabled    = false;
       elDsBtnRun.textContent = 'Run AI';
@@ -1057,7 +1057,7 @@ elDsBtnRun.addEventListener('click', async () => {
       elDsBtnDlPrompt.classList.remove('hidden');
     }
 
-    elDsResultLabel.textContent  = 'AI response — Phase ' + dsPhase;
+    elDsResultLabel.textContent  = 'AI response — ' + (DS_PHASE_LABELS[dsPhase] || 'Phase ' + dsPhase);
     elDsResultMeta.textContent   = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
     elDsResultTA.value           = result.raw_output;
     elDsResult.classList.remove('hidden');
