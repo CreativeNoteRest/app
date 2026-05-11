@@ -863,10 +863,20 @@ elP1BtnRun.addEventListener('click', async () => {
   const sd = await sb.auth.getSession();
   if (!sd.data.session) { elP1RunError.textContent = 'Session expired.'; elP1RunError.classList.remove('hidden'); elP1BtnRun.disabled = false; elP1BtnRun.textContent = 'Run AI — Phase 1'; return; }
 
-  const model  = getModelPill(elP1Pills);
+const model  = getModelPill(elP1Pills);
   const budget = parseInt(elP1Thinking.value, 10) || 0;
-  // Use current textarea value regardless of view mode — if in resolved view, use template
-  const promptToSend = p1ViewMode === 'template' ? elP1Textarea.value : (prompts[1]?.prompt_text || p1OrigText);
+
+  // Resolve the prompt with live data before sending to AI
+  const resolved = await fetchP1Resolved();
+  console.log('RESOLVED RESULT:', JSON.stringify(resolved));
+  if (resolved.error) {
+    elP1RunError.textContent = 'Could not resolve prompt: ' + resolved.error;
+    elP1RunError.classList.remove('hidden');
+    elP1BtnRun.disabled    = false;
+    elP1BtnRun.textContent = 'Run AI — Phase 1';
+    return;
+  }
+  const promptToSend = resolved.text;
 
   try {
     const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
