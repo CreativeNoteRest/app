@@ -608,7 +608,7 @@ elDsTabResolved.addEventListener('click', async () => {
     const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, bypass_gate: false, single_phase_run: true, phase: dsPhase, phase1_output: phase1Output, prompt_only: true })
+      body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, single_phase_run: true, phase: dsPhase, phase1_output: phase1Output, prompt_only: true })
     });
     const result = await res.json();
     if (!result.success || !result.assembled_prompt_used) {
@@ -775,7 +775,7 @@ elStudentSelect.addEventListener('change', async () => {
     const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + sd.data.session.access_token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: parsed.session_id, teacher_id: parsed.teacher_id, student_id: parsed.student_id, series_id: parsed.series_id, lesson_book_id: parsed.lesson_book_id, student_name: parsed.student_name, bypass_gate: false, dry_run: true })
+      body: JSON.stringify({ session_id: parsed.session_id, teacher_id: parsed.teacher_id, student_id: parsed.student_id, series_id: parsed.series_id, lesson_book_id: parsed.lesson_book_id, student_name: parsed.student_name, dry_run: true })
     });
     const result = await res.json();
     if (!result.success) {
@@ -882,8 +882,9 @@ elP1BtnRun.addEventListener('click', async () => {
       elP1BtnRun.textContent = 'Re-run AI — Phase 1';
       return;
     }
-    phase1Output = result.raw_output;
-    elP1ResultTA.value         = phase1Output;
+    // Store as parsed object for downstream phases; display raw string in textarea
+    try { phase1Output = JSON.parse(result.raw_output); } catch(e) { phase1Output = result.raw_output; }
+    elP1ResultTA.value         = result.raw_output;
     elP1ResultMeta.textContent = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
     elP1Result.classList.remove('hidden');
     elP1BtnRun.textContent = 'Re-run AI — Phase 1';
