@@ -269,37 +269,37 @@
       margin-top: 10px; display: none;
     }
 
-    /* ── Quality gate card ───────────────────────────────────────── */
-    .gate-card {
+    /* ── Entry guard card ────────────────────────────────────────── */
+    .guard-card {
       background: var(--warn-light);
       border: 1px solid var(--warn-border);
       border-radius: var(--radius);
       padding: 20px 18px;
       margin-bottom: 16px;
     }
-    .gate-heading {
+    .guard-heading {
       font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
       text-transform: uppercase; color: var(--warn); margin-bottom: 10px;
     }
-    .gate-message {
+    .guard-message {
       font-size: 0.88rem; color: var(--text); line-height: 1.65;
       margin-bottom: 18px;
     }
-    .gate-actions { display: flex; gap: 10px; }
-    .btn-gate-cancel {
+    .guard-actions { display: flex; gap: 10px; }
+    .btn-guard-back {
       flex: 1; height: 44px; background: var(--card); color: var(--text-mid);
       border: 1.5px solid var(--border); border-radius: 10px;
       font-size: 0.88rem; font-weight: 600; cursor: pointer;
       transition: border-color 0.15s;
     }
-    .btn-gate-cancel:hover { border-color: var(--text-mid); }
-    .btn-gate-anyway {
+    .btn-guard-back:hover { border-color: var(--text-mid); }
+    .btn-guard-anyway {
       flex: 1; height: 44px; background: none; color: var(--brand);
       border: 1.5px solid var(--brand); border-radius: 10px;
       font-size: 0.88rem; font-weight: 600; cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-gate-anyway:hover { background: var(--brand-light); }
+    .btn-guard-anyway:hover { background: var(--brand-light); }
 
     /* ── Error card ──────────────────────────────────────────────── */
     .error-card {
@@ -472,7 +472,6 @@
         <div class="phase-pip" id="pip-2"></div>
         <div class="phase-pip" id="pip-3"></div>
         <div class="phase-pip" id="pip-4"></div>
-        <div class="phase-pip" id="pip-5"></div>
       </div>
     </div>
 
@@ -483,18 +482,18 @@
         <div class="error-message" id="error-message">
           The lesson could not be processed. Your notes are safe -- tap Retry to try again, or Cancel to return to your lesson.
         </div>
-        <button class="btn-retry" onclick="runEdgeFunction(false)">Retry</button>
+        <button class="btn-retry" onclick="runEdgeFunction()">Retry</button>
       </div>
     </div>
 
-    <!-- ── GATE STATE (quality gate not satisfied) ───────────────── -->
-    <div id="state-gate" class="hidden">
-      <div class="gate-card">
-        <div class="gate-heading">Before you close</div>
-        <div class="gate-message" id="gate-message"></div>
-        <div class="gate-actions">
-          <button class="btn-gate-cancel" onclick="cancelAndReturn()">Cancel</button>
-          <button class="btn-gate-anyway" onclick="runEdgeFunction(true)">Close Anyway</button>
+    <!-- ── ENTRY GUARD STATE (thin notes warning) ───────────────── -->
+    <div id="state-guard" class="hidden">
+      <div class="guard-card">
+        <div class="guard-heading">Before you close</div>
+        <div class="guard-message">Your lesson notes look quite short. You can add more notes or close anyway — your choice.</div>
+        <div class="guard-actions">
+          <button class="btn-guard-back" onclick="cancelAndReturn()">Add More Notes</button>
+          <button class="btn-guard-anyway" onclick="proceedToClose()">Close Anyway</button>
         </div>
       </div>
     </div>
@@ -659,8 +658,7 @@
   })();
 
   // ── 6. Phase pip animation helpers ───────────────────────────────
-  // The Edge Function runs five sequential AI phases.
-  // We animate the pips on a rough time estimate (3s per phase).
+  // Four active phases: 1, 3, 4, 5 — animated on a rough 4s per phase estimate.
   let pipTimer = null;
   let currentPip = 0;
 
@@ -672,13 +670,13 @@
     setPipActive(0);
     pipTimer = setInterval(() => {
       currentPip++;
-      if (currentPip < 5) {
+      if (currentPip < 4) {
         setPipDone(currentPip - 1);
         setPipActive(currentPip);
       } else {
         clearInterval(pipTimer);
       }
-    }, 3000);
+    }, 4000);
   }
 
   function setPipActive(i) {
@@ -710,7 +708,7 @@
   function showState(name) {
     document.getElementById('state-loading').classList.add('hidden');
     document.getElementById('state-error').classList.add('hidden');
-    document.getElementById('state-gate').classList.add('hidden');
+    document.getElementById('state-guard').classList.add('hidden');
     document.getElementById('state-results').classList.add('hidden');
     document.getElementById('footer-bar').classList.add('hidden');
 
@@ -718,32 +716,69 @@
       document.getElementById('state-loading').classList.remove('hidden');
     } else if (name === 'error') {
       document.getElementById('state-error').classList.remove('hidden');
-    } else if (name === 'gate') {
-      document.getElementById('state-gate').classList.remove('hidden');
+    } else if (name === 'guard') {
+      document.getElementById('state-guard').classList.remove('hidden');
     } else if (name === 'results') {
       document.getElementById('state-results').classList.remove('hidden');
       document.getElementById('footer-bar').classList.remove('hidden');
     }
   }
 
-  // ── 8. Call the Edge Function ─────────────────────────────────────
-  // bypass_gate = false on first call; true if teacher taps Close Anyway.
-  async function runEdgeFunction(bypass_gate) {
+  // ── 8. Entry guard check ──────────────────────────────────────────
+  // Runs before the Edge Function call. If total entry text is below
+  // the minimum threshold (returned from the Edge Function response on
+  // first run, or defaulted here), show the guard warning.
+  // min_entry_character_count is returned in the Edge Function response
+  // and cached after first call. Default 20 chars if not yet known.
+  let minEntryCharCount = 20;
+  let entriesChecked    = false;
+
+  async function checkEntryGuard() {
+    if (entriesChecked) return true; // already passed once — skip
+    try {
+      const { data: entryRows } = await supabase
+        .from('session_entries')
+        .select('entry_text')
+        .eq('session_id', SESSION_ID)
+        .eq('entry_source', 'teacher')
+        .not('entry_text', 'like', '[IGNORE]%');
+
+      const totalChars = (entryRows || [])
+        .map(r => (r.entry_text || '').trim())
+        .join('')
+        .length;
+
+      if (totalChars < minEntryCharCount) {
+        return false; // too thin
+      }
+    } catch (e) {
+      console.warn('Entry guard check failed (non-blocking):', e);
+      // On error: allow through — never block teacher
+    }
+    entriesChecked = true;
+    return true;
+  }
+
+  // ── 9. Call the Edge Function ─────────────────────────────────────
+  async function runEdgeFunction() {
+    // Entry guard — check before calling Edge Function
+    const guardPassed = await checkEntryGuard();
+    if (!guardPassed) {
+      showState('guard');
+      return;
+    }
+
     showState('loading');
     startPipAnimation();
-
-    document.getElementById('loading-label').textContent = bypass_gate
-      ? 'Generating your summaries'
-      : 'Reviewing your lesson';
+    document.getElementById('loading-label').textContent = 'Reviewing your lesson';
 
     const body = {
-      session_id:    SESSION_ID,
-      teacher_id:    TEACHER_ID,
-      student_id:    STUDENT_ID,
-      series_id:     SERIES_ID,
-      lesson_book_id: LESSON_BOOK_ID,   // null is fine -- Edge Function handles it
-      student_name:  STUDENT_NAME,
-      bypass_gate:   bypass_gate
+      session_id:     SESSION_ID,
+      teacher_id:     TEACHER_ID,
+      student_id:     STUDENT_ID,
+      series_id:      SERIES_ID,
+      lesson_book_id: LESSON_BOOK_ID,
+      student_name:   STUDENT_NAME,
     };
 
     try {
@@ -754,7 +789,6 @@
       finishPips();
 
       if (error) {
-        // Network-level or function-level failure
         console.error('Edge Function error:', error);
         showError(
           `The lesson summary could not be generated. Your notes are safe. ` +
@@ -764,7 +798,6 @@
       }
 
       if (!data || data.success === false) {
-        // Function ran but returned a hard failure
         const msg = data?.error || 'An unknown error occurred in the summary service.';
         console.error('Edge Function returned success:false:', msg);
         showError(
@@ -774,16 +807,15 @@
         return;
       }
 
+      // Cache min_entry_character_count for future guard checks
+      if (data.min_entry_character_count) {
+        minEntryCharCount = data.min_entry_character_count;
+      }
+
       // Store full response for use at approve time
       efResponse = data;
 
-      if (data.gate_satisfied === false) {
-        // Quality gate fired -- show gate message, not full results
-        renderGate(data.gate_message);
-        return;
-      }
-
-      // Gate satisfied (or bypassed) -- render full results
+      // Render full results
       renderResults(data);
 
     } catch (err) {
@@ -797,17 +829,11 @@
     }
   }
 
-  // ── 9. Render: quality gate message ──────────────────────────────
-  function renderGate(message) {
-    stopPips();
-    document.getElementById('gate-message').textContent = message ||
-      'Please add more lesson notes before closing.';
-    document.getElementById('page-subtitle').textContent =
-      'A few things to check before closing';
-    showState('gate');
-  }
-
-  // ── 10. Render: full results ──────────────────────────────────────
+  // Close Anyway — teacher acknowledged thin notes, proceed directly
+  window.proceedToClose = function() {
+    entriesChecked = true; // bypass guard on this run
+    runEdgeFunction();
+  };
   function renderResults(data) {
     document.getElementById('page-subtitle').textContent =
       'Review and approve to save';
@@ -1160,8 +1186,8 @@
   // ── 17. Expose runEdgeFunction to window (used by Retry button) ───
   window.runEdgeFunction = runEdgeFunction;
 
-  // ── 18. Kick off the Edge Function call on page load ─────────────
-  runEdgeFunction(false);
+  // ── 18. Kick off on page load ─────────────────────────────────────
+  runEdgeFunction();
 
 </script>
 
