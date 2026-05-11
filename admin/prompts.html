@@ -868,7 +868,6 @@ const model  = getModelPill(elP1Pills);
 
   // Resolve the prompt with live data before sending to AI
   const resolved = await fetchP1Resolved();
-  console.log('RESOLVED RESULT:', JSON.stringify(resolved));
   if (resolved.error) {
     elP1RunError.textContent = 'Could not resolve prompt: ' + resolved.error;
     elP1RunError.classList.remove('hidden');
