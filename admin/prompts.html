@@ -277,6 +277,7 @@
         <div class="section-label">Select summary</div>
         <select id="ds-phase-select" class="phase-select">
           <option value="">-- select a summary --</option>
+          <option value="2">Teacher Tag Matching</option>
           <option value="3">Supplement Selection</option>
           <option value="4">Teacher Summary</option>
           <option value="5">Student Practice Plan</option>
@@ -359,8 +360,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
 const ADMIN_EMAILS = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
-const PHASE_KEYS   = { 1:'session_close_phase1', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
-const DS_PHASE_LABELS = { 3:'Supplement Selection', 4:'Teacher Summary', 5:'Student Practice Plan' };
+const PHASE_KEYS   = { 1:'session_close_phase1', 2:'session_close_phase2', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
+const DS_PHASE_LABELS = { 2:'Teacher Tag Matching', 3:'Supplement Selection', 4:'Teacher Summary', 5:'Student Practice Plan' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
