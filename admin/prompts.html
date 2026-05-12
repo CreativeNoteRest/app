@@ -590,7 +590,7 @@ elDsTabTemplate.addEventListener('click', () => { setDsView('template'); });
 elDsTabResolved.addEventListener('click', async () => {
   if (!studentRow || !phase1Output || !dsPhase) { return; }
   // If already fetched, just switch view
-  if (dsResolvedText) { setDsView('resolved'); return; }
+  // if (dsResolvedText) { setDsView('resolved'); return; }
   // Fetch resolved prompt via prompt_only (no Gemini call)
   elDsTabResolved.disabled    = true;
   elDsTabResolved.textContent = 'Resolving…';
