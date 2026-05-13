@@ -894,6 +894,9 @@ const model  = getModelPill(elP1Pills);
     }
     // Store as parsed object for downstream phases; display raw string in textarea
     phase1Output = result.parsed_output ?? JSON.parse(result.raw_output);
+    if (Array.isArray(phase1Output?.piece_references)) {
+  phase1Output.piece_references = phase1Output.piece_references.filter(r => r != null);
+  }
     elP1ResultTA.value         = result.raw_output;
     elP1ResultMeta.textContent = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
     elP1Result.classList.remove('hidden');
