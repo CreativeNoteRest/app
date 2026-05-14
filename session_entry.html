@@ -1091,6 +1091,7 @@
     const text = textarea.value.trim();
     if (!text) return;
 
+    if (recognition && listening) recognition.stop();
     btnSubmit.disabled = true;
     const ok = await writeEntry(text);
 
@@ -1110,15 +1111,17 @@
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
+  let recognition = null;
+  let listening = false;
+
   if (!SpeechRecognition) {
     btnMic.style.display = 'none';
   } else {
-    const recognition = new SpeechRecognition();
+    recognition = new SpeechRecognition();
     recognition.lang           = 'en-CA';
     recognition.continuous     = true;
     recognition.interimResults = true;
 
-    let listening    = false;
     let textBeforeMic = ''; // not used (full erase/rewrite) -- retained for clarity
 
     btnMic.addEventListener('click', function() {
