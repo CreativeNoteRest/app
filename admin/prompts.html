@@ -347,6 +347,14 @@
             <textarea id="ds-result-textarea" class="result-textarea" readonly></textarea>
           </div>
 
+          <!-- Phase 2 supplement ranking preview -->
+          <div id="ds-supplement-preview" class="result-section hidden">
+            <div class="result-label">Teacher Tag Matching — Matched Tags</div>
+            <div id="ds-supplement-tags" class="result-meta" style="white-space:pre-wrap;"></div>
+            <div class="result-label" style="margin-top:1rem;">Ranked Supplements</div>
+            <div id="ds-supplement-list" style="font-size:0.85rem;"></div>
+          </div>
+
         </div><!-- /ds-phase-content -->
       </div><!-- /ds-content -->
     </div>
@@ -1077,6 +1085,26 @@ elDsBtnRun.addEventListener('click', async () => {
     elDsBtnDlResp.classList.remove('hidden');
     elDsRerunNotice.classList.add('hidden');
     elDsResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Phase 2: render tags + ranked supplements
+    const elSupPreview = document.getElementById('ds-supplement-preview');
+    const elSupTags    = document.getElementById('ds-supplement-tags');
+    const elSupList    = document.getElementById('ds-supplement-list');
+    if (dsPhase === 2 && result.ranked_supplements && elSupPreview && elSupTags && elSupList) {
+      elSupTags.textContent = result.parsed_output && result.parsed_output.length
+        ? result.parsed_output.join('\n')
+        : '(none matched)';
+      elSupList.innerHTML = result.ranked_supplements.map((s, i) =>
+        `<div style="padding:0.3rem 0;border-bottom:1px solid #eee;">
+          <strong>${i + 1}. ${s.title}</strong>
+          &nbsp;<span style="color:#888;">[score: ${s.score} | ${s.pool}]</span><br>
+          <span style="color:#aaa;">${(s.tags || []).join(', ')}</span>
+        </div>`
+      ).join('');
+      elSupPreview.classList.remove('hidden');
+    } else {
+      elSupPreview && elSupPreview.classList.add('hidden');
+    }
   } catch (err) {
     elDsRunError.textContent = 'Request failed: ' + err.message;
     elDsRunError.classList.remove('hidden');
