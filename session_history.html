@@ -251,7 +251,7 @@
       headerTitle.textContent = selectedStudent.safe_name + ' -- Lessons';
       viewDetail.style.display  = 'none';
       viewSessions.style.display = '';
-      menuBtn.style.display = '';
+      menuBtn.style.display = 'inline-block';
       clearErr();
     } else if (view === 'sessions') {
       // Session list -> student selector
@@ -328,7 +328,7 @@
     headerTitle.textContent = student.safe_name + ' -- Lessons';
     viewStudents.style.display = 'none';
     viewSessions.style.display  = '';
-    menuBtn.style.display = '';
+    menuBtn.style.display = 'inline-block';
     clearErr();
     loadSessions(student.student_id);
   }
@@ -398,7 +398,7 @@
     headerTitle.textContent = selectedStudent.safe_name;
     viewSessions.style.display = 'none';
     viewDetail.style.display   = '';
-    menuBtn.style.display = '';
+    menuBtn.style.display = 'inline-block';
     detailContent.innerHTML    = '<div class="loading-state">Loading lesson...</div>';
     clearErr();
 
