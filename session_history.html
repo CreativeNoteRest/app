@@ -148,6 +148,23 @@
       font-size: 12px; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 4px 6px;
     }
+
+    /* ── Supplement cards (history view) ── */
+    .supp-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .supp-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .supp-item:first-child { padding-top: 0; }
+    .supp-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--brand-light); }
+    .supp-thumb-placeholder { background: var(--brand-light); }
+    .supp-info { flex: 1; min-width: 0; }
+    .supp-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .supp-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .supp-link { color: var(--brand); text-decoration: none; }
+    .supp-link:hover { text-decoration: underline; }
+    .supp-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .supp-badge { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+    .supp-badge-free { background: #F0FDF4; color: #16A34A; }
+    .supp-badge-paid { background: var(--brand-light); color: var(--brand); }
+    .supp-pool { font-size: 12px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -374,7 +391,7 @@
     // Fetch full session record -- content fields not loaded in list view
     const { data: session, error } = await supabase
       .from('sessions')
-      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement, pdf_sent_at, pdf_sent_to')
+      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, pdf_sent_at, pdf_sent_to')
       .eq('session_id', sessionId)
       .single();
 
@@ -424,8 +441,8 @@
       // Student Practice Plan
       contentBlock('Student Practice Plan', s.ai_summ_student, false) +
 
-      // Recommended Supplements -- top 3 only, priority order matches approval screen
-      contentBlock('Recommended Supplements', topThree(s.ai_summ_supplement), true) +
+      // Recommended Supplements -- top 3 rich cards from ai_summ_supplement_data
+      supplementBlock(s.ai_summ_supplement_data) +
 
       // Email PDF button
       '<div class="pdf-btn-wrap">' +
@@ -447,19 +464,39 @@
       '</div>';
   }
 
-  // Return the first 3 non-empty lines of ai_summ_supplement text
-  function topThree(text) {
-    if (!text) return '';
-    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 3).join('\n');
-  }
-
-  // Convert markdown-style [Title](url) links to <a> tags
-  // Applied AFTER escHtml so we work with escaped text and insert safe HTML
-  function markdownLinks(escapedText) {
-    return escapedText.replace(
-      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
+  // Render top 3 supplement cards from ai_summ_supplement_data JSONB array
+  function supplementBlock(data) {
+    const items = (data || []).slice(0, 3);
+    if (items.length === 0) {
+      return '<div class="content-block">' +
+        '<div class="content-block-label">Recommended Supplements</div>' +
+        '<div class="content-block-empty">No supplements recorded.</div>' +
+        '</div>';
+    }
+    const cards = items.map(s => {
+      const thumb = s.thumbnail_url
+        ? '<img class="supp-thumb" src="' + escHtml(s.thumbnail_url) + '" alt="" loading="lazy">'
+        : '<div class="supp-thumb supp-thumb-placeholder"></div>';
+      const badge = s.is_free === true
+        ? '<span class="supp-badge supp-badge-free">Free</span>'
+        : s.is_free === false
+          ? '<span class="supp-badge supp-badge-paid">Resource</span>'
+          : '';
+      const pool = s.pool === 'fallback'
+        ? '<span class="supp-pool">General resource</span>' : '';
+      const titleEl = s.source_url
+        ? '<a class="supp-title supp-link" href="' + escHtml(s.source_url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(s.title || 'Untitled') + '</a>'
+        : '<span class="supp-title">' + escHtml(s.title || 'Untitled') + '</span>';
+      return '<div class="supp-item">' + thumb +
+        '<div class="supp-info">' +
+          '<div class="supp-title-row">' + titleEl + badge + '</div>' +
+          (pool ? '<div class="supp-meta">' + pool + '</div>' : '') +
+        '</div></div>';
+    }).join('');
+    return '<div class="content-block">' +
+      '<div class="content-block-label">Recommended Supplements</div>' +
+      cards +
+      '</div>';
   }
 
   // ── Send PDF ──────────────────────────────────────────────────────────────
