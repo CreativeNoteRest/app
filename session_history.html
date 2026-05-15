@@ -49,6 +49,12 @@
       border-radius: 6px; display: flex; align-items: center; justify-content: center;
     }
     .header-back:hover { background: var(--brand-light); }
+    .header-menu {
+      background: none; border: 1.5px solid var(--brand); border-radius: 6px;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--brand);
+      padding: 4px 10px; white-space: nowrap; display: none;
+    }
+    .header-menu:hover { background: var(--brand-light); }
     .header-title { font-size: 17px; font-weight: 600; color: var(--text); flex: 1; }
 
     /* ── Content ── */
@@ -172,6 +178,7 @@
 <header class="header">
   <button class="header-back" id="backBtn" aria-label="Back">&#8592;</button>
   <span class="header-title" id="headerTitle">Lesson History</span>
+  <button class="header-menu" id="menuBtn" aria-label="Main Menu">Main Menu</button>
 </header>
 
 <main class="content">
@@ -228,10 +235,13 @@
   const activeOnlyCheck = document.getElementById('activeOnlyCheck');
   const headerTitle     = document.getElementById('headerTitle');
   const backBtn         = document.getElementById('backBtn');
+  const menuBtn         = document.getElementById('menuBtn');
   const errorBanner     = document.getElementById('errorBanner');
 
   function showErr(msg) { errorBanner.textContent = msg; errorBanner.classList.add('visible'); }
   function clearErr()   { errorBanner.textContent = '';  errorBanner.classList.remove('visible'); }
+
+  menuBtn.addEventListener('click', () => { window.location.href = '/main_menu.html'; });
 
   // ── Back button -- three-level navigation ─────────────────────────────
   backBtn.addEventListener('click', () => {
@@ -241,6 +251,7 @@
       headerTitle.textContent = selectedStudent.safe_name + ' -- Lessons';
       viewDetail.style.display  = 'none';
       viewSessions.style.display = '';
+      menuBtn.style.display = '';
       clearErr();
     } else if (view === 'sessions') {
       // Session list -> student selector
@@ -250,6 +261,7 @@
       headerTitle.textContent = 'Lesson History';
       viewSessions.style.display = 'none';
       viewStudents.style.display  = '';
+      menuBtn.style.display = 'none';
       clearErr();
     } else {
       window.location.href = '/main_menu.html';
@@ -316,6 +328,7 @@
     headerTitle.textContent = student.safe_name + ' -- Lessons';
     viewStudents.style.display = 'none';
     viewSessions.style.display  = '';
+    menuBtn.style.display = '';
     clearErr();
     loadSessions(student.student_id);
   }
@@ -385,6 +398,7 @@
     headerTitle.textContent = selectedStudent.safe_name;
     viewSessions.style.display = 'none';
     viewDetail.style.display   = '';
+    menuBtn.style.display = '';
     detailContent.innerHTML    = '<div class="loading-state">Loading lesson...</div>';
     clearErr();
 
