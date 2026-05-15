@@ -1002,7 +1002,7 @@
         .update({
           ai_summ_teacher:          teacherSummary,
           ai_summ_student:          efResponse.ai_summ_student          || '',
-          ai_summ_supplement:       efResponse.ai_summ_supplement       || '',
+          ai_summ_supplement:       (efResponse.ai_summ_supplement_data || []).map(s => s.title).filter(Boolean).join('\n') || '',
           ai_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
