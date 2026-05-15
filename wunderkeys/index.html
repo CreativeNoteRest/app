@@ -520,14 +520,18 @@
     // After Google/Microsoft OAuth, Supabase redirects back here with a session.
     // Detect it and complete the sessionStorage handoff automatically.
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { error } = await completeSignIn(session.user.id);
-        if (!error) {
-          window.location.href = '/main_menu.html';
-        } else {
-          showError(errorSignin, error);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { error } = await completeSignIn(session.user.id);
+          if (!error) {
+            window.location.href = '/main_menu.html';
+          } else {
+            showError(errorSignin, error);
+          }
         }
+      } catch (e) {
+        showError(errorSignin, 'Could not complete sign-in. Please refresh and try again.');
       }
     })();
 

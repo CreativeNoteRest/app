@@ -691,7 +691,11 @@
       .eq('series_id', seriesId)
       .eq('is_active', true)
       .order('sequence_number', { ascending: true });
-    if (!error && data) allBooks = data;
+    if (error) {
+      showListError('Could not load books. The book dropdown may be unavailable.');
+    } else if (data) {
+      allBooks = data;
+    }
   }
 
   // ── Student list ─────────────────────────────────────────────────────
