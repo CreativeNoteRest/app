@@ -523,48 +523,54 @@
     const originalHTML = pdfBtn.innerHTML;
     pdfBtn.innerHTML = 'Sending...';
 
-    const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
-      body: {
-        session_id:  currentSession.session_id,
-        teacher_id:  teacherId,
-        send_type:   'manual',
-      },
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
+        body: {
+          session_id:  currentSession.session_id,
+          teacher_id:  teacherId,
+          send_type:   'manual',
+        },
+      });
 
-    if (error || !data?.success) {
-      const msg = data?.error || error?.message || 'Email failed. Please try again.';
+      if (error || !data?.success) {
+        const msg = data?.error || error?.message || 'Email failed. Please try again.';
+        pdfBtn.innerHTML = originalHTML;
+        pdfBtn.disabled = false;
+        showErr(msg);
+        return;
+      }
+
+      // Success -- update button and session state
+      const sentTo = (data.sent_to || []).join(', ');
+      const nowStr  = new Date().toISOString();
+      currentSession.pdf_sent_at = nowStr;
+      currentSession.pdf_sent_to = sentTo;
+
+      // Update button to resend state
+      pdfBtn.innerHTML = 'Resend Practice Plan' +
+        '<span class="pdf-btn-sub">Last sent ' + formatDate(nowStr) + ' to ' + escHtml(sentTo) + '</span>';
+      pdfBtn.disabled = false;
+
+      // Update session list row pdf badge so it reflects on back navigation
+      const listRow = sessionRows.find(s => s.session_id === currentSession.session_id);
+      if (listRow) { listRow.pdf_sent_at = nowStr; listRow.pdf_sent_to = sentTo; }
+
+      // Brief sent confirmation
+      const wrap = pdfBtn.closest('.pdf-btn-wrap');
+      if (wrap) {
+        const confirm = document.createElement('div');
+        confirm.style.cssText = 'text-align:center;color:#2E7D32;font-size:13px;font-weight:600;margin-top:6px;';
+        confirm.textContent = 'Sent!';
+        wrap.appendChild(confirm);
+        setTimeout(() => confirm.remove(), 2000);
+      }
+
+      clearErr();
+    } catch (e) {
       pdfBtn.innerHTML = originalHTML;
       pdfBtn.disabled = false;
-      showErr(msg);
-      return;
+      showErr('An unexpected error occurred. Please try again.');
     }
-
-    // Success -- update button and session state
-    const sentTo = (data.sent_to || []).join(', ');
-    const nowStr  = new Date().toISOString();
-    currentSession.pdf_sent_at = nowStr;
-    currentSession.pdf_sent_to = sentTo;
-
-    // Update button to resend state
-    pdfBtn.innerHTML = 'Resend Practice Plan' +
-      '<span class="pdf-btn-sub">Last sent ' + formatDate(nowStr) + ' to ' + escHtml(sentTo) + '</span>';
-    pdfBtn.disabled = false;
-
-    // Update session list row pdf badge so it reflects on back navigation
-    const listRow = sessionRows.find(s => s.session_id === currentSession.session_id);
-    if (listRow) { listRow.pdf_sent_at = nowStr; listRow.pdf_sent_to = sentTo; }
-
-    // Brief sent confirmation
-    const wrap = pdfBtn.closest('.pdf-btn-wrap');
-    if (wrap) {
-      const confirm = document.createElement('div');
-      confirm.style.cssText = 'text-align:center;color:#2E7D32;font-size:13px;font-weight:600;margin-top:6px;';
-      confirm.textContent = 'Sent!';
-      wrap.appendChild(confirm);
-      setTimeout(() => confirm.remove(), 2000);
-    }
-
-    clearErr();
   }
 
   // ── Utilities ─────────────────────────────────────────────────────────
