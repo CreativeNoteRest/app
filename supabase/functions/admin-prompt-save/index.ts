@@ -13,8 +13,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+const SUPABASE_URL  = Deno.env.get("SUPABASE_URL");
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const ADMIN_EMAILS = [
   "sgdensham@gmail.com",
@@ -33,7 +35,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // Guard: secrets must be present
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_KEY) {
     return respond(500, { error: "Missing required environment secrets" });
   }
 
@@ -45,8 +47,8 @@ Deno.serve(async (req: Request) => {
 
   const jwt = authHeader.replace("Bearer ", "");
 
-  const userClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
-    global: { headers: { Authorization: `Bearer ${jwt}` } }
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { headers: { Authorization: `Bearer ${jwt}` } }
   });
 
   const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -79,7 +81,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 4. Write to Prompts table using service role ──────────────────
-  const adminClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
   const { error: updateError } = await adminClient
     .from("prompts")

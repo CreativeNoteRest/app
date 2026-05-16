@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   // ── Step 1: Read session and verify ownership ──────────────────────
   const { data: session, error: sessErr } = await db
     .from("sessions")
-    .select("session_id, teacher_id, student_id, session_date, max_lesson_page, lesson_book_id, ai_summ_student, ai_summ_supplement")
+    .select("session_id, teacher_id, student_id, session_date, max_lesson_page, lesson_book_id, ai_summ_student, ai_summ_supplement_data")
     .eq("session_id", session_id)
     .single();
 
@@ -93,13 +93,8 @@ Deno.serve(async (req) => {
     recipients.push(student.email_secondary.trim());
   }
 
-  // ── Step 6: Top 3 supplements ──────────────────────────────────────
-  const supplementText = (session.ai_summ_supplement || "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .slice(0, 3)
-    .join("\n");
+  // ── Step 6: Build supplement cards (top 3 from ai_summ_supplement_data) ──
+  const supplements = (session.ai_summ_supplement_data || []).slice(0, 3);
 
   // ── Step 7: Build HTML for PDFShift ───────────────────────────────
   const sessionDate = session.session_date
@@ -107,22 +102,34 @@ Deno.serve(async (req) => {
     : "Date not recorded";
   const pageStr = session.max_lesson_page ? `Page ${session.max_lesson_page}` : "Page not recorded";
 
-  function renderSupplementLine(line) {
-    return line.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '$1: $2');
-  }
-
-  const supplementLines = supplementText
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .map((l) => `<li style="margin-bottom:8px;">${renderSupplementLine(l)}</li>`)
-    .join("");
-
   const practiceLines = (session.ai_summ_student || "No practice plan recorded.")
     .split("\n")
     .map((l) => l.trim())
     .map((l) => l === "" ? "<br>" : `<p style="margin:0 0 6px 0;">${l}</p>`)
     .join("");
+
+  function buildSupplementCard(s) {
+    const badge = s.is_free === true
+      ? `<span style="font-size:10px;font-weight:700;background:#F0FDF4;color:#16A34A;border-radius:3px;padding:1px 5px;margin-left:6px;">Free</span>`
+      : s.is_free === false
+        ? `<span style="font-size:10px;font-weight:700;background:#FCE4D6;color:#E26B0A;border-radius:3px;padding:1px 5px;margin-left:6px;">Resource</span>`
+        : "";
+    const thumb = s.thumbnail_url
+      ? `<img src="${s.thumbnail_url}" width="48" height="48" style="border-radius:6px;object-fit:cover;flex-shrink:0;" />`
+      : `<div style="width:48px;height:48px;border-radius:6px;background:#FCE4D6;flex-shrink:0;"></div>`;
+    const titleEl = s.source_url
+      ? `<a href="${s.source_url}" style="font-size:13px;font-weight:600;color:#E26B0A;text-decoration:none;">${s.title || "Untitled"}</a>`
+      : `<span style="font-size:13px;font-weight:600;color:#1A1A1A;">${s.title || "Untitled"}</span>`;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #E8E4DF;border-radius:8px;margin-bottom:8px;">
+      ${thumb}
+      <div style="flex:1;min-width:0;">
+        <div>${titleEl}${badge}</div>
+        ${s.pool === "fallback" ? `<div style="font-size:11px;color:#9A9A9A;margin-top:2px;">General resource</div>` : ""}
+      </div>
+    </div>`;
+  }
+
+  const supplementCardsHtml = supplements.map(buildSupplementCard).join("");
 
   const htmlPayload = `<!DOCTYPE html>
 <html>
@@ -134,8 +141,6 @@ Deno.serve(async (req) => {
   .meta { font-size: 13px; color: #555; margin-bottom: 28px; }
   h2 { font-size: 15px; color: #E26B0A; border-bottom: 1px solid #E8E4DF; padding-bottom: 4px; margin-top: 28px; margin-bottom: 12px; }
   .practice { line-height: 1.65; }
-  ul { padding-left: 20px; margin: 0; }
-  li { line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -143,7 +148,7 @@ Deno.serve(async (req) => {
   <div class="meta">${sessionDate} &nbsp;|&nbsp; ${bookName} &nbsp;|&nbsp; ${pageStr}</div>
   <h2>Practice Plan</h2>
   <div class="practice">${practiceLines}</div>
-  ${supplementLines ? `<h2>Recommended Supplements</h2><ul>${supplementLines}</ul>` : ""}
+  ${supplementCardsHtml ? `<h2>Recommended Supplements</h2>${supplementCardsHtml}` : ""}
 </body>
 </html>`;
 
@@ -164,7 +169,18 @@ Deno.serve(async (req) => {
   }
 
   const pdfBuffer = await pdfShiftRes.arrayBuffer();
-  const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+
+  // ── Chunked base64 conversion (avoids call stack overflow on large PDFs) ──
+  function bufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  }
+  const pdfBase64 = bufferToBase64(pdfBuffer);
 
   // ── Step 9: Send via Resend ────────────────────────────────────────
   const fileName = `${student.safe_name.replace(/\s+/g, "_")}_Practice_Plan_${session.session_date || "unknown"}.pdf`;

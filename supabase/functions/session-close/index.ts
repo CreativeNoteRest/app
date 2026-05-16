@@ -1,632 +1,406 @@
 // session-close Edge Function
-// Creative Note -- Session Close Flow
-// Spec reference: Session_Close_Flow_Spec_v1_1.txt
-//
-// Responsibilities:
-//   - Receive POST from session_close.html with session context
-//   - Fetch all required data from Supabase in parallel
-//   - Run JavaScript supplement ranking logic
-//   - Execute five sequential Gemini AI calls (Phases 1-5)
-//   - Return structured response to browser
-//   - Read-only: makes no database writes
-//
-// All database writes occur in the browser on teacher approval only.
-//
-// Debug modes (admin/prompts.html only -- never sent by session_close.html):
-//   dry_run: true         -- assemble all five prompts, skip Gemini, return assembled strings
-//   single_phase_run: true -- call Gemini once with a provided assembled_prompt, return raw response
+// May 2026 — Phase 2 Teacher Tag Matching + Ranking Simplification
+// Phase 3 retired — supplement selection now pure JS passthrough
+// Read-only. All writes occur in the browser on teacher approval.
+// Phases: 1 (Piece Correlation), 2 (Teacher Tag Matching),
+//         4 (Teacher Summary), 5 (Student Practice Plan)
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ---------------------------------------------------------------------------
-// Types
+// Constants
 // ---------------------------------------------------------------------------
 
-interface RequestBody {
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+const ALLOWED_MODEL_OVERRIDES = [
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+];
+
+const PHASE_MAX_OUTPUT_TOKENS: Record<number, number> = {
+  1: 3000,
+  2: 500,
+  4: 5000,
+  5: 5000,
+};
+
+const PHASE_DEFAULT_THINKING_BUDGET: Record<number, number> = {
+  1: 0,
+  2: 0,
+  4: 1024,
+  5: 1024,
+};
+
+// ---------------------------------------------------------------------------
+// Supabase client
+// ---------------------------------------------------------------------------
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY')!;
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders() });
+  }
+
+  try {
+    const body = await req.json();
+    const {
+      session_id,
+      teacher_id,
+      student_id,
+      series_id,
+      lesson_book_id,
+      student_name,
+      // Debug fields
+      dry_run,
+      single_phase_run,
+      prompt_only,
+      model_override,
+      thinking_budget: thinking_budget_override,
+      assembled_prompt,
+      phase1_output: supplied_phase1_output,
+    } = body;
+
+    if (!session_id || !teacher_id || !student_id || !series_id || !lesson_book_id || !student_name) {
+      return jsonResponse({ success: false, error: 'Missing required fields.' });
+    }
+
+    const now = new Date();
+    const sessionMmdd = `${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const data = await fetchSessionData({
+      supabase,
+      session_id,
+      teacher_id,
+      student_id,
+      series_id,
+      lesson_book_id,
+      session_mmdd: sessionMmdd,
+    });
+
+    if (data.error) {
+      return jsonResponse({ success: false, error: data.error });
+    }
+
+    const {
+      entries,
+      birthYear,
+      bookName,
+      equivalentBooks,
+      booksUnits,
+      booksPieces,
+      prevLessonPage,
+      activeAssignments,
+      supplementCandidates,
+      configMap,
+      promptMap,
+      sessionDate,
+    } = data;
+
+    // Validate required prompts
+    const requiredPromptKeys = [
+      'session_close_phase1',
+      'session_close_phase2',
+      'session_close_phase4',
+      'session_close_phase5',
+    ];
+    for (const key of requiredPromptKeys) {
+      if (!promptMap.has(key)) {
+        return jsonResponse({ success: false, error: `Missing required prompt key: ${key}` });
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Derived values
+    // -----------------------------------------------------------------------
+
+    const sessionYear = new Date(sessionDate).getFullYear();
+    const studentAge = birthYear ? sessionYear - birthYear : null;
+
+    const { text: pieceListText, keyMap: pieceKeyMap } = assemblePieceList(booksUnits, booksPieces);
+    const activeSuppsText = activeSupplementsText(activeAssignments);
+    const priorLessonPageStr = prevLessonPage !== null ? String(prevLessonPage) : 'not recorded';
+    const bookThreshold = parseInt(configMap.get('book_transition_page_threshold') ?? '10');
+    const supplementMaxDisplay = parseInt(configMap.get('supplement_max_display') ?? '10');
+
+    const teacherTagWeight = parseInt(configMap.get('supplement_teacher_tag_weight') ?? '2');
+
+    const resolvedModelOverride = (model_override && ALLOWED_MODEL_OVERRIDES.includes(model_override))
+      ? model_override
+      : null;
+
+    // -----------------------------------------------------------------------
+    // dry_run path
+    // -----------------------------------------------------------------------
+
+    if (dry_run) {
+      const phaseAiConfig = {
+        phase1: resolvePhaseAIConfig(configMap, 1),
+        phase2: resolvePhaseAIConfig(configMap, 2),
+        phase4: resolvePhaseAIConfig(configMap, 4),
+        phase5: resolvePhaseAIConfig(configMap, 5),
+      };
+
+      const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
+      const phase2PromptDry = promptMap.get('session_close_phase2')!
+        .replace('{{entries}}', entries)
+        .replace('{{candidate_tags}}', '[Phase 1 dependent — not available in dry_run]');
+      const phase4PromptDry = promptMap.get('session_close_phase4')!
+        .replace('{{student_name}}', student_name)
+        .replace('{{session_date}}', sessionDate)
+        .replace('{{book_name}}', bookName)
+        .replace('{{lesson_page}}', '[Phase 1 dependent — not available in dry_run]')
+        .replace('{{piece_references}}', '[Phase 1 dependent — not available in dry_run]')
+        .replace('{{entries}}', entries)
+        .replace('{{active_supplements}}', activeSuppsText);
+      const phase5PromptDry = promptMap.get('session_close_phase5')!
+        .replace('{{student_name}}', student_name)
+        .replace('{{session_date}}', sessionDate)
+        .replace('{{book_name}}', bookName)
+        .replace('{{lesson_page}}', '[Phase 1 dependent — not available in dry_run]')
+        .replace('{{piece_references}}', '[Phase 1 dependent — not available in dry_run]')
+        .replace('{{entries}}', entries)
+        .replace('{{active_supplements}}', activeSuppsText)
+        .replace('{{student_age}}', studentAge !== null ? String(studentAge) : 'not recorded');
+
+      return jsonResponse({
+        success: true,
+        dry_run: true,
+        debug_prompts: {
+          phase1: phase1Prompt,
+          phase2: phase2PromptDry,
+          phase4: phase4PromptDry,
+          phase5: phase5PromptDry,
+        },
+        phase_ai_config: phaseAiConfig,
+        debug_piece_key_map: Object.fromEntries(pieceKeyMap),
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // single_phase_run debug path
+    // -----------------------------------------------------------------------
+
+    if (single_phase_run) {
+      const phase = body.phase as number;
+
+      if (phase === 1) {
+        if (!assembled_prompt) {
+          return jsonResponse({ success: false, error: 'single_phase_run phase 1 requires assembled_prompt.' });
+        }
+        const aiConfig = resolvePhaseAIConfig(configMap, 1, resolvedModelOverride, thinking_budget_override);
+        const raw = await callAI(assembled_prompt, aiConfig);
+        const parsed = parsePhase1JSON(raw);
+        const validated = parsed ? validatePhase1Output(parsed, booksPieces, booksUnits, pieceKeyMap) : null;
+        return jsonResponse({ success: true, phase: 1, raw_output: raw, parsed_output: validated });
+      }
+
+      if (phase === 2) {
+        if (!supplied_phase1_output) {
+          return jsonResponse({ success: false, error: 'single_phase_run phase 2 requires phase1_output.' });
+        }
+        const phase1 = validatePhase1Output(supplied_phase1_output as Phase1Output, booksPieces, booksUnits, pieceKeyMap);
+        const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
+
+        let allCandidates = supplementCandidates;
+        if (equivalentBooks && equivalentBooks.length > 0) {
+          const { data: equivData } = await supabase.rpc('get_supplement_candidates', {
+            p_book_id: lesson_book_id,
+            p_equivalent_books: equivalentBooks,
+            p_max_lesson_page: null,
+            p_series_id: series_id,
+            p_student_id: student_id,
+            p_session_id: session_id,
+            p_session_mmdd: sessionMmdd,
+          });
+          if (equivData) allCandidates = equivData;
+        }
+
+        const candidateTagList = buildCandidateTagList(allCandidates, effectiveLessonPage);
+        const promptText = assemblePhase2Prompt(promptMap, entries, candidateTagList);
+        if (prompt_only) return jsonResponse({ success: true, phase: 2, assembled_prompt_used: promptText, debug_candidate_count: allCandidates.length, debug_tag_count: candidateTagList.length });
+        const aiConfig = resolvePhaseAIConfig(configMap, 2, resolvedModelOverride, thinking_budget_override);
+        const raw = await callAI(promptText, aiConfig);
+        const parsed = parsePhase2JSON(raw, candidateTagList);
+        const ranked2 = rankSupplementCandidates(allCandidates, phase1, booksPieces, effectiveLessonPage, parsed, teacherTagWeight, supplementMaxDisplay);
+        const rankedWithScore = ranked2.fullList.map(s => ({ title: s.title, score: (s as any).totalScore, pool: s.pool, tags: s.tags }));
+        return jsonResponse({ success: true, phase: 2, raw_output: raw, parsed_output: parsed, assembled_prompt_used: promptText, ranked_supplements: rankedWithScore });
+      }
+
+      if ([4, 5].includes(phase)) {
+        if (!supplied_phase1_output) {
+          return jsonResponse({ success: false, error: `single_phase_run phase ${phase} requires phase1_output.` });
+        }
+        const phase1 = supplied_phase1_output as Phase1Output;
+        const validatedPhase1 = validatePhase1Output(phase1, booksPieces, booksUnits, pieceKeyMap);
+        const effectiveLessonPage = deriveEffectiveLessonPage(validatedPhase1, booksPieces, prevLessonPage);
+        validatedPhase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
+
+        if (phase === 4) {
+          const pieceBlock4 = assemblePieceBlock(validatedPhase1, booksPieces, entries, 'phase4');
+          const promptText = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock4, entries, activeSuppsText);
+          if (prompt_only) return jsonResponse({ success: true, phase: 4, assembled_prompt_used: promptText });
+          const aiConfig = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
+          const raw = await callAI(promptText, aiConfig);
+          return jsonResponse({ success: true, phase: 4, raw_output: raw, assembled_prompt_used: promptText });
+        }
+
+        if (phase === 5) {
+          const pieceBlock5 = assemblePieceBlock(validatedPhase1, booksPieces, entries, 'phase5');
+          const promptText = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock5, entries, activeSuppsText, studentAge);
+          if (prompt_only) return jsonResponse({ success: true, phase: 5, assembled_prompt_used: promptText });
+          const aiConfig = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
+          const raw = await callAI(promptText, aiConfig);
+          return jsonResponse({ success: true, phase: 5, raw_output: raw, assembled_prompt_used: promptText });
+        }
+      }
+
+      return jsonResponse({ success: false, error: `Unknown phase: ${phase}` });
+    }
+
+    // -----------------------------------------------------------------------
+    // Production path — sequential phases 1, 2, 4, 5
+    // -----------------------------------------------------------------------
+
+    // Second RPC for equivalent books
+    let allSupplementCandidates = supplementCandidates;
+    if (equivalentBooks && equivalentBooks.length > 0) {
+      const { data: equivData } = await supabase.rpc('get_supplement_candidates', {
+        p_book_id: lesson_book_id,
+        p_equivalent_books: equivalentBooks,
+        p_max_lesson_page: null,
+        p_series_id: series_id,
+        p_student_id: student_id,
+        p_session_id: session_id,
+        p_session_mmdd: sessionMmdd,
+      });
+      if (equivData) allSupplementCandidates = equivData;
+    }
+
+    // --- Phase 1 ---
+    const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
+    const phase1Config = resolvePhaseAIConfig(configMap, 1, resolvedModelOverride, thinking_budget_override);
+    const phase1Raw = await callAIWithJSONRetry(phase1Prompt, phase1Config, 1);
+    if (!phase1Raw.success) {
+      return jsonResponse({ success: false, failed_phase: 1, error: phase1Raw.error });
+    }
+    const phase1Parsed = parsePhase1JSON(phase1Raw.text!);
+    if (!phase1Parsed) {
+      return jsonResponse({ success: false, failed_phase: 1, error: 'Phase 1 JSON parse failed after retry.' });
+    }
+    const phase1 = validatePhase1Output(phase1Parsed, booksPieces, booksUnits, pieceKeyMap);
+
+    const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
+    phase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
+
+    // --- Phase 2: Teacher tag matching ---
+    // Graceful fallback to empty set — never fails the pipeline
+    let teacherImpliedTags: string[] = [];
+    try {
+      const candidateTagList = buildCandidateTagList(allSupplementCandidates, effectiveLessonPage);
+      if (candidateTagList.length > 0) {
+        const phase2Prompt = assemblePhase2Prompt(promptMap, entries, candidateTagList);
+        const phase2Config = resolvePhaseAIConfig(configMap, 2);
+        const phase2Raw = await callAI(phase2Prompt, phase2Config);
+        teacherImpliedTags = parsePhase2JSON(phase2Raw, candidateTagList);
+      }
+    } catch (err) {
+      console.warn('Phase 2 teacher tag matching failed — falling back to empty set:', err);
+      teacherImpliedTags = [];
+    }
+
+    // --- JS supplement ranking ---
+    const ranked = rankSupplementCandidates(
+      allSupplementCandidates,
+      phase1,
+      booksPieces,
+      effectiveLessonPage,
+      teacherImpliedTags,
+      teacherTagWeight,
+      supplementMaxDisplay,
+    );
+
+    // --- Phase 3 retired: JS passthrough ---
+    // ranked.fullList already contains thumbnail_url, title, source_url, is_free, pool.
+    // No AI call needed. ai_summ_supplement is a fixed string satisfying the non-null write check.
+    const supplementData = ranked.fullList;
+    const supplementText = 'See supplement recommendations below.';
+
+    // --- Phase 4 ---
+    const pieceBlock4 = assemblePieceBlock(phase1, booksPieces, entries, 'phase4');
+    const phase4Prompt = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock4, entries, activeSuppsText);
+    const phase4Config = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
+    const phase4Result = await callAI(phase4Prompt, phase4Config);
+
+    // --- Phase 5 ---
+    const pieceBlock5 = assemblePieceBlock(phase1, booksPieces, entries, 'phase5');
+    const phase5Prompt = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock5, entries, activeSuppsText, studentAge);
+    const phase5Config = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
+    const phase5Result = await callAI(phase5Prompt, phase5Config);
+
+    return jsonResponse({
+      success: true,
+      ai_summ_teacher: phase4Result,
+      ai_summ_student: phase5Result,
+      ai_summ_supplement: supplementText,
+      ai_summ_supplement_data: supplementData,
+      max_lesson_page: phase1.max_lesson_page,
+      book_transition_suspected: phase1.book_transition_suspected,
+      next_book_id: null,
+      min_entry_character_count: parseInt(configMap.get('min_entry_character_count') ?? '20'),
+    });
+
+  } catch (err) {
+    console.error('session-close unhandled error:', err);
+    return jsonResponse({ success: false, error: String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// fetchSessionData
+// ---------------------------------------------------------------------------
+
+interface FetchResult {
+  entries: string;
+  birthYear: number | null;
+  bookName: string;
+  equivalentBooks: string[] | null;
+  booksUnits: BookUnit[];
+  booksPieces: BookPiece[];
+  prevLessonPage: number | null;
+  activeAssignments: ActiveAssignment[];
+  supplementCandidates: SupplementCandidate[];
+  configMap: Map<string, string>;
+  promptMap: Map<string, string>;
+  sessionDate: string;
+  error?: string;
+}
+
+async function fetchSessionData(params: {
+  supabase: ReturnType<typeof createClient>;
   session_id: string;
   teacher_id: string;
   student_id: string;
   series_id: string;
   lesson_book_id: string;
-  student_name: string;
-  bypass_gate: boolean;
-  // Debug flags -- optional, absent on all production calls
-  dry_run?: boolean;
-  single_phase_run?: boolean;
-  phase?: number;
-  assembled_prompt?: string;
-  model_override?: string;   // single_phase_run only -- overrides default Gemini model
-  thinking_budget?: number;  // single_phase_run only -- overrides per-phase thinkingBudget
-}
-
-interface SupplementCandidate {
-  supplement_id: string;
-  title: string;
-  source_url: string;
-  is_free: boolean | null;
-  thumbnail_url: string | null;
-  pool: string;
-  match_context: string;
-  tags: string[];
-  rank_score?: number;
-}
-
-interface SelectedSupplement {
-  supplement_id: string;
-  title: string;
-  source_url: string;
-  is_free: boolean | null;
-  thumbnail_url: string | null;
-  pool: string;
-  rationale: string;
-}
-
-interface Phase1Result {
-  max_lesson_page: number | null;
-  detected_contexts: string[];
-  lesson_signals: string[];
-  behavioural_signals: string[];
-  event_signals: string[];
-  book_transition_suspected: boolean;
-}
-
-interface Phase2Result {
-  satisfied: boolean;
-  missing_items: string[];
-}
-
-interface Phase3Result {
-  ai_summ_supplement: string;
-  selected_supplements: SelectedSupplement[];
-}
-
-// ---------------------------------------------------------------------------
-// Gemini helper
-// ---------------------------------------------------------------------------
-
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
-const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-
-// Valid model strings accepted by model_override in single_phase_run mode.
-// Production path always uses GEMINI_MODEL -- this list is for debug use only.
-const ALLOWED_MODEL_OVERRIDES = [
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-2.5-pro"
-];
-
-async function callGemini(
-  apiKey: string,
-  prompt: string,
-  expectJson: boolean,
-  maxOutputTokens: number = 2000,
-  thinkingBudget: number = 0,
-  model: string = GEMINI_MODEL
-): Promise<string> {
-  const endpoint = `${GEMINI_BASE_URL}/${model}:generateContent`;
-
-  const body = {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.2,
-      thinkingConfig: { thinkingBudget },
-      maxOutputTokens
-    }
-  };
-
-  const fetchGemini = async (promptText: string): Promise<string> => {
-    const response = await fetch(`${endpoint}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...body,
-        contents: [{ role: "user", parts: [{ text: promptText }] }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini HTTP ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Gemini returned empty response");
-    return text;
-  };
-
-  const stripFences = (text: string): string =>
-    text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-
-  const rawText = await fetchGemini(prompt);
-
-  if (!expectJson) return rawText;
-
-  try {
-    const cleaned = stripFences(rawText);
-    JSON.parse(cleaned);
-    return cleaned;
-  } catch (_e) {
-    const retryPrompt =
-      prompt +
-      "\n\nCRITICAL: Your previous response could not be parsed as JSON. " +
-      "Return only a raw JSON object. No markdown, no code fences, no explanation. " +
-      "Start your response with { and end with }";
-    const retryText = await fetchGemini(retryPrompt);
-    const retryCleaned = stripFences(retryText);
-    try {
-      JSON.parse(retryCleaned);
-      return retryCleaned;
-    } catch (_e2) {
-      throw new Error(
-        "Gemini returned invalid JSON on both attempts. Raw response: " +
-          retryCleaned.substring(0, 200)
-      );
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Prompt variable substitution
-// ---------------------------------------------------------------------------
-
-function fillPrompt(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
-    if (vars[key] !== undefined && vars[key] !== null && vars[key] !== "") {
-      return vars[key];
-    }
-    const fallbacks: Record<string, string> = {
-      lesson_page: "not recorded",
-      prior_unit_title: "not available",
-      prior_unit_skills: "not available",
-      active_supplements: "",
-      lesson_signals: "none recorded",
-      supplement_candidates: "none available",
-      student_age: "not recorded"
-    };
-    return fallbacks[key] ?? `[${key} not available]`;
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Supplement ranking logic
-// ---------------------------------------------------------------------------
-
-function rankSupplements(
-  candidates: SupplementCandidate[],
-  maxLessonPage: number | null,
-  prevLessonPage: number | null,
-  lessonSignals: string[],
-  unitTags: string[]
-): SupplementCandidate[] {
-  const filtered = candidates.filter((c) => {
-    if (c.pool === "current_book") {
-      if (maxLessonPage === null) return true;
-      const pageStart = (c as any).page_start;
-      if (pageStart === undefined || pageStart === null) return true;
-      return pageStart <= maxLessonPage;
-    }
-    return true;
-  });
-
-  const pageSpan =
-    maxLessonPage !== null && prevLessonPage !== null
-      ? maxLessonPage - prevLessonPage
-      : null;
-
-  const scored = filtered.map((c) => {
-    const pageStart = (c as any).page_start ?? null;
-    const tags = c.tags ?? [];
-    const lessonTagMatch = tags.filter((t) => lessonSignals.includes(t)).length;
-    const unitTagMatch = tags.filter((t) => unitTags.includes(t)).length;
-
-    let score = 0;
-    if (c.pool === "current_book") {
-      if (
-        pageSpan !== null &&
-        pageStart !== null &&
-        prevLessonPage !== null &&
-        pageStart >= prevLessonPage &&
-        pageStart <= (maxLessonPage ?? 0)
-      ) {
-        score = 7;
-      } else if (lessonTagMatch > 0) {
-        score = 6;
-      } else if (unitTagMatch > 0) {
-        score = 5;
-      } else {
-        score = 4;
-      }
-    } else {
-      if (lessonTagMatch > 0) score = 3;
-      else if (unitTagMatch > 0) score = 2;
-      else score = 1;
-    }
-
-    return { ...c, rank_score: score, _tagMatchCount: lessonTagMatch + unitTagMatch };
-  });
-
-  const contexts = [...new Set(scored.map((c) => c.match_context))].filter(
-    (ctx) => ctx !== "studio_admin"
-  );
-
-  const sorted = scored.sort((a, b) => {
-    if (b.rank_score !== a.rank_score) return (b.rank_score ?? 0) - (a.rank_score ?? 0);
-    return ((b as any)._tagMatchCount ?? 0) - ((a as any)._tagMatchCount ?? 0);
-  });
-
-  const guaranteed: SupplementCandidate[] = [];
-  const usedIds = new Set<string>();
-  for (const ctx of contexts) {
-    const topForCtx = sorted.find(
-      (c) => c.match_context === ctx && !usedIds.has(c.supplement_id)
-    );
-    if (topForCtx) {
-      guaranteed.push(topForCtx);
-      usedIds.add(topForCtx.supplement_id);
-    }
-  }
-
-  const remainder = sorted.filter((c) => !usedIds.has(c.supplement_id));
-  return [...guaranteed, ...remainder].slice(0, 10);
-}
-
-// ---------------------------------------------------------------------------
-// Format helpers
-// ---------------------------------------------------------------------------
-
-function formatEntries(entries: { entry_text: string; entry_sequence: number }[]): string {
-  return entries.map((e) => `[${e.entry_sequence}] ${e.entry_text}`).join("\n");
-}
-
-// ---------------------------------------------------------------------------
-// formatPieceBlock
-// Shared formatter used by both Phase 4 (piece_context) and Phase 5
-// (student_instructions). Produces a structured, indented block that anchors
-// every instruction unambiguously to its piece and unit.
-//
-// Scope: current unit -3 through current unit +1, existence-checked.
-// Null fallback: full book (when max_lesson_page could not be resolved and
-// currentUnitLabel is empty or unit cannot be found in the sorted list).
-// ---------------------------------------------------------------------------
-
-function formatPieceBlock(
-  pieces: any[],
-  units: any[],
-  currentUnitLabel: string
-): string {
-  const sorted = [...units].sort((a, b) => a.unit_sort_order - b.unit_sort_order);
-
-  const currentIndex = sorted.findIndex((u) => u.unit_label === currentUnitLabel);
-
-  const windowUnits =
-    currentIndex === -1
-      ? sorted
-      : sorted.slice(
-          Math.max(0, currentIndex - 3),
-          currentIndex + 2
-        );
-
-  const windowLabels = new Set(windowUnits.map((u) => u.unit_label));
-  const windowPieces = pieces.filter((p) => windowLabels.has(p.unit_label));
-
-  if (windowPieces.length === 0) return "No piece data available for this session.";
-
-  const blocks: string[] = [];
-  for (const unit of windowUnits) {
-    const unitPieces = windowPieces.filter((p) => p.unit_label === unit.unit_label);
-    if (unitPieces.length === 0) continue;
-
-    const isCurrent = unit.unit_label === currentUnitLabel;
-    const unitHeader = `-- ${unit.unit_title ?? unit.unit_label}${isCurrent ? " (current)" : ""} --`;
-    const pieceLines: string[] = [];
-
-    for (const p of unitPieces) {
-      const pageRef = p.page_end && p.page_end !== p.page_start
-        ? `p. ${p.page_start}-${p.page_end}`
-        : `p. ${p.page_start}`;
-      const typeLabel = p.piece_type ? `, ${p.piece_type}` : "";
-      const pieceHeader = `  ${p.piece_title} (${pageRef}${typeLabel})`;
-
-      const instructionLines =
-        Array.isArray(p.student_instructions) && p.student_instructions.length > 0
-          ? p.student_instructions.map((inst: string) => `    ${inst}`).join("\n")
-          : "    (no instructions on file)";
-
-      pieceLines.push(`${pieceHeader}\n${instructionLines}`);
-    }
-
-    blocks.push(`${unitHeader}\n\n${pieceLines.join("\n\n")}`);
-  }
-
-  return blocks.join("\n\n");
-}
-
-function formatSupplementCandidates(candidates: SupplementCandidate[]): string {
-  return candidates
-    .map((c, i) => {
-      const freeLabel =
-        c.is_free === true ? "[FREE]" : c.is_free === false ? "[PAID]" : "[FREE STATUS UNKNOWN]";
-      return `${i + 1}. ${c.title} ${freeLabel} | Pool: ${c.pool} | Score: ${c.rank_score} | URL: ${c.source_url}`;
-    })
-    .join("\n");
-}
-
-function formatActiveSupplements(assignments: { title: string }[]): string {
-  if (!assignments || assignments.length === 0) return "";
-  return assignments.map((a) => `- ${a.title}`).join("\n");
-}
-
-function resolveCurrentUnit(
-  units: any[],
-  pieces: any[],
-  maxLessonPage: number | null
-): { currentUnit: any; priorUnit: any | null } {
-  if (maxLessonPage === null) {
-    return { currentUnit: units[0] ?? null, priorUnit: null };
-  }
-
-  const sorted = [...units].sort((a, b) => a.unit_sort_order - b.unit_sort_order);
-  let currentUnit = sorted[0];
-  for (const unit of sorted) {
-    const unitPieces = pieces.filter((p) => p.unit_label === unit.unit_label);
-    if (maxLessonPage >= (unitPieces[0]?.page_start ?? 0)) {
-      currentUnit = unit;
-    }
-  }
-
-  const currentIndex = sorted.findIndex((u) => u.unit_label === currentUnit.unit_label);
-  const priorUnit = currentIndex > 0 ? sorted[currentIndex - 1] : null;
-  return { currentUnit, priorUnit };
-}
-
-// ---------------------------------------------------------------------------
-// Build gate message
-// ---------------------------------------------------------------------------
-
-function buildGateMessage(studentName: string, missingItems: string[]): string {
-  const missingList = missingItems.map((item) => `- ${item}`).join("\n");
-  return (
-    `The notes for ${studentName}'s lesson appear to be missing some information:\n` +
-    missingList +
-    `\n\nClose Lesson is an end-of-lesson action. If the lesson is still in progress, ` +
-    `continue adding notes and close when the lesson is done.\n\n` +
-    `When you are ready, keep adding notes and close at the end of the lesson. ` +
-    `You can also close anyway if you need to -- reopen is available the same day.`
-  );
-}
-
-// ---------------------------------------------------------------------------
-// CORS headers
-// ---------------------------------------------------------------------------
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
-};
-
-// ---------------------------------------------------------------------------
-// Main handler
-// ---------------------------------------------------------------------------
-
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { status: 200, headers: corsHeaders });
-  }
-  if (req.method !== "POST") {
-    return jsonResponse({ success: false, error: "Method not allowed" }, 405);
-  }
-
-  // -------------------------------------------------------------------------
-  // Step 1: Parse and validate request body
-  // -------------------------------------------------------------------------
-  let body: RequestBody;
-  try {
-    body = await req.json();
-  } catch (_e) {
-    return jsonResponse({ success: false, error: "Invalid JSON in request body" }, 400);
-  }
-
-  // -------------------------------------------------------------------------
-  // Debug mode: single_phase_run
-  // Call Gemini once with the provided assembled_prompt and return raw response.
-  // Data fetches and prompt assembly are skipped entirely -- the browser
-  // supplies the already-assembled prompt string from a prior dry_run call.
-  //
-  // Accepts optional overrides (debug use only):
-  //   model_override    -- one of ALLOWED_MODEL_OVERRIDES; falls back to GEMINI_MODEL
-  //   thinking_budget   -- integer >= 0; falls back to per-phase default if absent
-  // -------------------------------------------------------------------------
-  if (body.single_phase_run === true) {
-    if (!body.assembled_prompt) {
-      return jsonResponse({ success: false, error: "single_phase_run requires assembled_prompt" }, 400);
-    }
-
-    const geminiKeyDebug = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiKeyDebug) {
-      return jsonResponse({ success: false, error: "Missing GEMINI_API_KEY" }, 500);
-    }
-
-    // Phase 1, 2, 3 expect JSON; 4 and 5 expect plain text.
-    const phaseNum = body.phase ?? 0;
-    const expectJson = phaseNum >= 1 && phaseNum <= 3;
-    const maxTokens = phaseNum >= 4 ? 5000 : phaseNum === 3 ? 2000 : phaseNum === 1 ? 1000 : 500;
-    const defaultThinking = phaseNum >= 4 ? 1024 : 0;
-
-    // Resolve model override -- validate against allowlist, fall back to default.
-    const modelOverride =
-      body.model_override && ALLOWED_MODEL_OVERRIDES.includes(body.model_override)
-        ? body.model_override
-        : GEMINI_MODEL;
-
-    // Resolve thinking budget -- use supplied value if a non-negative integer,
-    // otherwise fall back to the per-phase default.
-    const thinkingOverride =
-      typeof body.thinking_budget === "number" && body.thinking_budget >= 0
-        ? body.thinking_budget
-        : defaultThinking;
-
-    try {
-      const aiResponse = await callGemini(
-        geminiKeyDebug,
-        body.assembled_prompt,
-        expectJson,
-        maxTokens,
-        thinkingOverride,
-        modelOverride
-      );
-      return jsonResponse({
-        success: true,
-        ai_response: aiResponse,
-        model_used: modelOverride,
-        thinking_budget_used: thinkingOverride
-      });
-    } catch (err: any) {
-      return jsonResponse({ success: false, error: `Gemini call failed: ${err.message}` }, 500);
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Standard path: validate required fields
-  // -------------------------------------------------------------------------
-  const required = ["session_id", "teacher_id", "student_id", "series_id", "lesson_book_id", "student_name"];
-  for (const field of required) {
-    if (!body[field as keyof RequestBody]) {
-      return jsonResponse({ success: false, error: `Missing required field: ${field}` }, 400);
-    }
-  }
-
-  const bypassGate = body.bypass_gate === true;
-  const dryRun = body.dry_run === true;
-
-  // -------------------------------------------------------------------------
-  // Step 2: Initialise Supabase client
-  // -------------------------------------------------------------------------
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const geminiKey = Deno.env.get("GEMINI_API_KEY");
-
-  if (!supabaseUrl || !supabaseKey || !geminiKey) {
-    return jsonResponse({ success: false, error: "Missing required environment secrets" }, 500);
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  // -------------------------------------------------------------------------
-  // Step 3: Fetch all data in parallel
-  // -------------------------------------------------------------------------
-  let fetchResults: any[];
-  try {
-    fetchResults = await Promise.all([
-      // 0: Session entries
-      supabase
-        .from("session_entries")
-        .select("entry_text, entry_sequence")
-        .eq("session_id", body.session_id)
-        .eq("entry_source", "teacher")
-        .not("entry_text", "like", "[IGNORE]%")
-        .order("entry_sequence", { ascending: true }),
-
-      // 1: Book context
-      supabase
-        .from("books")
-        .select("full_display_name, equivalent_books, sequence_number")
-        .eq("book_id", body.lesson_book_id)
-        .single(),
-
-      // 2: Units
-      supabase
-        .from("books_units")
-        .select("unit_label, unit_sort_order, unit_title, unit_skill_focus, unit_tags")
-        .eq("book_id", body.lesson_book_id)
-        .order("unit_sort_order", { ascending: true }),
-
-      // 3: Pieces
-      supabase
-        .from("books_pieces")
-        .select("piece_title, piece_type, page_start, page_end, student_instructions, skill_focus, page_level_tags, unit_label, unit_sort_order")
-        .eq("book_id", body.lesson_book_id)
-        .order("page_start", { ascending: true }),
-
-      // 4: Previous session (for page_span)
-      supabase
-        .from("sessions")
-        .select("max_lesson_page")
-        .eq("student_id", body.student_id)
-        .eq("session_status", "approved")
-        .order("session_date", { ascending: false })
-        .limit(1),
-
-      // 5: Active student assignments
-      supabase
-        .from("student_assignments")
-        .select("supplement_id, supplements(title)")
-        .eq("student_id", body.student_id)
-        .eq("is_active", true),
-
-      // 6: Supplement candidates via Postgres function
-      // p_session_mmdd uses today as a fallback -- sessionDate is not yet resolved
-      // at this point in the parallel fetch. The refined call below (post-resolve)
-      // uses the real sessionMmdd and replaces this result when equivalent_books
-      // is populated. The fallback only applies for books with no equivalent_books
-      // (currently Preschool Book 1 only).
-      supabase.rpc("get_supplement_candidates", {
-        p_book_id: body.lesson_book_id,
-        p_equivalent_books: null,
-        p_max_lesson_page: null,
-        p_series_id: body.series_id,
-        p_student_id: body.student_id,
-        p_session_id: body.session_id,
-        p_session_mmdd: new Date().toISOString().slice(5, 10)
-      }),
-
-      // 7: Config values
-      supabase
-        .from("config")
-        .select("config_key, config_value")
-        .eq("series_id", body.series_id)
-        .in("config_key", [
-          "supplement_max_display",
-          "supplement_initial_display",
-          "quality_gate_enabled",
-          "book_transition_page_threshold",
-          "active_supplement_check_after_sessions"
-        ]),
-
-      // 8: Prompts
-      supabase
-        .from("prompts")
-        .select("prompt_key, prompt_text")
-        .eq("series_id", body.series_id)
-        .in("prompt_key", [
-          "session_close_phase1",
-          "session_close_phase2",
-          "session_close_phase3",
-          "session_close_phase4",
-          "session_close_phase5"
-        ]),
-
-      // 9: Session date from Sessions record
-      supabase
-        .from("sessions")
-        .select("session_date")
-        .eq("session_id", body.session_id)
-        .single(),
-
-      // 10: Student birth_year
-      supabase
-        .from("students")
-        .select("birth_year")
-        .eq("student_id", body.student_id)
-        .single()
-    ]);
-  } catch (err: any) {
-    return jsonResponse({ success: false, error: `Data fetch failed: ${err.message}` }, 500);
-  }
+  session_mmdd: string;
+}): Promise<FetchResult> {
+  const { supabase, session_id, teacher_id, student_id, series_id, lesson_book_id, session_mmdd } = params;
 
   const [
     entriesResult,
+    studentResult,
     bookResult,
     unitsResult,
     piecesResult,
@@ -636,368 +410,774 @@ Deno.serve(async (req: Request) => {
     configResult,
     promptsResult,
     sessionDateResult,
-    studentResult
-  ] = fetchResults;
+  ] = await Promise.all([
+    supabase
+      .from('session_entries')
+      .select('entry_text, entry_sequence')
+      .eq('session_id', session_id)
+      .eq('entry_source', 'teacher')
+      .not('entry_text', 'like', '[IGNORE]%')
+      .order('entry_sequence', { ascending: true }),
 
-  if (bookResult.error) {
-    return jsonResponse({ success: false, error: `Book fetch failed: ${bookResult.error.message}` }, 500);
-  }
-  if (promptsResult.error) {
-    return jsonResponse({ success: false, error: `Prompts fetch failed: ${promptsResult.error.message}` }, 500);
-  }
+    supabase
+      .from('students')
+      .select('birth_year')
+      .eq('student_id', student_id)
+      .single(),
 
-  // -------------------------------------------------------------------------
-  // Parse fetched data
-  // -------------------------------------------------------------------------
-  const entries: any[] = entriesResult.data ?? [];
-  const book = bookResult.data;
-  const units: any[] = unitsResult.data ?? [];
-  const pieces: any[] = piecesResult.data ?? [];
-  const prevLessonPage: number | null = prevSessionResult.data?.[0]?.max_lesson_page ?? null;
-  const rawAssignments: any[] = assignmentsResult.data ?? [];
-  const activeAssignments = rawAssignments.map((a) => ({
-    supplement_id: a.supplement_id,
-    title: a.supplements?.title ?? "Unknown supplement"
-  }));
-  const rawCandidates: SupplementCandidate[] = candidatesResult.data ?? [];
+    supabase
+      .from('books')
+      .select('full_display_name, equivalent_books, sequence_number')
+      .eq('book_id', lesson_book_id)
+      .single(),
 
-  const sessionDate: string =
-    sessionDateResult.data?.session_date ?? new Date().toISOString().split("T")[0];
+    supabase
+      .from('books_units')
+      .select('unit_label, unit_sort_order, unit_title, unit_tags')
+      .eq('book_id', lesson_book_id)
+      .order('unit_sort_order', { ascending: true }),
 
-  const sessionMmdd: string = sessionDate.slice(5, 10);
+    supabase
+      .from('books_pieces')
+      .select('piece_id, piece_title, piece_type, page_start, page_end, page_level_tags, student_instructions, unit_label, unit_sort_order')
+      .eq('book_id', lesson_book_id)
+      .order('page_start', { ascending: true }),
 
-  const birthYear: number | null = studentResult.data?.birth_year ?? null;
-  const sessionYear = parseInt(sessionDate.substring(0, 4), 10);
-  const studentAge: string | null = birthYear !== null ? String(sessionYear - birthYear) : null;
+    supabase
+      .from('sessions')
+      .select('max_lesson_page')
+      .eq('student_id', student_id)
+      .eq('session_status', 'approved')
+      .order('session_date', { ascending: false })
+      .limit(1),
 
-  let candidates: SupplementCandidate[] = rawCandidates;
-  if (book.equivalent_books && book.equivalent_books.length > 0) {
-    const { data: refinedCandidates } = await supabase.rpc("get_supplement_candidates", {
-      p_book_id: body.lesson_book_id,
-      p_equivalent_books: book.equivalent_books,
+    supabase
+      .from('student_assignments')
+      .select('supplement_id, supplements(title)')
+      .eq('student_id', student_id)
+      .eq('is_active', true),
+
+    supabase.rpc('get_supplement_candidates', {
+      p_book_id: lesson_book_id,
+      p_equivalent_books: null,
       p_max_lesson_page: null,
-      p_series_id: body.series_id,
-      p_student_id: body.student_id,
-      p_session_id: body.session_id,
-      p_session_mmdd: sessionMmdd
-    });
-    candidates = refinedCandidates ?? rawCandidates;
-  }
+      p_series_id: series_id,
+      p_student_id: student_id,
+      p_session_id: session_id,
+      p_session_mmdd: session_mmdd,
+    }),
 
-  const configMap: Record<string, string> = {};
+    supabase
+      .from('config')
+      .select('config_key, config_value')
+      .eq('series_id', series_id)
+      .in('config_key', [
+        'supplement_max_display',
+        'supplement_initial_display',
+        'book_transition_page_threshold',
+        'active_supplement_check_after_sessions',
+        'min_entry_character_count',
+        'supplement_teacher_tag_weight',
+        'ai_phase1_model', 'ai_phase1_thinking_budget',
+        'ai_phase2_model', 'ai_phase2_thinking_budget',
+        'ai_phase4_model', 'ai_phase4_thinking_budget',
+        'ai_phase5_model', 'ai_phase5_thinking_budget',
+      ]),
+
+    supabase
+      .from('prompts')
+      .select('prompt_key, prompt_text')
+      .eq('series_id', series_id)
+      .in('prompt_key', [
+        'session_close_phase1',
+        'session_close_phase2',
+        'session_close_phase4',
+        'session_close_phase5',
+      ]),
+
+    supabase
+      .from('sessions')
+      .select('session_date')
+      .eq('session_id', session_id)
+      .single(),
+  ]);
+
+  const configMap = new Map<string, string>();
   for (const row of configResult.data ?? []) {
-    configMap[row.config_key] = row.config_value;
+    configMap.set(row.config_key, row.config_value);
   }
-  const supplementMaxDisplay = parseInt(configMap["supplement_max_display"] ?? "10");
-  const supplementInitialDisplay = parseInt(configMap["supplement_initial_display"] ?? "3");
-  const qualityGateEnabled = (configMap["quality_gate_enabled"] ?? "true") === "true";
-  const bookThreshold = parseInt(configMap["book_transition_page_threshold"] ?? "10");
 
-  const promptMap: Record<string, string> = {};
+  const promptMap = new Map<string, string>();
   for (const row of promptsResult.data ?? []) {
-    promptMap[row.prompt_key] = row.prompt_text;
+    promptMap.set(row.prompt_key, row.prompt_text);
   }
 
-  const requiredPromptKeys = [
-    "session_close_phase1",
-    "session_close_phase2",
-    "session_close_phase3",
-    "session_close_phase4",
-    "session_close_phase5"
-  ];
-  for (const key of requiredPromptKeys) {
-    if (!promptMap[key]) {
-      return jsonResponse(
-        { success: false, error: `Prompt not found: ${key}. Seed the Prompts table before running session close.` },
-        500
-      );
+  const entryRows = entriesResult.data ?? [];
+  const entries = entryRows.map((r: any) => r.entry_text).join('\n');
+  const sessionDate = sessionDateResult.data?.session_date ?? new Date().toISOString().split('T')[0];
+
+  const activeAssignments: ActiveAssignment[] = (assignmentsResult.data ?? []).map((r: any) => ({
+    supplement_id: r.supplement_id,
+    title: r.supplements?.title ?? '',
+  }));
+
+  return {
+    entries,
+    birthYear: studentResult.data?.birth_year ?? null,
+    bookName: bookResult.data?.full_display_name ?? '',
+    equivalentBooks: bookResult.data?.equivalent_books ?? null,
+    booksUnits: unitsResult.data ?? [],
+    booksPieces: piecesResult.data ?? [],
+    prevLessonPage: prevSessionResult.data?.[0]?.max_lesson_page ?? null,
+    activeAssignments,
+    supplementCandidates: candidatesResult.data ?? [],
+    configMap,
+    promptMap,
+    sessionDate,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface BookUnit {
+  unit_label: string;
+  unit_sort_order: number;
+  unit_title: string;
+  unit_tags: string[];
+}
+
+interface BookPiece {
+  piece_id: string;
+  piece_title: string;
+  piece_type: string;
+  page_start: number;
+  page_end: number | null;
+  page_level_tags: string[];
+  student_instructions: string[] | null;
+  unit_label: string;
+  unit_sort_order: number;
+}
+
+interface ActiveAssignment {
+  supplement_id: string;
+  title: string;
+}
+
+interface SupplementCandidate {
+  supplement_id: string;
+  title: string;
+  source_url: string;
+  is_free: boolean | null;
+  pool: string;
+  page_start: number | null;
+  tags: string[];
+  match_context: string | null;
+  thumbnail_url: string | null;
+}
+
+interface PieceReference {
+  piece_id: string;
+  piece_title: string;
+  confidence: 'high' | 'medium';
+  teacher_notes: string[];
+  page_level_tags_matched: string[];
+  student_instructions: string[] | null;
+}
+
+interface UnitPieceEntry {
+  piece_id: string;
+  piece_title: string;
+  page_start: number;
+}
+
+interface UnitReference {
+  unit_label: string;
+  unit_title: string;
+  teacher_notes: string[];
+  pieces: UnitPieceEntry[];
+}
+
+interface Phase1Output {
+  piece_references: PieceReference[];
+  unit_references: UnitReference[];
+  max_lesson_page: number | null;
+  book_transition_suspected: boolean;
+}
+
+type PieceKeyMap = Map<number, string>;
+
+interface PhaseAIConfig {
+  model: string;
+  thinkingBudget: number;
+  maxOutputTokens: number;
+}
+
+interface RankedResult {
+  fullList: SupplementCandidate[];
+}
+
+// ---------------------------------------------------------------------------
+// resolvePhaseAIConfig
+// ---------------------------------------------------------------------------
+
+function resolvePhaseAIConfig(
+  configMap: Map<string, string>,
+  phase: number,
+  modelOverride?: string | null,
+  thinkingBudgetOverride?: number | null,
+): PhaseAIConfig {
+  const model = modelOverride
+    ?? configMap.get(`ai_phase${phase}_model`)
+    ?? GEMINI_MODEL;
+  const thinkingBudget = (thinkingBudgetOverride !== null && thinkingBudgetOverride !== undefined && thinkingBudgetOverride >= 0)
+    ? thinkingBudgetOverride
+    : parseInt(configMap.get(`ai_phase${phase}_thinking_budget`) ?? String(PHASE_DEFAULT_THINKING_BUDGET[phase] ?? 0));
+  const maxOutputTokens = PHASE_MAX_OUTPUT_TOKENS[phase] ?? 2000;
+  return { model, thinkingBudget, maxOutputTokens };
+}
+
+// ---------------------------------------------------------------------------
+// callAI / callGemini — with exponential backoff retry
+// ---------------------------------------------------------------------------
+
+async function callAI(prompt: string, config: PhaseAIConfig): Promise<string> {
+  return callGemini(prompt, config);
+}
+
+async function callGemini(prompt: string, config: PhaseAIConfig): Promise<string> {
+  const url = `${GEMINI_BASE_URL}/${config.model}:generateContent?key=${geminiApiKey}`;
+
+  const body: Record<string, unknown> = {
+    system_instruction: {
+      parts: [{ text: 'You are a data extraction tool. You extract information only from the text provided to you. You never use outside knowledge, memory, or training data. If the information is not in the provided text, you do not include it.' }]
+    },
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      maxOutputTokens: config.maxOutputTokens,
+    },
+  };
+
+  if (config.thinkingBudget > 0) {
+    body.generationConfig = {
+      ...body.generationConfig as object,
+      thinkingConfig: { thinkingBudget: config.thinkingBudget },
+    };
+  }
+
+  const RETRY_DELAYS = [1000, 2000, 4000];
+  let lastError = '';
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+        return text;
+      }
+
+      if (res.status === 429 || res.status === 503) {
+        lastError = `HTTP ${res.status}`;
+        if (attempt < RETRY_DELAYS.length) {
+          await delay(RETRY_DELAYS[attempt]);
+          continue;
+        }
+      }
+
+      const errText = await res.text();
+      throw new Error(`Gemini HTTP ${res.status}: ${errText}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('Gemini HTTP')) throw err;
+      lastError = String(err);
+      if (attempt < RETRY_DELAYS.length) await delay(RETRY_DELAYS[attempt]);
     }
   }
 
-  const entriesText =
-    entries.length > 0 ? formatEntries(entries) : "No lesson notes recorded.";
+  throw new Error(`Gemini call failed after retries: ${lastError}`);
+}
 
-  // -------------------------------------------------------------------------
-  // Assemble all five prompts
-  // This block runs on both the production path and dry_run path.
-  // On dry_run, Gemini is never called -- assembled strings are returned directly.
-  // -------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// callAIWithJSONRetry
+// ---------------------------------------------------------------------------
 
-  // Phase 1 prompt
-  const phase1Prompt = fillPrompt(promptMap["session_close_phase1"], {
-    student_name: body.student_name,
-    book_name: book.full_display_name,
-    entries: entriesText,
-    book_threshold: String(bookThreshold)
-  });
-
-  // Phase 2 prompt -- assembled with placeholder page since Phase 1 has not run yet.
-  // On dry_run this is fine: the user is inspecting the template with real entry data.
-  // On the live path Phase 2 prompt is re-assembled below with the real maxLessonPage.
-  const phase2PromptDryRun = fillPrompt(promptMap["session_close_phase2"], {
-    student_name: body.student_name,
-    book_name: book.full_display_name,
-    entries: entriesText,
-    lesson_page: "not yet resolved -- requires Phase 1 AI output"
-  });
-
-  // Resolve unit context for Phases 3, 4, 5 using page null (best-guess for dry run).
-  // On the live path these are re-assembled below with real Phase 1 output.
-  const { currentUnit: dryRunUnit, priorUnit: dryRunPriorUnit } = resolveCurrentUnit(units, pieces, null);
-  const dryRunCandidateText =
-    candidates.length > 0 ? formatSupplementCandidates(rankSupplements(candidates, null, prevLessonPage, [], dryRunUnit?.unit_tags ?? [])) : "none available";
-
-  const phase3PromptDryRun = fillPrompt(promptMap["session_close_phase3"], {
-    student_name: body.student_name,
-    book_name: book.full_display_name,
-    lesson_page: "not yet resolved -- requires Phase 1 AI output",
-    current_unit_title: dryRunUnit?.unit_title ?? "not available",
-    current_unit_skills: dryRunUnit?.unit_skill_focus ?? "not available",
-    lesson_signals: "not yet resolved -- requires Phase 1 AI output",
-    supplement_candidates: dryRunCandidateText,
-    max_display: String(supplementMaxDisplay)
-  });
-
-  const dryRunPieceBlock = formatPieceBlock(pieces, units, dryRunUnit?.unit_label ?? "");
-  const dryRunActiveSupplements = formatActiveSupplements(activeAssignments);
-
-  const phase4PromptDryRun = fillPrompt(promptMap["session_close_phase4"], {
-    student_name: body.student_name,
-    session_date: sessionDate,
-    book_name: book.full_display_name,
-    lesson_page: "not yet resolved -- requires Phase 1 AI output",
-    current_unit_title: dryRunUnit?.unit_title ?? "not available",
-    current_unit_skills: dryRunUnit?.unit_skill_focus ?? "not available",
-    prior_unit_title: dryRunPriorUnit?.unit_title ?? "not available",
-    prior_unit_skills: dryRunPriorUnit?.unit_skill_focus ?? "not available",
-    piece_context: dryRunPieceBlock,
-    entries: entriesText,
-    active_supplements: dryRunActiveSupplements
-  });
-
-  const phase5VarsDryRun: Record<string, string> = {
-    student_name: body.student_name,
-    session_date: sessionDate,
-    book_name: book.full_display_name,
-    lesson_page: "not yet resolved -- requires Phase 1 AI output",
-    current_unit_title: dryRunUnit?.unit_title ?? "not available",
-    student_instructions: dryRunPieceBlock,
-    entries: entriesText,
-    active_supplements: dryRunActiveSupplements
-  };
-  if (studentAge !== null) { phase5VarsDryRun.student_age = studentAge; }
-  const phase5PromptDryRun = fillPrompt(promptMap["session_close_phase5"], phase5VarsDryRun);
-
-  // -------------------------------------------------------------------------
-  // Dry run exit -- return all five assembled prompts without calling Gemini
-  // -------------------------------------------------------------------------
-  if (dryRun) {
-    return jsonResponse({
-      success: true,
-      dry_run: true,
-      debug_prompts: {
-        phase1: phase1Prompt,
-        phase2: phase2PromptDryRun,
-        phase3: phase3PromptDryRun,
-        phase4: phase4PromptDryRun,
-        phase5: phase5PromptDryRun
-      }
-    });
-  }
-
-  // -------------------------------------------------------------------------
-  // Phase 1 -- Working position and signals (live path only)
-  // -------------------------------------------------------------------------
-  let phase1: Phase1Result;
+async function callAIWithJSONRetry(
+  prompt: string,
+  config: PhaseAIConfig,
+  phase: number,
+): Promise<{ success: boolean; text?: string; error?: string }> {
   try {
-    const phase1Raw = await callGemini(geminiKey, phase1Prompt, true, 1000);
-    phase1 = JSON.parse(phase1Raw) as Phase1Result;
-  } catch (err: any) {
-    return jsonResponse({ success: false, error: `Phase 1 failed: ${err.message}` }, 500);
+    const text = await callAI(prompt, config);
+    const cleaned = stripFences(text);
+    JSON.parse(cleaned);
+    return { success: true, text: cleaned };
+  } catch {
+    const retryPrompt = prompt + '\n\nCRITICAL: Your previous response could not be parsed as JSON. Return ONLY a raw JSON object. No markdown. No code fences. No explanation. Start with { and end with }.';
+    try {
+      const text = await callAI(retryPrompt, config);
+      const cleaned = stripFences(text);
+      JSON.parse(cleaned);
+      return { success: true, text: cleaned };
+    } catch (err) {
+      return { success: false, error: `Phase ${phase} JSON parse failed after retry: ${String(err)}` };
+    }
   }
+}
 
-  const maxLessonPage = phase1.max_lesson_page;
+// ---------------------------------------------------------------------------
+// stripFences
+// ---------------------------------------------------------------------------
 
-  // -------------------------------------------------------------------------
-  // JavaScript ranking logic (runs after Phase 1)
-  // -------------------------------------------------------------------------
-  const { currentUnit, priorUnit } = resolveCurrentUnit(units, pieces, maxLessonPage);
-  const unitTags: string[] = currentUnit?.unit_tags ?? [];
-  const rankedCandidates = rankSupplements(
-    candidates,
-    maxLessonPage,
-    prevLessonPage,
-    phase1.lesson_signals,
-    unitTags
+function stripFences(text: string): string {
+  return text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+}
+
+// ---------------------------------------------------------------------------
+// parsePhase1JSON
+// ---------------------------------------------------------------------------
+
+function parsePhase1JSON(text: string): Phase1Output | null {
+  try {
+    const parsed = JSON.parse(stripFences(text));
+    return {
+      piece_references: Array.isArray(parsed.piece_references) ? parsed.piece_references : [],
+      unit_references: Array.isArray(parsed.unit_references) ? parsed.unit_references : [],
+      max_lesson_page: typeof parsed.max_lesson_page === 'number' ? parsed.max_lesson_page : null,
+      book_transition_suspected: false,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// parsePhase2JSON
+// ---------------------------------------------------------------------------
+
+function parsePhase2JSON(text: string, candidateTagList: string[]): string[] {
+  try {
+    const cleaned = stripFences(text);
+    const parsed = JSON.parse(cleaned);
+    const tags: unknown = parsed.teacher_implied_tags;
+    if (!Array.isArray(tags)) return [];
+    const validSet = new Set(candidateTagList);
+    return (tags as unknown[])
+      .filter((t): t is string => typeof t === 'string' && validSet.has(t));
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// buildCandidateTagList
+// ---------------------------------------------------------------------------
+
+function buildCandidateTagList(
+  candidates: SupplementCandidate[],
+  effectiveLessonPage: number | null,
+): string[] {
+  const tagSet = new Set<string>();
+  for (const c of candidates) {
+    const eligible =
+      c.pool === 'fallback' ||
+      effectiveLessonPage === null ||
+      (c.page_start !== null && c.page_start <= effectiveLessonPage);
+    if (eligible) {
+      for (const tag of c.tags ?? []) {
+        tagSet.add(tag);
+      }
+    }
+  }
+  return Array.from(tagSet).sort();
+}
+
+// ---------------------------------------------------------------------------
+// validatePhase1Output
+// ---------------------------------------------------------------------------
+
+function validatePhase1Output(
+  phase1: Phase1Output,
+  booksPieces: BookPiece[],
+  booksUnits: BookUnit[],
+  pieceKeyMap: PieceKeyMap,
+): Phase1Output {
+  const validPieceIds = new Set(booksPieces.map(p => p.piece_id));
+  const validUnitLabels = new Set(booksUnits.map(u => u.unit_label));
+  const pieceMap = new Map(booksPieces.map(p => [p.piece_id, p]));
+  const validPieceRefs: PieceReference[] = (phase1.piece_references ?? [])
+    .filter((ref: any) => ref != null)
+    .map((ref: any) => {
+    const rawKey = ref.piece_key;
+    const resolvedId = rawKey !== undefined
+      ? pieceKeyMap.get(Number(rawKey))
+      : ref.piece_id;
+    if (!resolvedId || !validPieceIds.has(resolvedId)) {
+      console.error(`DROPPED: key=${rawKey} resolvedId=${resolvedId}`);
+      return null;
+    }
+    const piece = pieceMap.get(resolvedId)!;
+    return {
+      piece_id: resolvedId,
+      piece_title: piece.piece_title,
+      confidence: ref.confidence === 'medium' ? 'medium' : 'high',
+      teacher_notes: Array.isArray(ref.teacher_notes) ? ref.teacher_notes : [],
+      page_level_tags_matched: piece.page_level_tags ?? [],
+      student_instructions: piece.student_instructions ?? null,
+    };
+  }).filter((r): r is PieceReference => r !== null);
+
+  const validUnitRefs: UnitReference[] = (phase1.unit_references ?? []).map((uref: any) => {
+    if (!validUnitLabels.has(uref.unit_label)) {
+      console.warn(`Phase 1 validator: dropped unit_reference — unknown unit_label: ${uref.unit_label}`);
+      return null;
+    }
+    const validPieces: UnitPieceEntry[] = (uref.piece_keys ?? uref.pieces ?? []).map((entry: any) => {
+      const rawKey = typeof entry === 'number' ? entry : entry.piece_key;
+      const resolvedId = rawKey !== undefined
+        ? pieceKeyMap.get(Number(rawKey))
+        : entry.piece_id;
+      if (!resolvedId || !validPieceIds.has(resolvedId)) {
+        console.warn(`Phase 1 validator: dropped unit piece — unresolvable key/id: ${rawKey ?? entry}`);
+        return null;
+      }
+      const piece = pieceMap.get(resolvedId)!;
+      return { piece_id: resolvedId, piece_title: piece.piece_title, page_start: piece.page_start };
+    }).filter((p: any): p is UnitPieceEntry => p !== null);
+
+    return {
+      unit_label: uref.unit_label,
+      unit_title: uref.unit_title,
+      teacher_notes: Array.isArray(uref.teacher_notes) ? uref.teacher_notes : [],
+      pieces: validPieces,
+    };
+  }).filter((u): u is UnitReference => u !== null);
+
+  return {
+    ...phase1,
+    piece_references: validPieceRefs,
+    unit_references: validUnitRefs,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// deriveEffectiveLessonPage
+// ---------------------------------------------------------------------------
+
+function deriveEffectiveLessonPage(
+  phase1: Phase1Output,
+  booksPieces: BookPiece[],
+  prevLessonPage: number | null,
+): number | null {
+  const pieceMap = new Map(booksPieces.map(p => [p.piece_id, p]));
+
+  const highConfidencePages = phase1.piece_references
+    .filter(r => r.confidence === 'high')
+    .map(r => pieceMap.get(r.piece_id)?.page_start ?? null)
+    .filter((p): p is number => p !== null);
+
+  const unitPages = phase1.unit_references.flatMap(u =>
+    u.pieces.map(p => p.page_start).filter((p): p is number => p !== null)
   );
 
-  // -------------------------------------------------------------------------
-  // Phase 2 -- Quality gate (live path only)
-  // -------------------------------------------------------------------------
-  if (!bypassGate && qualityGateEnabled) {
-    let phase2: Phase2Result;
-    try {
-      const phase2Prompt = fillPrompt(promptMap["session_close_phase2"], {
-        student_name: body.student_name,
-        book_name: book.full_display_name,
-        entries: entriesText,
-        lesson_page: maxLessonPage !== null ? String(maxLessonPage) : "not recorded"
-      });
-      const phase2Raw = await callGemini(geminiKey, phase2Prompt, true, 500);
-      phase2 = JSON.parse(phase2Raw) as Phase2Result;
-    } catch (err: any) {
-      return jsonResponse({ success: false, error: `Phase 2 failed: ${err.message}` }, 500);
-    }
+  const allPages = [...highConfidencePages, ...unitPages];
+  let effectiveLessonPage: number | null = allPages.length > 0 ? Math.max(...allPages) : null;
 
-    if (!phase2.satisfied) {
-      const gateMessage = buildGateMessage(body.student_name, phase2.missing_items);
-      return jsonResponse({
-        success: true,
-        gate_satisfied: false,
-        gate_message: gateMessage,
-        max_lesson_page: maxLessonPage,
-        book_transition_suspected: phase1.book_transition_suspected,
-        book_transition_book_name: null,
-        book_transition_book_id: null,
-        ai_summ_teacher: null,
-        ai_summ_student: null,
-        ai_summ_supplement: null,
-        ai_summ_supplement_data: null,
-        supplement_initial_display: null
-      });
-    }
+  if (phase1.max_lesson_page !== null) {
+    effectiveLessonPage = effectiveLessonPage !== null
+      ? Math.min(effectiveLessonPage, phase1.max_lesson_page)
+      : phase1.max_lesson_page;
   }
 
-  // -------------------------------------------------------------------------
-  // Phase 3 -- Supplement selection (live path only)
-  // -------------------------------------------------------------------------
-  let phase3: Phase3Result;
-  try {
-    const candidateText =
-      rankedCandidates.length > 0 ? formatSupplementCandidates(rankedCandidates) : "none available";
+  return effectiveLessonPage;
+}
 
-    const phase3Prompt = fillPrompt(promptMap["session_close_phase3"], {
-      student_name: body.student_name,
-      book_name: book.full_display_name,
-      lesson_page: maxLessonPage !== null ? String(maxLessonPage) : "not recorded",
-      current_unit_title: currentUnit?.unit_title ?? "not available",
-      current_unit_skills: currentUnit?.unit_skill_focus ?? "not available",
-      lesson_signals: phase1.lesson_signals.length > 0
-        ? phase1.lesson_signals.join(", ")
-        : "none recorded",
-      supplement_candidates: candidateText,
-      max_display: String(supplementMaxDisplay)
-    });
+// ---------------------------------------------------------------------------
+// deriveBookTransition
+// ---------------------------------------------------------------------------
 
-    const phase3Raw = await callGemini(geminiKey, phase3Prompt, true, 2000);
-    const phase3Parsed = JSON.parse(phase3Raw);
+function deriveBookTransition(
+  entries: string,
+  effectiveLessonPage: number | null,
+  bookThreshold: number,
+): boolean {
+  const lower = entries.toLowerCase();
+  const hasTransitionLanguage = [
+    'finished the book',
+    'moving to next book',
+    'last page today',
+    'ready for next book',
+  ].some(phrase => lower.includes(phrase));
+  return hasTransitionLanguage && effectiveLessonPage !== null && effectiveLessonPage < bookThreshold;
+}
 
-    const candidateMap = new Map(candidates.map((c) => [c.supplement_id, c]));
-    const enrichedSupplements = (phase3Parsed.selected_supplements ?? []).map((s: any) => {
-      const candidate = candidateMap.get(s.supplement_id);
-      return { ...s, thumbnail_url: candidate?.thumbnail_url ?? null };
-    });
+// ---------------------------------------------------------------------------
+// rankSupplementCandidates
+// ---------------------------------------------------------------------------
 
-    phase3 = {
-      ai_summ_supplement: phase3Parsed.ai_summ_supplement ?? "",
-      selected_supplements: enrichedSupplements
-    };
-  } catch (err: any) {
-    return jsonResponse({ success: false, error: `Phase 3 failed: ${err.message}` }, 500);
-  }
-
-  // -------------------------------------------------------------------------
-  // Phase 4 -- Teacher summary (live path only)
-  // -------------------------------------------------------------------------
-  let teacherSummary: string;
-  try {
-    const pieceContextText = formatPieceBlock(
-      pieces,
-      units,
-      currentUnit?.unit_label ?? ""
-    );
-    const activeSupplementsText = formatActiveSupplements(activeAssignments);
-
-    const phase4Prompt = fillPrompt(promptMap["session_close_phase4"], {
-      student_name: body.student_name,
-      session_date: sessionDate,
-      book_name: book.full_display_name,
-      lesson_page: maxLessonPage !== null ? String(maxLessonPage) : "not recorded",
-      current_unit_title: currentUnit?.unit_title ?? "not available",
-      current_unit_skills: currentUnit?.unit_skill_focus ?? "not available",
-      prior_unit_title: priorUnit?.unit_title ?? "not available",
-      prior_unit_skills: priorUnit?.unit_skill_focus ?? "not available",
-      piece_context: pieceContextText,
-      entries: entriesText,
-      active_supplements: activeSupplementsText
-    });
-
-    teacherSummary = await callGemini(geminiKey, phase4Prompt, false, 5000, 1024);
-  } catch (err: any) {
-    return jsonResponse({ success: false, error: `Phase 4 failed: ${err.message}` }, 500);
-  }
-
-  // -------------------------------------------------------------------------
-  // Phase 5 -- Student practice plan (live path only)
-  // -------------------------------------------------------------------------
-  let studentSummary: string;
-  try {
-    const studentInstructionsText = formatPieceBlock(
-      pieces,
-      units,
-      currentUnit?.unit_label ?? ""
-    );
-    const activeSupplementsText = formatActiveSupplements(activeAssignments);
-
-    const phase5Vars: Record<string, string> = {
-      student_name: body.student_name,
-      session_date: sessionDate,
-      book_name: book.full_display_name,
-      lesson_page: maxLessonPage !== null ? String(maxLessonPage) : "not recorded",
-      current_unit_title: currentUnit?.unit_title ?? "not available",
-      student_instructions: studentInstructionsText,
-      entries: entriesText,
-      active_supplements: activeSupplementsText
-    };
-
-    if (studentAge !== null) {
-      phase5Vars.student_age = studentAge;
-    }
-
-    const phase5Prompt = fillPrompt(promptMap["session_close_phase5"], phase5Vars);
-    studentSummary = await callGemini(geminiKey, phase5Prompt, false, 5000, 1024);
-  } catch (err: any) {
-    return jsonResponse({ success: false, error: `Phase 5 failed: ${err.message}` }, 500);
-  }
-
-  // -------------------------------------------------------------------------
-  // Assemble and return full response
-  // -------------------------------------------------------------------------
-  return jsonResponse({
-    success: true,
-    gate_satisfied: true,
-    gate_message: null,
-    max_lesson_page: maxLessonPage,
-    book_transition_suspected: phase1.book_transition_suspected,
-    book_transition_book_name: null,
-    book_transition_book_id: null,
-    detected_contexts: phase1.detected_contexts,
-    lesson_signals: phase1.lesson_signals,
-    ai_summ_teacher: teacherSummary,
-    ai_summ_student: studentSummary,
-    ai_summ_supplement: phase3.ai_summ_supplement,
-    ai_summ_supplement_data: phase3.selected_supplements,
-    supplement_initial_display: supplementInitialDisplay
+function rankSupplementCandidates(
+  candidates: SupplementCandidate[],
+  phase1: Phase1Output,
+  booksPieces: BookPiece[],
+  effectiveLessonPage: number | null,
+  teacherImpliedTags: string[],
+  teacherTagWeight: number,
+  maxDisplay: number,
+): RankedResult {
+  // Step 1: Position filter
+  const filtered = candidates.filter(c => {
+    if (c.pool === 'fallback') return true;
+    if (effectiveLessonPage === null) return true;
+    return (c.page_start ?? 0) <= effectiveLessonPage;
   });
-});
+
+  // Step 2: Build tag sets
+  const teacherTagSet = new Set<string>(teacherImpliedTags);
+
+  const pieceTagSet = new Set<string>(
+    phase1.piece_references.flatMap(r => r.page_level_tags_matched ?? [])
+  );
+
+  // Step 3: Score each candidate
+  const scored = filtered.map(c => {
+    const candidateTags = new Set<string>(c.tags ?? []);
+
+    let teacherScore = 0;
+    if (teacherTagSet.size > 0) {
+      for (const tag of candidateTags) {
+        if (teacherTagSet.has(tag)) teacherScore += teacherTagWeight;
+      }
+    }
+
+    let pieceScore = 0;
+    if (pieceTagSet.size > 0) {
+      for (const tag of candidateTags) {
+        if (pieceTagSet.has(tag)) pieceScore += 1;
+      }
+    }
+
+    const totalScore = teacherScore + pieceScore;
+    const sortPage = (c.page_start ?? 0) + (c.pool === 'current_book' ? 1000 : 0);
+
+    return { ...c, totalScore, sortPage };
+  });
+
+  // Step 4: Sort and trim
+  scored.sort((a, b) => b.totalScore - a.totalScore || b.sortPage - a.sortPage);
+
+  const topList = scored.slice(0, maxDisplay);
+
+  return { fullList: topList };
+}
 
 // ---------------------------------------------------------------------------
-// Response helper
+// assemblePieceList
 // ---------------------------------------------------------------------------
 
-function jsonResponse(body: unknown, status: number = 200): Response {
-  return new Response(JSON.stringify(body), {
+function assemblePieceList(
+  booksUnits: BookUnit[],
+  booksPieces: BookPiece[],
+): { text: string; keyMap: PieceKeyMap } {
+  const lines: string[] = [];
+  const keyMap: PieceKeyMap = new Map();
+  let key = 1;
+  for (const unit of booksUnits) {
+    lines.push(`UNIT ${unit.unit_label} — ${unit.unit_title}`);
+    const piecesInUnit = booksPieces.filter(p => p.unit_label === unit.unit_label);
+    for (const piece of piecesInUnit) {
+      keyMap.set(key, piece.piece_id);
+      lines.push(`  #${key} | ${piece.piece_title} | p.${piece.page_start} | ${piece.piece_type}`);
+      key++;
+    }
+    lines.push('');
+  }
+  return { text: lines.join('\n').trim(), keyMap };
+}
+
+// ---------------------------------------------------------------------------
+// assemblePieceBlock
+// ---------------------------------------------------------------------------
+
+function assemblePieceBlock(
+  phase1: Phase1Output,
+  booksPieces: BookPiece[],
+  entries: string,
+  variant: 'phase4' | 'phase5',
+): string {
+  const pieceMap = new Map(booksPieces.map(p => [p.piece_id, p]));
+  const lines: string[] = [];
+
+  const sortedRefs = [...phase1.piece_references].sort((a, b) => {
+    const pa = pieceMap.get(a.piece_id)?.page_start ?? 0;
+    const pb = pieceMap.get(b.piece_id)?.page_start ?? 0;
+    return pa - pb;
+  });
+
+  for (const ref of sortedRefs) {
+    const piece = pieceMap.get(ref.piece_id);
+    const page = piece?.page_start ?? '?';
+    const type = piece?.piece_type ?? '';
+    lines.push(`${ref.piece_title} (p.${page}, ${type})`);
+    for (const note of ref.teacher_notes ?? []) {
+      lines.push(`Teacher: ${note}`);
+    }
+    if (variant === 'phase5' && piece?.student_instructions) {
+      const raw = piece.student_instructions;
+      const instructions: string[] = Array.isArray(raw)
+        ? raw
+        : String(raw).split(/[\n;]+/);
+      for (const instr of instructions.map(s => s.trim()).filter(s => s.length > 0)) {
+        lines.push(`Book: ${instr}`);
+      }
+    }
+    lines.push('');
+  }
+
+  for (const uref of phase1.unit_references) {
+    lines.push(`Unit ${uref.unit_label} — ${uref.unit_title} [unit instruction]`);
+    for (const note of uref.teacher_notes ?? []) {
+      lines.push(`Teacher: ${note}`);
+    }
+    for (const p of uref.pieces ?? []) {
+      lines.push(`  ${p.piece_title} (p.${p.page_start})`);
+    }
+    lines.push('');
+  }
+
+  const matchedPieceTitles = [
+    ...sortedRefs.map(r => r.piece_title.toLowerCase()),
+    ...phase1.unit_references.flatMap(u => u.pieces.map(p => p.piece_title.toLowerCase())),
+  ];
+  const matchedUnitTitles = phase1.unit_references.map(u => u.unit_title.toLowerCase());
+
+  const sentences = entries
+    .split(/(?<=[.!?])\s+|\n/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+    const isPieceSpecific = matchedPieceTitles.some(t => lower.includes(t));
+    const isUnitSpecific = matchedUnitTitles.some(t => lower.includes(t));
+    if (!isPieceSpecific && !isUnitSpecific) {
+      lines.push(`General: ${sentence}`);
+    }
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+// ---------------------------------------------------------------------------
+// activeSupplementsText
+// ---------------------------------------------------------------------------
+
+function activeSupplementsText(assignments: ActiveAssignment[]): string {
+  if (!assignments || assignments.length === 0) return 'None.';
+  return assignments
+    .map(a => `Continue working on ${a.title} as previously instructed.`)
+    .join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// Prompt assembly functions
+// ---------------------------------------------------------------------------
+
+function assemblePhase1Prompt(
+  promptMap: Map<string, string>,
+  studentName: string,
+  bookName: string,
+  entries: string,
+  pieceList: string,
+  priorLessonPage: string,
+): string {
+  return (promptMap.get('session_close_phase1') ?? '')
+    .replace('{{student_name}}', studentName)
+    .replace('{{book_name}}', bookName)
+    .replace('{{entries}}', entries)
+    .replace('{{piece_list}}', pieceList)
+    .replace('{{prior_lesson_page}}', priorLessonPage);
+}
+
+function assemblePhase2Prompt(
+  promptMap: Map<string, string>,
+  entries: string,
+  candidateTagList: string[],
+): string {
+  const candidateTagsText = candidateTagList.join('\n');
+  return (promptMap.get('session_close_phase2') ?? '')
+    .replace('{{entries}}', entries)
+    .replace('{{candidate_tags}}', candidateTagsText);
+}
+
+function assemblePhase4Prompt(
+  promptMap: Map<string, string>,
+  studentName: string,
+  sessionDate: string,
+  bookName: string,
+  effectiveLessonPage: number | null,
+  pieceReferences: string,
+  entries: string,
+  activeSupplements: string,
+): string {
+  const lessonPageStr = effectiveLessonPage != null ? String(effectiveLessonPage) : 'not recorded';
+  return (promptMap.get('session_close_phase4') ?? '')
+    .replace('{{student_name}}', studentName)
+    .replace('{{session_date}}', sessionDate)
+    .replace('{{book_name}}', bookName)
+    .replace('{{lesson_page}}', lessonPageStr)
+    .replace('{{piece_references}}', pieceReferences)
+    .replace('{{entries}}', entries)
+    .replace('{{active_supplements}}', activeSupplements);
+}
+
+function assemblePhase5Prompt(
+  promptMap: Map<string, string>,
+  studentName: string,
+  sessionDate: string,
+  bookName: string,
+  effectiveLessonPage: number | null,
+  pieceReferences: string,
+  entries: string,
+  activeSupplements: string,
+  studentAge: number | null,
+): string {
+  const lessonPageStr = effectiveLessonPage != null ? String(effectiveLessonPage) : 'not recorded';
+  const ageStr = studentAge !== null ? String(studentAge) : 'not recorded';
+  return (promptMap.get('session_close_phase5') ?? '')
+    .replace('{{student_name}}', studentName)
+    .replace('{{session_date}}', sessionDate)
+    .replace('{{book_name}}', bookName)
+    .replace('{{lesson_page}}', lessonPageStr)
+    .replace('{{piece_references}}', pieceReferences)
+    .replace('{{entries}}', entries)
+    .replace('{{active_supplements}}', activeSupplements)
+    .replace('{{student_age}}', ageStr);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
+
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
   });
 }
