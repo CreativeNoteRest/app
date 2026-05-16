@@ -10,15 +10,16 @@
   <style>
     /* ── Design tokens (matched to app standard) ─────────────────── */
     :root {
-      --brand:          #E26B0A;
-      --brand-light:    #FCE4D6;
+      --brand:          #DB6E2B;
+      --brand-light:    #FAEADE;
+      --brand-dark:     #B85A1E;
       --text:           #1A1A1A;
       --text-mid:       #5A5A5A;
       --text-light:     #9A9A9A;
       --surface:        #FAFAF8;
       --card:           #FFFFFF;
       --border:         #E8E4DF;
-      --radius:         14px;
+      --radius:         12px;
       --shadow:         0 2px 16px rgba(0,0,0,0.07);
       --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
       --danger:         #DC2626;
@@ -355,11 +356,11 @@
       border: none; border-radius: var(--radius);
       font-family: 'DM Serif Display', serif;
       font-size: 1.1rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(226,107,10,0.28);
+      box-shadow: 0 4px 16px rgba(219,110,43,0.28);
       transition: transform 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(226,107,10,0.36); }
+    .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(219,110,43,0.36); }
     .btn-approve:active { transform: translateY(0); }
     .btn-approve:disabled {
       background: var(--border); color: var(--text-light);
@@ -416,10 +417,10 @@
       border: none; border-radius: var(--radius);
       font-family: 'DM Serif Display', serif;
       font-size: 1.05rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(226,107,10,0.28);
+      box-shadow: 0 4px 16px rgba(219,110,43,0.28);
       transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
     }
-    .btn-pdf-send:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(226,107,10,0.36); }
+    .btn-pdf-send:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(219,110,43,0.36); }
     .btn-pdf-send:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-pdf-notnow {
       flex: 1; height: 50px;

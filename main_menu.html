@@ -10,20 +10,27 @@
   <style>
     /* ── Design tokens ─────────────────────────────────────────────── */
     :root {
-      --brand:        #E26B0A;
-      --brand-light:  #FCE4D6;
-      --text:         #1A1A1A;
-      --text-mid:     #5A5A5A;
-      --text-light:   #9A9A9A;
-      --surface:      #FAFAF8;
-      --card:         #FFFFFF;
-      --border:       #E8E4DF;
-      --radius:       14px;
-      --shadow:       0 2px 16px rgba(0,0,0,0.07);
-      --danger:       #DC2626;
-      --danger-light: #FEF2F2;
-      --danger-border:#FECACA;
-      --suspended:    #F59E0B;
+      --brand:          #DB6E2B;
+      --brand-light:    #FAEADE;
+      --brand-dark:     #B85A1E;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         12px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --suspended:      #F59E0B;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,32 +81,32 @@
     /* ── Primary button ─────────────────────────────────────────────── */
     .action-primary {
       background: var(--brand); border-radius: var(--radius);
-      padding: 22px 22px 20px; margin-bottom: 14px;
+      padding: 16px 18px; margin-bottom: 10px;
       cursor: pointer; border: none; width: 100%; text-align: left;
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      box-shadow: 0 4px 20px rgba(226,107,10,0.3);
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      box-shadow: 0 4px 20px rgba(219,110,43,0.3);
       transition: transform 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .action-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(226,107,10,0.38); }
+    .action-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(219,110,43,0.38); }
     .action-primary:active { transform: translateY(0); }
     .action-primary-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 3px; }
-    .action-primary-title { font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: #fff; line-height: 1.1; }
-    .action-primary-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.18); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .action-primary-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .action-primary-title { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: #fff; line-height: 1.1; }
+    .action-primary-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.18); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .action-primary-icon svg { width: 18px; height: 18px; fill: #fff; }
 
-    /* ── Secondary grid ─────────────────────────────────────────────── */
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+    /* ── Secondary buttons ──────────────────────────────────────────── */
     .action-secondary {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 18px 16px;
-      cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 10px;
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
+      cursor: pointer; text-align: left; width: 100%;
+      display: flex; align-items: center; gap: 14px;
       transition: border-color 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
     .action-secondary:hover { border-color: var(--brand); box-shadow: var(--shadow); }
-    .action-secondary-icon { width: 36px; height: 36px; background: var(--brand-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .action-secondary-icon svg { width: 18px; height: 18px; fill: var(--brand); }
+    .action-secondary-icon { width: 30px; height: 30px; background: var(--brand-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .action-secondary-icon svg { width: 16px; height: 16px; fill: var(--brand); }
     .action-secondary-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); }
     .action-secondary-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
     .stub-badge { display: inline-block; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; background: var(--brand-light); color: var(--brand); border-radius: 4px; padding: 2px 6px; margin-top: 2px; }
@@ -339,7 +346,7 @@
       </div>
     </button>
 
-    <button class="action-secondary" style="width:100%;margin-bottom:14px;" onclick="goHistory()">
+    <button class="action-secondary" onclick="goHistory()">
       <div class="action-secondary-icon">
         <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
       </div>
@@ -349,28 +356,15 @@
       </div>
     </button>
 
-    <div class="action-grid">
-      <button class="action-secondary" onclick="goStudents()">
-        <div class="action-secondary-icon">
-          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <div>
-          <div class="action-secondary-label">Manage</div>
-          <div class="action-secondary-title">Students</div>
-        </div>
-      </button>
-
-      <button class="action-secondary" onclick="goAccount()">
-        <div class="action-secondary-icon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </div>
-        <div>
-          <div class="action-secondary-label">Manage</div>
-          <div class="action-secondary-title">Account</div>
-          <span class="stub-badge">Coming soon</span>
-        </div>
-      </button>
-    </div>
+    <button class="action-secondary" onclick="goStudents()" style="margin-bottom:24px;">
+      <div class="action-secondary-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <div class="action-secondary-label">Manage</div>
+        <div class="action-secondary-title">Students</div>
+      </div>
+    </button>
 
     <div class="status-strip">
       <div class="status-dot"></div>

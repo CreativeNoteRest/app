@@ -12,29 +12,29 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --accent:       #E07B2A;
-      --accent-light: #FDF3EA;
-      --accent-dark:  #B85E15;
-      --surface:      #FAFAF8;
-      --card:         #FFFFFF;
-      --border:       #E8E4DF;
-      --text-primary: #1A1714;
-      --text-secondary:#6B6560;
-      --text-muted:   #A09A94;
-      --danger:       #C0392B;
-      --danger-light: #FDECEA;
-      --success:      #2D7D46;
-      --success-light:#EAF5ED;
-      --radius:       12px;
-      --shadow-sm:    0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-md:    0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --brand:          #DB6E2B;
+      --brand-light:    #FAEADE;
+      --brand-dark:     #B85A1E;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --radius:         12px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
     }
 
     html, body {
       height: 100%;
       font-family: 'DM Sans', sans-serif;
       background: var(--surface);
-      color: var(--text-primary);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
 
@@ -61,20 +61,20 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: var(--brand);
       margin-bottom: 4px;
     }
 
     .header-student {
       font-family: 'DM Serif Display', serif;
       font-size: 22px;
-      color: var(--text-primary);
+      color: var(--text);
       line-height: 1.2;
     }
 
     .header-meta {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: var(--text-mid);
       margin-top: 3px;
     }
 
@@ -93,7 +93,7 @@
       content: 'Notes will appear here as you type them.';
       display: block;
       text-align: center;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-size: 14px;
       margin-top: 40px;
     }
@@ -114,7 +114,7 @@
 
     .entry-timestamp {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-light);
       margin-bottom: 4px;
       font-weight: 500;
     }
@@ -122,7 +122,7 @@
     .entry-text {
       font-size: 15px;
       line-height: 1.5;
-      color: var(--text-primary);
+      color: var(--text);
     }
 
     .entry-item {
@@ -142,7 +142,7 @@
 
     .entry-ignored .entry-text {
       text-decoration: line-through;
-      color: var(--text-muted);
+      color: var(--text-light);
     }
 
     .entry-ignored .entry-timestamp {
@@ -152,8 +152,8 @@
     /* ── Inline edit state ────────────────────────────────────── */
     .entry-item.editing {
       background: #FFFDF9;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(219,110,43,0.12);
     }
 
     .entry-edit-textarea {
@@ -166,7 +166,7 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 15px;
       line-height: 1.5;
-      color: var(--text-primary);
+      color: var(--text);
       resize: none;
       overflow: hidden;
     }
@@ -177,12 +177,12 @@
       text-align: center;
       padding: 6px;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-weight: 500;
     }
 
     .entry-counter span {
-      color: var(--accent);
+      color: var(--brand);
       font-weight: 600;
     }
 
@@ -211,7 +211,7 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 15px;
       line-height: 1.5;
-      color: var(--text-primary);
+      color: var(--text);
       background: var(--surface);
       resize: none;
       outline: none;
@@ -221,13 +221,13 @@
     }
 
     .entry-textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(219,110,43,0.12);
       background: #fff;
     }
 
     .entry-textarea::placeholder {
-      color: var(--text-muted);
+      color: var(--text-light);
     }
 
     /* Mic button */
@@ -237,7 +237,7 @@
       border-radius: 50%;
       border: 1.5px solid var(--border);
       background: var(--surface);
-      color: var(--text-secondary);
+      color: var(--text-mid);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -247,7 +247,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn-mic:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .btn-mic:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
     .btn-mic.listening {
       border-color: var(--danger);
       background: var(--danger-light);
@@ -268,7 +268,7 @@
       padding: 0 20px;
       border-radius: var(--radius);
       border: none;
-      background: var(--accent);
+      background: var(--brand);
       color: #fff;
       font-family: 'DM Sans', sans-serif;
       font-size: 15px;
@@ -279,11 +279,11 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn-submit:hover  { background: var(--accent-dark); }
+    .btn-submit:hover  { background: var(--brand-dark); }
     .btn-submit:active { transform: scale(0.97); }
     .btn-submit:disabled {
       background: var(--border);
-      color: var(--text-muted);
+      color: var(--text-light);
       cursor: not-allowed;
       transform: none;
     }
@@ -322,7 +322,7 @@
       border-radius: var(--radius);
       border: 1.5px solid var(--border);
       background: transparent;
-      color: var(--text-secondary);
+      color: var(--text-mid);
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       font-weight: 500;
@@ -332,8 +332,8 @@
     }
 
     .btn-close-lesson:hover {
-      border-color: var(--text-secondary);
-      color: var(--text-primary);
+      border-color: var(--text-mid);
+      color: var(--text);
     }
 
     /* ── Auth guard overlay ───────────────────────────────────── */
@@ -349,7 +349,7 @@
     .spinner {
       width: 32px; height: 32px;
       border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      border-top-color: var(--brand);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
@@ -359,13 +359,13 @@
     /* ── Book display + change modal ─────────────────────────────── */
     .hdr-book {
       font-size: 12px;
-      color: var(--text-primary);
+      color: var(--text);
       font-weight: 600;
       margin-top: 4px;
     }
 
     .book-change-link {
-      color: var(--accent);
+      color: var(--brand);
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
@@ -393,12 +393,12 @@
 
     .book-modal-heading {
       font-family: 'DM Serif Display', serif;
-      font-size: 1.3rem; color: var(--text-primary);
+      font-size: 1.3rem; color: var(--text);
       letter-spacing: -0.01em; margin-bottom: 10px;
     }
 
     .book-modal-body {
-      font-size: 0.88rem; color: var(--text-secondary);
+      font-size: 0.88rem; color: var(--text-mid);
       line-height: 1.6; margin-bottom: 16px;
     }
 
@@ -409,41 +409,41 @@
       border-radius: var(--radius);
       font-family: 'DM Sans', sans-serif;
       font-size: 15px;
-      color: var(--text-primary);
+      color: var(--text);
       background: var(--surface);
       margin-bottom: 20px;
       outline: none;
     }
 
     .book-modal-select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(219,110,43,0.12);
     }
 
     .book-modal-actions { display: flex; gap: 10px; }
 
     .btn-book-confirm {
       flex: 2; height: 50px;
-      background: var(--accent); color: #fff;
+      background: var(--brand); color: #fff;
       border: none; border-radius: var(--radius);
       font-family: 'DM Serif Display', serif;
       font-size: 1.05rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(224,123,42,0.28);
+      box-shadow: 0 4px 16px rgba(219,110,43,0.28);
       transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
     }
 
-    .btn-book-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(224,123,42,0.36); }
+    .btn-book-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(219,110,43,0.36); }
     .btn-book-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
     .btn-book-cancel {
       flex: 1; height: 50px;
-      background: var(--card); color: var(--text-secondary);
+      background: var(--card); color: var(--text-mid);
       border: 1.5px solid var(--border); border-radius: var(--radius);
       font-size: 0.95rem; font-weight: 600; cursor: pointer;
       transition: border-color 0.15s, color 0.15s;
     }
 
-    .btn-book-cancel:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+    .btn-book-cancel:hover { border-color: var(--text-mid); color: var(--text); }
 
     .book-modal-error {
       font-size: 0.82rem; color: var(--danger);
@@ -471,7 +471,7 @@
       border-radius: 50%;
       border: 1.5px solid var(--border);
       background: var(--surface);
-      color: var(--text-secondary);
+      color: var(--text-mid);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -481,7 +481,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn-history:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .btn-history:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
     .btn-history svg { width: 18px; height: 18px; }
 
     /* ── History modal ────────────────────────────────────────────── */
@@ -515,13 +515,13 @@
     .history-modal-heading {
       font-family: 'DM Serif Display', serif;
       font-size: 1.3rem;
-      color: var(--text-primary);
+      color: var(--text);
     }
 
     .btn-history-close {
       width: 32px; height: 32px;
       border: none; background: none;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-size: 16px; cursor: pointer;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
@@ -529,7 +529,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn-history-close:hover { background: var(--border); color: var(--text-primary); }
+    .btn-history-close:hover { background: var(--border); color: var(--text); }
 
     #history-modal-body {
       overflow-y: auto;
@@ -545,15 +545,15 @@
       border-radius: var(--radius);
       font-family: 'DM Sans', sans-serif;
       font-size: 15px;
-      color: var(--text-primary);
+      color: var(--text);
       background: var(--surface);
       margin-bottom: 16px;
       outline: none;
     }
 
     .history-date-select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(224,123,42,0.12);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(219,110,43,0.12);
     }
 
     .history-content-block {
@@ -569,41 +569,41 @@
       font-weight: 700;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: var(--brand);
       margin-bottom: 8px;
     }
 
     .history-content-body {
       font-size: 14px;
-      color: var(--text-primary);
+      color: var(--text);
       line-height: 1.65;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
     .history-content-body a {
-      color: var(--accent);
+      color: var(--brand);
       text-decoration: underline;
       word-break: break-all;
     }
 
     .history-content-empty {
       font-size: 14px;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-style: italic;
     }
 
     .history-empty-state {
       text-align: center;
       padding: 32px 16px;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-size: 14px;
     }
 
     .history-loading {
       text-align: center;
       padding: 32px 16px;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-size: 14px;
     }
 
@@ -1405,7 +1405,7 @@
 
     body.innerHTML =
       selectorHtml +
-      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">' + escapeHtml(s.bookName) + ' · ' + escapeHtml(pageStr) + '</div>' +
+      '<div style="font-size:12px;color:var(--text-light);margin-bottom:14px;">' + escapeHtml(s.bookName) + ' · ' + escapeHtml(pageStr) + '</div>' +
       historyContentBlock('Teacher Summary', s.ai_summ_teacher, false) +
       historyContentBlock('Student Practice Plan', s.ai_summ_student, false) +
       historyContentBlock('Recommended Supplements', historyTopThree(s.ai_summ_supplement), true);
