@@ -689,10 +689,17 @@
         .select('subscription_tier, subscription_status, student_seat_limit, stripe_customer_id')
         .eq('teacher_id', teacherId)
         .eq('series_id', seriesId)
-        .single()
+        .maybeSingle()
     ]);
 
-    if (teacherRes.error || subRes.error) {
+    if (teacherRes.error) {
+      console.error('Teachers fetch error:', teacherRes.error);
+    }
+    if (subRes.error) {
+      console.error('Subscription fetch error:', subRes.error);
+    }
+    // Toast only if teacher row failed. Subscription errors degrade gracefully.
+    if (teacherRes.error) {
       showToast('Error loading account data. Please refresh.', true);
     }
 
