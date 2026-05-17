@@ -591,10 +591,12 @@
     btnGoogle.addEventListener('click', async () => {
       clearError(errorSignup);
       btnGoogle.disabled = true;
+      await supabase.auth.signOut();   // clear any stale session before initiating
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+          queryParams: { prompt: 'select_account' }
         }
       });
       if (error) {
@@ -607,10 +609,12 @@
     btnMicrosoft.addEventListener('click', async () => {
       clearError(errorSignup);
       btnMicrosoft.disabled = true;
+      await supabase.auth.signOut();   // clear any stale session before initiating
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
           redirectTo: `https://app.creativenoterest.com/${SERIES_SLUG}/`,
+          queryParams: { prompt: 'select_account' }
         }
       });
       if (error) {
