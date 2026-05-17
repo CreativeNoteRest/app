@@ -587,7 +587,6 @@
     btnGoogle.addEventListener('click', async () => {
       clearError(errorSignin);
       btnGoogle.disabled = true;
-      await supabase.auth.signOut();   // clear any stale session before initiating
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -606,7 +605,6 @@
     btnMicrosoft.addEventListener('click', async () => {
       clearError(errorSignin);
       btnMicrosoft.disabled = true;
-      await supabase.auth.signOut();   // clear any stale session before initiating
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
