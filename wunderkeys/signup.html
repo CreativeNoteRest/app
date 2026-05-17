@@ -364,6 +364,18 @@
         <span class="coming-soon-badge">Soon</span>
       </button>
 
+      <!-- Safari ITP notice — shown only for Safari users via JS -->
+      <div id="safari-notice" style="display:none; margin-top:12px; text-align:center;">
+        <button id="safari-notice-toggle" style="background:none; border:none; font-family:var(--font-body); font-size:0.82rem; color:var(--color-muted); text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:0;">
+          Having trouble signing in with Safari?
+        </button>
+        <div id="safari-notice-body" style="display:none; margin-top:10px; background:var(--color-accent-soft); border:1px solid #f7c99a; border-radius:8px; padding:12px 14px; font-size:0.82rem; color:#7a3e06; line-height:1.6; text-align:left;">
+          Safari's privacy settings can interfere with Google and Microsoft sign-in.<br><br>
+          <strong>Easiest fix:</strong> Use the <strong>Google app</strong> or <strong>Chrome</strong> on your iPhone instead.<br><br>
+          <strong>In Safari:</strong> Try signing in using a Private tab. If Safari asks whether to reduce privacy protections for this site, tap <strong>Allow</strong> — this is required for sign-in to work and only appears once.
+        </div>
+      </div>
+
       <div class="bottom-links">
         Already have an account? <a href="/wunderkeys/">Sign in</a>
       </div>
@@ -416,6 +428,16 @@
     // ── Helpers ──
     function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
     function clearError(el)     { el.textContent = '';  el.style.display = 'none'; }
+
+    // ── Safari ITP notice ──
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      document.getElementById('safari-notice').style.display = 'block';
+      document.getElementById('safari-notice-toggle').addEventListener('click', () => {
+        const body = document.getElementById('safari-notice-body');
+        body.style.display = body.style.display === 'none' ? 'block' : 'none';
+      });
+    }
 
     // ── Live password match hint ──
     confirmInput.addEventListener('input', () => {
