@@ -124,6 +124,55 @@
     .mt16 { margin-top: 16px; }
     .mb8  { margin-bottom: 8px; }
     .mb16 { margin-bottom: 16px; }
+
+    /* ── Review UI ────────────────────────────────────────────────────── */
+    /* Unit block */
+    .unit-block { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    .unit-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); cursor: pointer; user-select: none; gap: 10px; }
+    .unit-header:hover { background: var(--brand-light); }
+    .unit-header-left { display: flex; align-items: center; gap: 10px; }
+    .unit-label-badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--brand); color: #fff; border-radius: 6px; padding: 2px 8px; }
+    .unit-title-text { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text); }
+    .unit-piece-count { font-size: 0.75rem; color: var(--text-light); }
+    .unit-chevron { font-size: 0.75rem; color: var(--text-light); transition: transform 0.2s; }
+    .unit-chevron.open { transform: rotate(90deg); }
+    .unit-body { border-top: 1px solid var(--border); padding: 12px 16px; background: var(--card); }
+    /* Unit edit form */
+    .unit-edit-form { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+    .unit-edit-form .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .unit-edit-form .form-row:last-child { margin-bottom: 0; }
+    .form-lbl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); }
+    .form-inp { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; }
+    .form-inp:focus { border-color: var(--brand); }
+    .form-ta  { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; line-height: 1.55; color: var(--text); background: var(--card); outline: none; resize: vertical; min-height: 70px; transition: border-color 0.15s; }
+    .form-ta:focus  { border-color: var(--brand); }
+    .form-sel { width: 100%; height: 38px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--card); outline: none; }
+    .form-sel:focus { border-color: var(--brand); }
+    .form-save-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .btn-save-sm { height: 34px; padding: 0 16px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    .btn-save-sm:hover { opacity: 0.88; }
+    .btn-save-sm:disabled { opacity: 0.45; cursor: not-allowed; }
+    .save-feedback { font-size: 0.78rem; }
+    .save-ok  { color: var(--success); }
+    .save-err { color: var(--danger); }
+    /* Piece rows */
+    .piece-row { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .piece-row.has-notes { border-color: var(--warn); }
+    .piece-summary { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: var(--card); cursor: pointer; gap: 8px; user-select: none; }
+    .piece-summary:hover { background: var(--surface); }
+    .piece-summary-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .piece-type-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; padding: 2px 7px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); color: var(--text-mid); }
+    .piece-title-text { font-size: 0.9rem; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .piece-page-text { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; }
+    .piece-note-flag { font-size: 0.72rem; color: var(--warn); font-weight: 600; white-space: nowrap; }
+    .piece-chevron { font-size: 0.7rem; color: var(--text-light); transition: transform 0.2s; flex-shrink: 0; }
+    .piece-chevron.open { transform: rotate(90deg); }
+    /* Piece edit form */
+    .piece-edit { border-top: 1px solid var(--border); padding: 14px; background: var(--surface); display: none; }
+    .piece-edit.open { display: block; }
+    .piece-edit .form-row { margin-bottom: 10px; }
+    .notes-box { background: var(--warn-light); border: 1px solid var(--warn-border); border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: var(--text-mid); line-height: 1.5; margin-bottom: 10px; }
+    .notes-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-bottom: 3px; }
   </style>
 </head>
 <body>
@@ -256,19 +305,37 @@
     <div id="review" class="card" style="margin-top:40px;">
       <div class="card-tag">Review</div>
       <div class="card-title">Review staged books</div>
-      <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:20px;line-height:1.55">
-        Books currently in staging are listed below. Expand a book to review units and pieces,
-        edit fields, and mark as <strong>Verified</strong> or <strong>Rejected</strong>.
-        Only verified books can be loaded to production.
-      </p>
-      <div id="review-loading" style="font-size:0.85rem;color:var(--text-light);padding:4px 0">
-        <span class="spinner spinner-dark"></span>Loading staged books…
+
+      <!-- Book selector -->
+      <div class="section-label">Staged book</div>
+      <div id="rv-books-loading" style="font-size:0.85rem;color:var(--text-light);padding:4px 0 12px"><span class="spinner spinner-dark"></span>Loading…</div>
+      <div id="rv-empty" class="msg msg-warn hidden">No books currently in staging.</div>
+      <div id="rv-error" class="msg msg-error hidden"></div>
+      <select id="rv-book-select" class="select-input hidden" style="margin-bottom:16px;"><option value="">-- select a book --</option></select>
+
+      <!-- Book summary strip -->
+      <div id="rv-book-strip" class="hidden" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;">
+        <div>
+          <div id="rv-book-name" style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--text);"></div>
+          <div id="rv-book-meta" style="font-size:0.75rem;color:var(--text-light);margin-top:3px;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span id="rv-status-badge" style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:20px;"></span>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--success);color:var(--success);" id="rv-btn-verify">✓ Mark verified</button>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--danger);color:var(--danger);"  id="rv-btn-reject">✗ Mark rejected</button>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;" id="rv-btn-delete">🗑 Delete</button>
+        </div>
       </div>
-      <div id="review-empty" class="msg msg-warn hidden">No books currently in staging.</div>
-      <div id="review-error" class="msg msg-error hidden"></div>
-      <div id="review-list"></div>
-      <div style="margin-top:16px;">
-        <button class="btn-secondary" id="btn-refresh-review">↻ Refresh</button>
+
+      <!-- Partner notes summary — flagged pieces -->
+      <div id="rv-notes-banner" class="msg msg-warn hidden" style="margin-bottom:16px;"></div>
+
+      <!-- Unit/piece accordion -->
+      <div id="rv-units"></div>
+
+      <!-- Refresh -->
+      <div style="margin-top:20px;">
+        <button class="btn-secondary" id="btn-refresh-review" style="height:36px;font-size:0.82rem;padding:0 16px;">↻ Refresh</button>
       </div>
     </div>
 
@@ -651,103 +718,400 @@ function resetAll() {
 }
 
 // ── Review section ─────────────────────────────────────────────────────
+const PIECE_TYPES = ['Lesson Piece','Challenge Piece','Getting Ready Exercises','Duet with Teacher','Lesson Worksheet'];
+
+const elRvLoading    = document.getElementById('rv-books-loading');
+const elRvEmpty      = document.getElementById('rv-empty');
+const elRvError      = document.getElementById('rv-error');
+const elRvSelect     = document.getElementById('rv-book-select');
+const elRvStrip      = document.getElementById('rv-book-strip');
+const elRvBookName   = document.getElementById('rv-book-name');
+const elRvBookMeta   = document.getElementById('rv-book-meta');
+const elRvStatusBadge= document.getElementById('rv-status-badge');
+const elRvBtnVerify  = document.getElementById('rv-btn-verify');
+const elRvBtnReject  = document.getElementById('rv-btn-reject');
+const elRvBtnDelete  = document.getElementById('rv-btn-delete');
+const elRvNotesBanner= document.getElementById('rv-notes-banner');
+const elRvUnits      = document.getElementById('rv-units');
+
+let rvAllRows  = [];   // all staging rows for selected book
+let rvBookMeta = null; // summary fields for selected book
+
+// Load book list into selector
 async function loadReview() {
-  const elLoading = document.getElementById('review-loading');
-  const elEmpty   = document.getElementById('review-empty');
-  const elError   = document.getElementById('review-error');
-  const elList    = document.getElementById('review-list');
+  elRvLoading.classList.remove('hidden');
+  elRvEmpty.classList.add('hidden');
+  elRvError.classList.add('hidden');
+  elRvSelect.classList.add('hidden');
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvUnits.innerHTML = '';
 
-  elLoading.classList.remove('hidden');
-  elEmpty.classList.add('hidden');
-  elError.classList.add('hidden');
-  elList.innerHTML = '';
-
-  // Fetch distinct books in staging
   const { data, error } = await sb
     .from('books_staging')
     .select('book_id, book_display_name, full_display_name, edition, sequence_number, book_status, imported_at')
     .eq('series_id', SERIES_ID)
     .order('imported_at', { ascending: false });
 
-  elLoading.classList.add('hidden');
+  elRvLoading.classList.add('hidden');
 
   if (error) {
-    elError.textContent = 'Failed to load staged books: ' + error.message;
-    elError.classList.remove('hidden');
+    elRvError.textContent = 'Failed to load staged books: ' + error.message;
+    elRvError.classList.remove('hidden');
     return;
   }
 
-  // De-duplicate by book_id (one summary row per book)
+  // Deduplicate by book_id
   const seen = new Map();
-  (data || []).forEach(row => {
-    if (!seen.has(row.book_id)) seen.set(row.book_id, { ...row, piece_count: 0 });
-    seen.get(row.book_id).piece_count++;
-  });
-
+  (data || []).forEach(r => { if (!seen.has(r.book_id)) seen.set(r.book_id, r); });
   const books = [...seen.values()];
 
-  if (books.length === 0) {
-    elEmpty.classList.remove('hidden');
+  if (books.length === 0) { elRvEmpty.classList.remove('hidden'); return; }
+
+  // Rebuild selector options
+  elRvSelect.innerHTML = '<option value="">-- select a book --</option>';
+  books.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.book_id;
+    opt.textContent = b.full_display_name + ' (' + b.book_status + ')';
+    elRvSelect.appendChild(opt);
+  });
+  elRvSelect.classList.remove('hidden');
+
+  // If only one book auto-select it
+  if (books.length === 1) {
+    elRvSelect.value = books[0].book_id;
+    await loadBookDetail(books[0].book_id);
+  }
+}
+
+// Load all rows for one book and render
+async function loadBookDetail(bookId) {
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvUnits.innerHTML = '<div style="font-size:0.85rem;color:var(--text-light);padding:4px 0"><span class="spinner spinner-dark"></span>Loading pieces…</div>';
+
+  const { data, error } = await sb
+    .from('books_staging')
+    .select('*')
+    .eq('book_id', bookId)
+    .order('unit_sort_order', { ascending: true })
+    .order('page_start',      { ascending: true });
+
+  if (error) {
+    elRvUnits.innerHTML = '';
+    elRvError.textContent = 'Failed to load book detail: ' + error.message;
+    elRvError.classList.remove('hidden');
     return;
   }
 
-  books.forEach(book => {
-    const statusColour = {
-      pending:  'color:var(--warn);background:var(--warn-light);border:1px solid var(--warn-border)',
-      verified: 'color:var(--success);background:var(--success-light);border:1px solid var(--success-border)',
-      rejected: 'color:var(--danger);background:var(--danger-light);border:1px solid var(--danger-border)',
-    }[book.book_status] || '';
+  rvAllRows  = data || [];
+  rvBookMeta = rvAllRows[0] || null;
+  if (!rvBookMeta) { elRvUnits.innerHTML = ''; return; }
 
-    const card = document.createElement('div');
-    card.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;background:var(--card);';
-    card.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div>
-          <div style="font-family:\'DM Serif Display\',serif;font-size:1.05rem;color:var(--text);">${esc(book.full_display_name)}</div>
-          <div style="font-size:0.75rem;color:var(--text-light);margin-top:3px;font-family:monospace;">${esc(book.book_id)}</div>
+  // Render summary strip
+  elRvBookName.textContent = rvBookMeta.full_display_name;
+  elRvBookMeta.textContent = `Seq: ${rvBookMeta.sequence_number} · ${rvAllRows.length} pieces · Imported ${new Date(rvBookMeta.imported_at).toLocaleDateString('en-CA')} · ID: ${rvBookMeta.book_id}`;
+  renderStatusBadge(rvBookMeta.book_status);
+  elRvStrip.classList.remove('hidden');
+
+  // Partner notes summary
+  const flagged = rvAllRows.filter(r => r.partner_notes);
+  if (flagged.length) {
+    elRvNotesBanner.innerHTML = `<strong>⚠️ ${flagged.length} piece${flagged.length > 1 ? 's have' : ' has'} partner notes requiring review.</strong> These are highlighted below.`;
+    elRvNotesBanner.classList.remove('hidden');
+  }
+
+  // Group into units
+  const unitMap = new Map();
+  rvAllRows.forEach(row => {
+    const key = row.unit_label ?? '__none__';
+    if (!unitMap.has(key)) unitMap.set(key, { label: row.unit_label, sort: row.unit_sort_order, title: row.unit_title, skill: row.unit_skill_focus, pieces: [] });
+    unitMap.get(key).pieces.push(row);
+  });
+
+  elRvUnits.innerHTML = '';
+  unitMap.forEach((unit, key) => renderUnit(unit, bookId));
+}
+
+function renderStatusBadge(status) {
+  const styles = {
+    pending:  'color:var(--warn);background:var(--warn-light);border:1px solid var(--warn-border)',
+    verified: 'color:var(--success);background:var(--success-light);border:1px solid var(--success-border)',
+    rejected: 'color:var(--danger);background:var(--danger-light);border:1px solid var(--danger-border)',
+  };
+  elRvStatusBadge.style.cssText = styles[status] || '';
+  elRvStatusBadge.textContent = status;
+}
+
+function renderUnit(unit, bookId) {
+  const block = document.createElement('div');
+  block.className = 'unit-block';
+
+  const skillText = Array.isArray(unit.skill) ? unit.skill.join(' · ') : (unit.skill || '');
+
+  block.innerHTML = `
+    <div class="unit-header" id="uh-${esc(unit.label)}">
+      <div class="unit-header-left">
+        <span class="unit-label-badge">Unit ${esc(unit.label ?? '?')}</span>
+        <span class="unit-title-text">${esc(unit.title ?? '(no title)')}</span>
+        <span class="unit-piece-count">${unit.pieces.length} piece${unit.pieces.length !== 1 ? 's' : ''}</span>
+      </div>
+      <span class="unit-chevron">▶</span>
+    </div>
+    <div class="unit-body" style="display:none;">
+      <div class="unit-edit-form">
+        <div class="form-row">
+          <span class="form-lbl">Unit title</span>
+          <input class="form-inp" id="uf-title-${esc(unit.label)}" value="${esc(unit.title ?? '')}" />
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:20px;${statusColour}">${book.book_status}</span>
-          <span style="font-size:0.78rem;color:var(--text-light);">${book.piece_count} pieces</span>
-          <span style="font-size:0.78rem;color:var(--text-light);">${new Date(book.imported_at).toLocaleDateString('en-CA')}</span>
+        <div class="form-row">
+          <span class="form-lbl">Unit skill focus (one per line, include [N] numbering)</span>
+          <textarea class="form-ta" id="uf-skill-${esc(unit.label)}" rows="3">${esc(Array.isArray(unit.skill) ? unit.skill.join('\n') : (unit.skill ?? ''))}</textarea>
+        </div>
+        <div class="form-save-row">
+          <button class="btn-save-sm" onclick="saveUnit('${esc(bookId)}','${esc(unit.label)}')">Save unit fields</button>
+          <span class="save-feedback" id="uf-fb-${esc(unit.label)}"></span>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;"
-          onclick="setBookStatus('${book.book_id}', 'verified', this.closest('div').parentElement)">✓ Mark verified</button>
-        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;border-color:var(--danger);color:var(--danger);"
-          onclick="setBookStatus('${book.book_id}', 'rejected', this.closest('div').parentElement)">✗ Mark rejected</button>
-        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;border-color:var(--danger);color:var(--danger);"
-          onclick="deleteStaging('${book.book_id}', this.closest('div').parentElement)">🗑 Delete from staging</button>
+      <div id="pieces-${esc(unit.label)}"></div>
+    </div>
+  `;
+  elRvUnits.appendChild(block);
+
+  // Toggle accordion
+  const header = block.querySelector('.unit-header');
+  const body   = block.querySelector('.unit-body');
+  const chev   = block.querySelector('.unit-chevron');
+  header.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    chev.classList.toggle('open', !open);
+  });
+
+  // Render pieces
+  const piecesEl = block.querySelector(`#pieces-${CSS.escape(unit.label ?? '__none__')}`);
+  unit.pieces.forEach(piece => renderPiece(piece, piecesEl));
+}
+
+function renderPiece(piece, container) {
+  const hasNotes = !!piece.partner_notes;
+  const pageStr  = piece.page_start != null
+    ? ('p.' + piece.page_start + (piece.page_end != null ? '–' + piece.page_end : ''))
+    : '(no page)';
+
+  const row = document.createElement('div');
+  row.className = 'piece-row' + (hasNotes ? ' has-notes' : '');
+  row.id = `pr-${piece.row_id}`;
+
+  const instrText = Array.isArray(piece.student_instructions)
+    ? piece.student_instructions.join('\n')
+    : (piece.student_instructions ?? '');
+
+  const typeOptions = PIECE_TYPES.map(t =>
+    `<option value="${esc(t)}" ${piece.piece_type === t ? 'selected' : ''}>${esc(t)}</option>`
+  ).join('');
+
+  const notesHtml = hasNotes ? `
+    <div class="notes-box">
+      <div class="notes-label">⚠️ Partner notes</div>
+      ${esc(piece.partner_notes)}
+    </div>` : '';
+
+  row.innerHTML = `
+    <div class="piece-summary">
+      <div class="piece-summary-left">
+        <span class="piece-type-badge">${esc(piece.piece_type ?? '?')}</span>
+        <span class="piece-title-text">${esc(piece.piece_title)}</span>
       </div>
-    `;
-    elList.appendChild(card);
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        ${hasNotes ? '<span class="piece-note-flag">⚠️ notes</span>' : ''}
+        <span class="piece-page-text">${pageStr}</span>
+        <span class="piece-chevron">▶</span>
+      </div>
+    </div>
+    <div class="piece-edit" id="pe-${piece.row_id}">
+      ${notesHtml}
+      <div class="form-row">
+        <span class="form-lbl">Piece title</span>
+        <input class="form-inp" id="pf-title-${piece.row_id}" value="${esc(piece.piece_title)}" />
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Piece type</span>
+        <select class="form-sel" id="pf-type-${piece.row_id}">${typeOptions}</select>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="form-row" style="flex:1;">
+          <span class="form-lbl">Page start</span>
+          <input class="form-inp" type="number" id="pf-ps-${piece.row_id}" value="${piece.page_start ?? ''}" />
+        </div>
+        <div class="form-row" style="flex:1;">
+          <span class="form-lbl">Page end</span>
+          <input class="form-inp" type="number" id="pf-pe-${piece.row_id}" value="${piece.page_end ?? ''}" placeholder="(null if single page)" />
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Student instructions (one per line, include [N] numbering)</span>
+        <textarea class="form-ta" id="pf-instr-${piece.row_id}" rows="4">${esc(instrText)}</textarea>
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Partner notes</span>
+        <textarea class="form-ta" id="pf-notes-${piece.row_id}" rows="2">${esc(piece.partner_notes ?? '')}</textarea>
+      </div>
+      <div class="form-save-row">
+        <button class="btn-save-sm" onclick="savePiece(${piece.row_id})">Save piece</button>
+        <span class="save-feedback" id="pf-fb-${piece.row_id}"></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+
+  // Toggle piece edit
+  const summary  = row.querySelector('.piece-summary');
+  const editEl   = row.querySelector('.piece-edit');
+  const chevEl   = row.querySelector('.piece-chevron');
+  summary.addEventListener('click', () => {
+    const open = editEl.classList.contains('open');
+    editEl.classList.toggle('open', !open);
+    chevEl.classList.toggle('open', !open);
   });
 }
 
-window.setBookStatus = async (bookId, status, cardEl) => {
+// Save unit-level fields — fans out to all pieces in that unit
+window.saveUnit = async (bookId, unitLabel) => {
+  const fbEl    = document.getElementById(`uf-fb-${unitLabel}`);
+  const titleEl = document.getElementById(`uf-title-${unitLabel}`);
+  const skillEl = document.getElementById(`uf-skill-${unitLabel}`);
+  fbEl.textContent = '';
+
+  const newTitle = titleEl.value.trim();
+  const newSkill = skillEl.value.trim()
+    ? skillEl.value.trim().split('\n').map(s => s.trim()).filter(Boolean)
+    : null;
+
+  const { error } = await sb
+    .from('books_staging')
+    .update({ unit_title: newTitle || null, unit_skill_focus: newSkill })
+    .eq('book_id', bookId)
+    .eq('unit_label', unitLabel);
+
+  if (error) {
+    fbEl.textContent = '✗ ' + error.message;
+    fbEl.className = 'save-feedback save-err';
+  } else {
+    fbEl.textContent = '✓ Saved';
+    fbEl.className = 'save-feedback save-ok';
+    setTimeout(() => { fbEl.textContent = ''; }, 2500);
+    // Update local state
+    rvAllRows.forEach(r => {
+      if (r.unit_label === unitLabel) {
+        r.unit_title = newTitle || null;
+        r.unit_skill_focus = newSkill;
+      }
+    });
+  }
+};
+
+// Save piece-level fields by row_id
+window.savePiece = async (rowId) => {
+  const fbEl    = document.getElementById(`pf-fb-${rowId}`);
+  fbEl.textContent = '';
+
+  const title  = document.getElementById(`pf-title-${rowId}`).value.trim();
+  const type   = document.getElementById(`pf-type-${rowId}`).value;
+  const psRaw  = document.getElementById(`pf-ps-${rowId}`).value;
+  const peRaw  = document.getElementById(`pf-pe-${rowId}`).value;
+  const instrRaw = document.getElementById(`pf-instr-${rowId}`).value.trim();
+  const notes  = document.getElementById(`pf-notes-${rowId}`).value.trim();
+
+  if (!title) {
+    fbEl.textContent = '✗ Piece title is required.';
+    fbEl.className = 'save-feedback save-err';
+    return;
+  }
+
+  const updates = {
+    piece_title:          title,
+    piece_type:           type || null,
+    page_start:           psRaw !== '' ? parseInt(psRaw, 10) : null,
+    page_end:             peRaw !== '' ? parseInt(peRaw, 10) : null,
+    student_instructions: instrRaw ? instrRaw.split('\n').map(s => s.trim()).filter(Boolean) : null,
+    partner_notes:        notes || null,
+  };
+
+  const { error } = await sb
+    .from('books_staging')
+    .update(updates)
+    .eq('row_id', rowId);
+
+  if (error) {
+    fbEl.textContent = '✗ ' + error.message;
+    fbEl.className = 'save-feedback save-err';
+  } else {
+    fbEl.textContent = '✓ Saved';
+    fbEl.className = 'save-feedback save-ok';
+    setTimeout(() => { fbEl.textContent = ''; }, 2500);
+    // Update local state
+    const row = rvAllRows.find(r => r.row_id === rowId);
+    if (row) Object.assign(row, updates);
+    // Update piece summary display
+    const summaryTitle = document.querySelector(`#pr-${rowId} .piece-title-text`);
+    const summaryType  = document.querySelector(`#pr-${rowId} .piece-type-badge`);
+    const summaryPage  = document.querySelector(`#pr-${rowId} .piece-page-text`);
+    if (summaryTitle) summaryTitle.textContent = title;
+    if (summaryType)  summaryType.textContent  = type || '?';
+    if (summaryPage)  summaryPage.textContent  =
+      updates.page_start != null
+        ? ('p.' + updates.page_start + (updates.page_end != null ? '–' + updates.page_end : ''))
+        : '(no page)';
+  }
+};
+
+// Status actions
+elRvBtnVerify.addEventListener('click', () => setBookStatus(rvBookMeta?.book_id, 'verified'));
+elRvBtnReject.addEventListener('click', () => setBookStatus(rvBookMeta?.book_id, 'rejected'));
+
+async function setBookStatus(bookId, status) {
+  if (!bookId) return;
   const { error } = await sb
     .from('books_staging')
     .update({ book_status: status })
     .eq('book_id', bookId);
   if (error) { alert('Failed to update status: ' + error.message); return; }
-  await loadReview();
-};
+  rvBookMeta.book_status = status;
+  renderStatusBadge(status);
+  // Update selector label
+  const opt = elRvSelect.querySelector(`option[value="${bookId}"]`);
+  if (opt) opt.textContent = opt.textContent.replace(/\(.*\)$/, `(${status})`);
+}
 
-window.deleteStaging = async (bookId, cardEl) => {
+elRvBtnDelete.addEventListener('click', async () => {
+  if (!rvBookMeta?.book_id) return;
   if (!confirm('Delete all staging rows for this book? This cannot be undone.')) return;
   const { error } = await sb
     .from('books_staging')
     .delete()
-    .eq('book_id', bookId);
+    .eq('book_id', rvBookMeta.book_id);
   if (error) { alert('Failed to delete: ' + error.message); return; }
   await loadReview();
-};
+});
 
-document.getElementById('btn-refresh-review').addEventListener('click', loadReview);
+// Book selector change
+elRvSelect.addEventListener('change', async () => {
+  const bookId = elRvSelect.value;
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvUnits.innerHTML = '';
+  if (bookId) await loadBookDetail(bookId);
+});
+
+document.getElementById('btn-refresh-review').addEventListener('click', async () => {
+  await loadReview();
+  if (rvBookMeta?.book_id) await loadBookDetail(rvBookMeta.book_id);
+});
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── Init ───────────────────────────────────────────────────────────────
 checkSession();
