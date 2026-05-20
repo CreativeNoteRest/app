@@ -512,6 +512,7 @@ function renderPiece(piece, container) {
       </div>
       <div class="form-save-row">
         <button class="btn-save-sm" onclick="savePiece(${piece.row_id})">Save piece</button>
+        <button class="btn-save-sm" onclick="deletePiece(${piece.row_id})" style="background:none;border:1.5px solid var(--danger);color:var(--danger);">Delete piece</button>
         <span class="save-feedback" id="pf-fb-${piece.row_id}"></span>
       </div>
     </div>
@@ -608,6 +609,28 @@ window.savePiece = async (rowId) => {
     // Remove amber border if notes cleared
     if (!notes) document.getElementById(`pr-${rowId}`)?.classList.remove('has-notes');
   }
+};
+
+// ── Delete piece ───────────────────────────────────────────────────────
+window.deletePiece = async (rowId) => {
+  const piece = rvAllRows.find(r => r.row_id === rowId);
+  const title = piece?.piece_title ?? 'this piece';
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+
+  const { error } = await sb
+    .from('books_staging')
+    .delete()
+    .eq('row_id', rowId);
+
+  if (error) {
+    const fbEl = document.getElementById(`pf-fb-${rowId}`);
+    if (fbEl) { fbEl.textContent = '✗ ' + error.message; fbEl.className = 'save-feedback save-err'; }
+    return;
+  }
+
+  // Remove from local state and DOM
+  rvAllRows = rvAllRows.filter(r => r.row_id !== rowId);
+  document.getElementById(`pr-${rowId}`)?.remove();
 };
 
 // ── Status actions ─────────────────────────────────────────────────────
