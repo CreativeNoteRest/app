@@ -43,6 +43,8 @@
     .header-email { font-size: 0.78rem; color: var(--text-light); }
     .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
     .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+    .btn-back { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-decoration: none; margin-right: 4px; transition: color 0.15s; }
+    .btn-back:hover { color: var(--brand); }
 
     /* ── Login ────────────────────────────────────────────────────────── */
     .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -155,9 +157,11 @@
 
 <header class="app-header">
   <div class="header-brand">
+    <a class="btn-back" href="/admin/index.html">← Admin</a>
+    <span class="header-dot"></span>
     <span class="header-title">Creative Note</span>
     <span class="header-dot"></span>
-    <span class="header-sub">Admin</span>
+    <span class="header-sub">Prompt Editor</span>
   </div>
   <div class="header-right hidden" id="header-right">
     <span class="header-email" id="header-email"></span>
