@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Review — Creative Note Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --success-border: #BBF7D0;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --info:           #2563EB;
+      --info-light:     #EFF6FF;
+      --info-border:    #BFDBFE;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--brand); }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-email { font-size: 0.78rem; color: var(--text-light); }
+    .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+    .btn-back { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-decoration: none; margin-right: 4px; transition: color 0.15s; }
+    .btn-back:hover { color: var(--brand); }
+
+    /* ── Login ────────────────────────────────────────────────────────── */
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+    .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .field-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .field-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; margin-bottom: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .btn-login { width: 100%; height: 48px; margin-top: 8px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s; }
+    .btn-login:hover { opacity: 0.88; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
+
+    /* ── Layout ───────────────────────────────────────────────────────── */
+    .main { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
+    .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 32px; line-height: 1.5; }
+
+    /* ── Cards ────────────────────────────────────────────────────────── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--text); margin-bottom: 18px; }
+
+    /* ── Form elements ────────────────────────────────────────────────── */
+    .section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+    .select-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; }
+    .select-input:focus { border-color: var(--brand); }
+
+    /* ── Messages ─────────────────────────────────────────────────────── */
+    .msg { padding: 12px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.55; margin-bottom: 14px; }
+    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .msg-warn    { background: var(--warn-light);    border: 1px solid var(--warn-border);    color: var(--warn); }
+
+    /* ── Buttons ──────────────────────────────────────────────────────── */
+    .btn-secondary { height: 44px; padding: 0 18px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+
+    .spinner { width: 16px; height: 16px; border: 2.5px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+
+    /* ── Review UI ────────────────────────────────────────────────────── */
+    .unit-block { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    .unit-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); cursor: pointer; user-select: none; gap: 10px; }
+    .unit-header:hover { background: var(--brand-light); }
+    .unit-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .unit-label-badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--brand); color: #fff; border-radius: 6px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; }
+    .unit-title-text { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .unit-piece-count { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; flex-shrink: 0; }
+    .unit-chevron { font-size: 0.75rem; color: var(--text-light); transition: transform 0.2s; flex-shrink: 0; }
+    .unit-chevron.open { transform: rotate(90deg); }
+    .unit-body { border-top: 1px solid var(--border); padding: 12px 16px; background: var(--card); display: none; }
+    .unit-body.open { display: block; }
+    .unit-edit-form { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-lbl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); }
+    .form-inp { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; }
+    .form-inp:focus { border-color: var(--brand); }
+    .form-ta { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; line-height: 1.55; color: var(--text); background: var(--card); outline: none; resize: vertical; min-height: 70px; transition: border-color 0.15s; }
+    .form-ta:focus { border-color: var(--brand); }
+    .form-sel { width: 100%; height: 38px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--card); outline: none; }
+    .form-sel:focus { border-color: var(--brand); }
+    .form-save-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .btn-save-sm { height: 34px; padding: 0 16px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    .btn-save-sm:hover { opacity: 0.88; }
+    .save-feedback { font-size: 0.78rem; }
+    .save-ok  { color: var(--success); }
+    .save-err { color: var(--danger); }
+    .piece-row { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .piece-row.has-notes { border-color: var(--warn); }
+    .piece-summary { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: var(--card); cursor: pointer; gap: 8px; user-select: none; }
+    .piece-summary:hover { background: var(--surface); }
+    .piece-summary-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .piece-type-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; padding: 2px 7px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); color: var(--text-mid); flex-shrink: 0; }
+    .piece-title-text { font-size: 0.9rem; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .piece-page-text { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; flex-shrink: 0; }
+    .piece-note-flag { font-size: 0.72rem; color: var(--warn); font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .piece-chevron { font-size: 0.7rem; color: var(--text-light); transition: transform 0.2s; flex-shrink: 0; }
+    .piece-chevron.open { transform: rotate(90deg); }
+    .piece-edit { border-top: 1px solid var(--border); padding: 14px; background: var(--surface); display: none; }
+    .piece-edit.open { display: block; }
+    .notes-box { background: var(--warn-light); border: 1px solid var(--warn-border); border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: var(--text-mid); line-height: 1.5; margin-bottom: 10px; }
+    .notes-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <a class="btn-back" href="/admin/books.html">← Import</a>
+    <span class="header-dot"></span>
+    <span class="header-title">Creative Note</span>
+    <span class="header-dot"></span>
+    <span class="header-sub">Book Review</span>
+  </div>
+  <div class="header-right hidden" id="header-right">
+    <span class="header-email" id="header-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign out</button>
+  </div>
+</header>
+
+<!-- ── Login ──────────────────────────────────────────────────────────── -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin sign in</div>
+    <div class="login-sub">Creative Note book review. Access restricted to approved administrators.</div>
+    <label class="field-label" for="inp-email">Email</label>
+    <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
+    <label class="field-label" for="inp-password">Password</label>
+    <input class="field-input" id="inp-password" type="password" autocomplete="current-password" placeholder="Password" style="margin-bottom:0" />
+    <div id="login-error" class="login-error hidden"></div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+  </div>
+</div>
+
+<!-- ── Main tool ───────────────────────────────────────────────────────── -->
+<div id="view-tool" class="hidden">
+  <main class="main">
+    <div class="page-label">Curriculum</div>
+    <h1 class="page-title">Book <em>review</em></h1>
+    <p class="page-subtitle">Review staged books unit by unit. Edit fields, clear partner notes, then mark as Verified or Rejected. Only verified books can be loaded to production.</p>
+
+    <div class="card">
+      <!-- Book selector -->
+      <div class="section-label" style="margin-bottom:8px;">Staged book</div>
+      <div id="rv-loading" style="font-size:0.85rem;color:var(--text-light);padding:4px 0 12px;"><span class="spinner"></span>Loading staged books…</div>
+      <div id="rv-empty" class="msg msg-warn hidden">No books currently in staging.</div>
+      <div id="rv-error" class="msg msg-error hidden"></div>
+      <select id="rv-select" class="select-input hidden" style="margin-bottom:16px;"><option value="">-- select a book --</option></select>
+
+      <!-- Book summary strip -->
+      <div id="rv-strip" class="hidden" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;">
+        <div style="min-width:0;">
+          <div id="rv-book-name" style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--text);"></div>
+          <div id="rv-book-meta" style="font-size:0.75rem;color:var(--text-light);margin-top:3px;font-family:monospace;word-break:break-all;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+          <span id="rv-status-badge" style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:20px;"></span>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--success);color:var(--success);" id="rv-btn-verify">✓ Mark verified</button>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--danger);color:var(--danger);"  id="rv-btn-reject">✗ Mark rejected</button>
+          <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;" id="rv-btn-delete">🗑 Delete</button>
+        </div>
+      </div>
+
+      <!-- Partner notes banner -->
+      <div id="rv-notes-banner" class="msg msg-warn hidden" style="margin-bottom:16px;"></div>
+
+      <!-- Unit accordion -->
+      <div id="rv-units"></div>
+
+      <!-- Footer actions -->
+      <div id="rv-footer" class="hidden" style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 14px;border-color:var(--success);color:var(--success);" id="rv-btn-verify-foot">✓ Mark verified</button>
+        <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 14px;border-color:var(--danger);color:var(--danger);"  id="rv-btn-reject-foot">✗ Mark rejected</button>
+        <button class="btn-secondary" style="height:36px;font-size:0.82rem;padding:0 16px;" id="btn-refresh">↻ Refresh</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL  = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
+const ADMIN_EMAILS  = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
+const SERIES_ID     = '96c05aaa-0329-4582-a35c-51423afc21dd';
+const PIECE_TYPES   = ['Lesson Piece','Challenge Piece','Getting Ready Exercises','Duet with Teacher','Lesson Worksheet'];
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── Elements ───────────────────────────────────────────────────────────
+const elLogin       = document.getElementById('view-login');
+const elTool        = document.getElementById('view-tool');
+const elHeaderR     = document.getElementById('header-right');
+const elHeaderEmail = document.getElementById('header-email');
+const elBtnSignout  = document.getElementById('btn-signout');
+const elBtnLogin    = document.getElementById('btn-login');
+const elInpEmail    = document.getElementById('inp-email');
+const elInpPw       = document.getElementById('inp-password');
+const elLoginErr    = document.getElementById('login-error');
+
+const elRvLoading   = document.getElementById('rv-loading');
+const elRvEmpty     = document.getElementById('rv-empty');
+const elRvError     = document.getElementById('rv-error');
+const elRvSelect    = document.getElementById('rv-select');
+const elRvStrip     = document.getElementById('rv-strip');
+const elRvBookName  = document.getElementById('rv-book-name');
+const elRvBookMeta  = document.getElementById('rv-book-meta');
+const elRvBadge     = document.getElementById('rv-status-badge');
+const elRvBtnVerify = document.getElementById('rv-btn-verify');
+const elRvBtnReject = document.getElementById('rv-btn-reject');
+const elRvBtnDelete = document.getElementById('rv-btn-delete');
+const elRvNotesBanner = document.getElementById('rv-notes-banner');
+const elRvUnits     = document.getElementById('rv-units');
+const elRvFooter    = document.getElementById('rv-footer');
+
+// ── State ──────────────────────────────────────────────────────────────
+let rvAllRows  = [];
+let rvBookMeta = null;
+
+// ── Auth ───────────────────────────────────────────────────────────────
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && ADMIN_EMAILS.includes(session.user.email)) {
+    showTool(session.user.email);
+    await loadBookList();
+  }
+}
+
+function showTool(email) {
+  elLogin.classList.add('hidden');
+  elTool.classList.remove('hidden');
+  elHeaderR.classList.remove('hidden');
+  elHeaderEmail.textContent = email;
+}
+
+elBtnLogin.addEventListener('click', async () => {
+  const email = elInpEmail.value.trim();
+  const pw    = elInpPw.value;
+  if (!email || !pw) { showLoginErr('Email and password are required.'); return; }
+  elBtnLogin.disabled = true;
+  elBtnLogin.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.4);border-top-color:#fff;"></span>Signing in…';
+  elLoginErr.classList.add('hidden');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  elBtnLogin.disabled = false;
+  elBtnLogin.textContent = 'Sign in';
+  if (error || !data.session) { showLoginErr(error?.message || 'Sign-in failed.'); return; }
+  if (!ADMIN_EMAILS.includes(data.user.email)) { showLoginErr('This account does not have administrator access.'); await sb.auth.signOut(); return; }
+  showTool(data.user.email);
+  await loadBookList();
+});
+elInpPw.addEventListener('keydown', e => { if (e.key === 'Enter') elBtnLogin.click(); });
+elBtnSignout.addEventListener('click', async () => {
+  await sb.auth.signOut();
+  elTool.classList.add('hidden');
+  elLogin.classList.remove('hidden');
+  elHeaderR.classList.add('hidden');
+  elInpPw.value = '';
+});
+function showLoginErr(msg) { elLoginErr.textContent = msg; elLoginErr.classList.remove('hidden'); }
+
+// ── Load book list ─────────────────────────────────────────────────────
+async function loadBookList() {
+  elRvLoading.classList.remove('hidden');
+  elRvEmpty.classList.add('hidden');
+  elRvError.classList.add('hidden');
+  elRvSelect.classList.add('hidden');
+
+  const { data, error } = await sb
+    .from('books_staging')
+    .select('book_id, full_display_name, book_status, imported_at')
+    .eq('series_id', SERIES_ID)
+    .order('imported_at', { ascending: false });
+
+  elRvLoading.classList.add('hidden');
+
+  if (error) {
+    elRvError.textContent = 'Failed to load staged books: ' + error.message;
+    elRvError.classList.remove('hidden');
+    return;
+  }
+
+  // Deduplicate by book_id
+  const seen = new Map();
+  (data || []).forEach(r => { if (!seen.has(r.book_id)) seen.set(r.book_id, r); });
+  const books = [...seen.values()];
+
+  if (books.length === 0) { elRvEmpty.classList.remove('hidden'); return; }
+
+  elRvSelect.innerHTML = '<option value="">-- select a book --</option>';
+  books.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.book_id;
+    opt.textContent = `${b.full_display_name} (${b.book_status})`;
+    elRvSelect.appendChild(opt);
+  });
+  elRvSelect.classList.remove('hidden');
+
+  // Check for ?book= query param — auto-select if present
+  const params = new URLSearchParams(window.location.search);
+  const paramBookId = params.get('book');
+  if (paramBookId && seen.has(paramBookId)) {
+    elRvSelect.value = paramBookId;
+    await loadBookDetail(paramBookId);
+  } else if (books.length === 1) {
+    elRvSelect.value = books[0].book_id;
+    await loadBookDetail(books[0].book_id);
+  }
+}
+
+// ── Load book detail ───────────────────────────────────────────────────
+async function loadBookDetail(bookId) {
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvFooter.classList.add('hidden');
+  elRvUnits.innerHTML = '<div style="font-size:0.85rem;color:var(--text-light);padding:4px 0;"><span class="spinner"></span>Loading pieces…</div>';
+
+  const { data, error } = await sb
+    .from('books_staging')
+    .select('*')
+    .eq('book_id', bookId)
+    .order('unit_sort_order', { ascending: true })
+    .order('page_start',      { ascending: true, nullsFirst: false });
+
+  if (error) {
+    elRvUnits.innerHTML = '';
+    elRvError.textContent = 'Failed to load book: ' + error.message;
+    elRvError.classList.remove('hidden');
+    return;
+  }
+
+  rvAllRows  = data || [];
+  rvBookMeta = rvAllRows[0] || null;
+  if (!rvBookMeta) { elRvUnits.innerHTML = ''; return; }
+
+  // Summary strip
+  elRvBookName.textContent = rvBookMeta.full_display_name;
+  elRvBookMeta.textContent = `Seq: ${rvBookMeta.sequence_number} · ${rvAllRows.length} pieces · Imported ${new Date(rvBookMeta.imported_at).toLocaleDateString('en-CA')} · ${rvBookMeta.book_id}`;
+  renderBadge(rvBookMeta.book_status);
+  elRvStrip.classList.remove('hidden');
+  elRvFooter.classList.remove('hidden');
+
+  // Partner notes banner
+  const flagged = rvAllRows.filter(r => r.partner_notes);
+  if (flagged.length) {
+    elRvNotesBanner.innerHTML = `<strong>⚠️ ${flagged.length} piece${flagged.length !== 1 ? 's have' : ' has'} partner notes requiring review.</strong> Flagged pieces are outlined in amber below.`;
+    elRvNotesBanner.classList.remove('hidden');
+  }
+
+  // Group into units preserving sort order
+  const unitMap = new Map();
+  rvAllRows.forEach(row => {
+    const key = row.unit_label ?? '__none__';
+    if (!unitMap.has(key)) {
+      unitMap.set(key, { label: row.unit_label, sort: row.unit_sort_order, title: row.unit_title, skill: row.unit_skill_focus, pieces: [] });
+    }
+    unitMap.get(key).pieces.push(row);
+  });
+
+  elRvUnits.innerHTML = '';
+  unitMap.forEach(unit => renderUnit(unit, bookId));
+}
+
+// ── Render unit ────────────────────────────────────────────────────────
+function renderUnit(unit, bookId) {
+  const block = document.createElement('div');
+  block.className = 'unit-block';
+
+  block.innerHTML = `
+    <div class="unit-header">
+      <div class="unit-header-left">
+        <span class="unit-label-badge">Unit ${esc(unit.label ?? '?')}</span>
+        <span class="unit-title-text">${esc(unit.title ?? '(no title)')}</span>
+        <span class="unit-piece-count">${unit.pieces.length} piece${unit.pieces.length !== 1 ? 's' : ''}</span>
+      </div>
+      <span class="unit-chevron">▶</span>
+    </div>
+    <div class="unit-body">
+      <div class="unit-edit-form">
+        <div class="form-row">
+          <span class="form-lbl">Unit title</span>
+          <input class="form-inp" id="uf-title-${esc(unit.label)}" value="${esc(unit.title ?? '')}" />
+        </div>
+        <div class="form-row">
+          <span class="form-lbl">Unit skill focus — one phrase per line, include [N] numbering</span>
+          <textarea class="form-ta" id="uf-skill-${esc(unit.label)}" rows="3">${esc(Array.isArray(unit.skill) ? unit.skill.join('\n') : (unit.skill ?? ''))}</textarea>
+        </div>
+        <div class="form-save-row">
+          <button class="btn-save-sm" onclick="saveUnit('${esc(bookId)}','${esc(unit.label ?? '')}')">Save unit fields</button>
+          <span class="save-feedback" id="uf-fb-${esc(unit.label)}"></span>
+        </div>
+      </div>
+      <div id="pieces-${esc(unit.label ?? '__none__')}"></div>
+    </div>
+  `;
+  elRvUnits.appendChild(block);
+
+  // Accordion toggle — collapsed by default
+  const header = block.querySelector('.unit-header');
+  const body   = block.querySelector('.unit-body');
+  const chev   = block.querySelector('.unit-chevron');
+  header.addEventListener('click', () => {
+    const open = body.classList.contains('open');
+    body.classList.toggle('open', !open);
+    chev.classList.toggle('open', !open);
+  });
+
+  // Render pieces
+  const piecesEl = block.querySelector(`#pieces-${CSS.escape(unit.label ?? '__none__')}`);
+  unit.pieces.forEach(piece => renderPiece(piece, piecesEl));
+}
+
+// ── Render piece ───────────────────────────────────────────────────────
+function renderPiece(piece, container) {
+  const hasNotes = !!piece.partner_notes;
+  const pageStr  = piece.page_start != null
+    ? 'p.' + piece.page_start + (piece.page_end != null ? '–' + piece.page_end : '')
+    : '(no page)';
+
+  const instrText = Array.isArray(piece.student_instructions)
+    ? piece.student_instructions.join('\n')
+    : (piece.student_instructions ?? '');
+
+  const typeOptions = PIECE_TYPES.map(t =>
+    `<option value="${esc(t)}" ${piece.piece_type === t ? 'selected' : ''}>${esc(t)}</option>`
+  ).join('');
+
+  const notesHtml = hasNotes ? `
+    <div class="notes-box">
+      <div class="notes-label">⚠️ Partner notes</div>
+      ${esc(piece.partner_notes)}
+    </div>` : '';
+
+  const row = document.createElement('div');
+  row.className = 'piece-row' + (hasNotes ? ' has-notes' : '');
+  row.id = `pr-${piece.row_id}`;
+  row.innerHTML = `
+    <div class="piece-summary">
+      <div class="piece-summary-left">
+        <span class="piece-type-badge">${esc(piece.piece_type ?? '?')}</span>
+        <span class="piece-title-text">${esc(piece.piece_title)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        ${hasNotes ? '<span class="piece-note-flag">⚠️ notes</span>' : ''}
+        <span class="piece-page-text">${pageStr}</span>
+        <span class="piece-chevron">▶</span>
+      </div>
+    </div>
+    <div class="piece-edit" id="pe-${piece.row_id}">
+      ${notesHtml}
+      <div class="form-row">
+        <span class="form-lbl">Piece title</span>
+        <input class="form-inp" id="pf-title-${piece.row_id}" value="${esc(piece.piece_title)}" />
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Piece type</span>
+        <select class="form-sel" id="pf-type-${piece.row_id}">${typeOptions}</select>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="form-row" style="flex:1;">
+          <span class="form-lbl">Page start</span>
+          <input class="form-inp" type="number" id="pf-ps-${piece.row_id}" value="${piece.page_start ?? ''}" />
+        </div>
+        <div class="form-row" style="flex:1;">
+          <span class="form-lbl">Page end</span>
+          <input class="form-inp" type="number" id="pf-pe-${piece.row_id}" value="${piece.page_end ?? ''}" placeholder="null if single page" />
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Student instructions — one per line, include [N] numbering</span>
+        <textarea class="form-ta" id="pf-instr-${piece.row_id}" rows="4">${esc(instrText)}</textarea>
+      </div>
+      <div class="form-row">
+        <span class="form-lbl">Partner notes</span>
+        <textarea class="form-ta" id="pf-notes-${piece.row_id}" rows="2">${esc(piece.partner_notes ?? '')}</textarea>
+      </div>
+      <div class="form-save-row">
+        <button class="btn-save-sm" onclick="savePiece(${piece.row_id})">Save piece</button>
+        <span class="save-feedback" id="pf-fb-${piece.row_id}"></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+
+  // Piece toggle
+  const summary = row.querySelector('.piece-summary');
+  const editEl  = row.querySelector('.piece-edit');
+  const chevEl  = row.querySelector('.piece-chevron');
+  summary.addEventListener('click', () => {
+    const open = editEl.classList.contains('open');
+    editEl.classList.toggle('open', !open);
+    chevEl.classList.toggle('open', !open);
+  });
+}
+
+// ── Save unit ──────────────────────────────────────────────────────────
+window.saveUnit = async (bookId, unitLabel) => {
+  const fbEl    = document.getElementById(`uf-fb-${unitLabel}`);
+  const newTitle = document.getElementById(`uf-title-${unitLabel}`).value.trim();
+  const skillRaw = document.getElementById(`uf-skill-${unitLabel}`).value.trim();
+  const newSkill = skillRaw ? skillRaw.split('\n').map(s => s.trim()).filter(Boolean) : null;
+  fbEl.textContent = '';
+
+  const { error } = await sb
+    .from('books_staging')
+    .update({ unit_title: newTitle || null, unit_skill_focus: newSkill })
+    .eq('book_id', bookId)
+    .eq('unit_label', unitLabel);
+
+  if (error) {
+    fbEl.textContent = '✗ ' + error.message;
+    fbEl.className = 'save-feedback save-err';
+  } else {
+    fbEl.textContent = '✓ Saved';
+    fbEl.className = 'save-feedback save-ok';
+    setTimeout(() => { fbEl.textContent = ''; }, 2500);
+    rvAllRows.forEach(r => {
+      if (r.unit_label === unitLabel) { r.unit_title = newTitle || null; r.unit_skill_focus = newSkill; }
+    });
+  }
+};
+
+// ── Save piece ─────────────────────────────────────────────────────────
+window.savePiece = async (rowId) => {
+  const fbEl  = document.getElementById(`pf-fb-${rowId}`);
+  const title = document.getElementById(`pf-title-${rowId}`).value.trim();
+  fbEl.textContent = '';
+
+  if (!title) {
+    fbEl.textContent = '✗ Piece title is required.';
+    fbEl.className = 'save-feedback save-err';
+    return;
+  }
+
+  const type     = document.getElementById(`pf-type-${rowId}`).value;
+  const psRaw    = document.getElementById(`pf-ps-${rowId}`).value;
+  const peRaw    = document.getElementById(`pf-pe-${rowId}`).value;
+  const instrRaw = document.getElementById(`pf-instr-${rowId}`).value.trim();
+  const notes    = document.getElementById(`pf-notes-${rowId}`).value.trim();
+
+  const updates = {
+    piece_title:          title,
+    piece_type:           type || null,
+    page_start:           psRaw !== '' ? parseInt(psRaw, 10) : null,
+    page_end:             peRaw !== '' ? parseInt(peRaw, 10) : null,
+    student_instructions: instrRaw ? instrRaw.split('\n').map(s => s.trim()).filter(Boolean) : null,
+    partner_notes:        notes || null,
+  };
+
+  const { error } = await sb
+    .from('books_staging')
+    .update(updates)
+    .eq('row_id', rowId);
+
+  if (error) {
+    fbEl.textContent = '✗ ' + error.message;
+    fbEl.className = 'save-feedback save-err';
+  } else {
+    fbEl.textContent = '✓ Saved';
+    fbEl.className = 'save-feedback save-ok';
+    setTimeout(() => { fbEl.textContent = ''; }, 2500);
+    const row = rvAllRows.find(r => r.row_id === rowId);
+    if (row) Object.assign(row, updates);
+    // Update summary row in-place
+    const el = id => document.querySelector(`#pr-${rowId} ${id}`);
+    const t = el('.piece-title-text'); if (t) t.textContent = title;
+    const b = el('.piece-type-badge'); if (b) b.textContent = type || '?';
+    const p = el('.piece-page-text');
+    if (p) p.textContent = updates.page_start != null
+      ? 'p.' + updates.page_start + (updates.page_end != null ? '–' + updates.page_end : '')
+      : '(no page)';
+    // Remove amber border if notes cleared
+    if (!notes) document.getElementById(`pr-${rowId}`)?.classList.remove('has-notes');
+  }
+};
+
+// ── Status actions ─────────────────────────────────────────────────────
+function renderBadge(status) {
+  const s = {
+    pending:  'color:var(--warn);background:var(--warn-light);border:1px solid var(--warn-border)',
+    verified: 'color:var(--success);background:var(--success-light);border:1px solid var(--success-border)',
+    rejected: 'color:var(--danger);background:var(--danger-light);border:1px solid var(--danger-border)',
+  };
+  elRvBadge.style.cssText = s[status] || '';
+  elRvBadge.textContent = status;
+}
+
+async function setStatus(status) {
+  if (!rvBookMeta?.book_id) return;
+  const { error } = await sb
+    .from('books_staging')
+    .update({ book_status: status })
+    .eq('book_id', rvBookMeta.book_id);
+  if (error) { alert('Failed to update status: ' + error.message); return; }
+  rvBookMeta.book_status = status;
+  renderBadge(status);
+  const opt = elRvSelect.querySelector(`option[value="${rvBookMeta.book_id}"]`);
+  if (opt) opt.textContent = opt.textContent.replace(/\(.*\)$/, `(${status})`);
+}
+
+elRvBtnVerify.addEventListener('click',     () => setStatus('verified'));
+elRvBtnReject.addEventListener('click',     () => setStatus('rejected'));
+document.getElementById('rv-btn-verify-foot').addEventListener('click', () => setStatus('verified'));
+document.getElementById('rv-btn-reject-foot').addEventListener('click', () => setStatus('rejected'));
+
+elRvBtnDelete.addEventListener('click', async () => {
+  if (!rvBookMeta?.book_id) return;
+  if (!confirm('Delete all staging rows for this book? This cannot be undone.')) return;
+  const { error } = await sb.from('books_staging').delete().eq('book_id', rvBookMeta.book_id);
+  if (error) { alert('Failed to delete: ' + error.message); return; }
+  await loadBookList();
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvFooter.classList.add('hidden');
+  elRvUnits.innerHTML = '';
+  rvAllRows = []; rvBookMeta = null;
+});
+
+// ── Book selector change ───────────────────────────────────────────────
+elRvSelect.addEventListener('change', async () => {
+  const bookId = elRvSelect.value;
+  elRvStrip.classList.add('hidden');
+  elRvNotesBanner.classList.add('hidden');
+  elRvFooter.classList.add('hidden');
+  elRvUnits.innerHTML = '';
+  elRvError.classList.add('hidden');
+  if (bookId) {
+    // Update URL without reload so back button works correctly
+    history.replaceState(null, '', `?book=${encodeURIComponent(bookId)}`);
+    await loadBookDetail(bookId);
+  } else {
+    history.replaceState(null, '', window.location.pathname);
+  }
+});
+
+// ── Refresh ────────────────────────────────────────────────────────────
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  await loadBookList();
+  if (rvBookMeta?.book_id) await loadBookDetail(rvBookMeta.book_id);
+});
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Init ───────────────────────────────────────────────────────────────
+checkSession();
+</script>
+</body>
+</html>
