@@ -64,19 +64,16 @@
     .page-title em { color: var(--brand); font-style: italic; }
     .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 40px; line-height: 1.5; }
 
-    /* ── Tool grid ────────────────────────────────────────────────────── */
-    .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .tool-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; box-shadow: var(--shadow); text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
-    .tool-card:hover { border-color: var(--brand); box-shadow: 0 4px 20px rgba(226,107,10,0.12); }
-    .tool-card-icon { font-size: 1.6rem; line-height: 1; margin-bottom: 2px; }
-    .tool-card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); }
-    .tool-card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
-    .tool-card-desc { font-size: 0.82rem; color: var(--text-mid); line-height: 1.55; }
-    .tool-card-arrow { font-size: 0.85rem; color: var(--brand); font-weight: 600; margin-top: auto; padding-top: 10px; }
+    /* ── Tool buttons ─────────────────────────────────────────────────── */
+    .tool-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tool-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--text-mid); text-decoration: none; cursor: pointer; transition: border-color 0.15s, color 0.15s, box-shadow 0.15s; white-space: nowrap; }
+    .tool-btn:hover { border-color: var(--brand); color: var(--brand); box-shadow: 0 2px 10px rgba(226,107,10,0.10); }
+    .tool-btn-icon { font-size: 1rem; }
+    /* Tooltip */
+    .tool-btn::after { content: attr(data-tip); position: absolute; top: calc(100% + 8px); left: 0; background: var(--text); color: #fff; font-size: 0.75rem; font-weight: 400; line-height: 1.45; padding: 7px 11px; border-radius: 7px; white-space: normal; width: 220px; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; }
+    .tool-btn:hover::after { opacity: 1; }
 
     .hidden { display: none !important; }
-    .spinner { width: 18px; height: 18px; border: 2.5px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -114,22 +111,16 @@
     <h1 class="page-title">Admin <em>tools</em></h1>
     <p class="page-subtitle">Select a tool below. All tools require administrator access.</p>
 
-    <div class="tool-grid">
+    <div class="tool-row">
 
-      <a class="tool-card" href="/admin/prompts.html">
-        <div class="tool-card-icon">✏️</div>
-        <div class="tool-card-tag">AI pipeline</div>
-        <div class="tool-card-title">Prompt Editor</div>
-        <div class="tool-card-desc">Edit, test, and save session-close prompts against live session data. Inspect phase outputs and compare model responses.</div>
-        <div class="tool-card-arrow">Open tool →</div>
+      <a class="tool-btn" href="/admin/prompts.html"
+        data-tip="Edit, test, and save session-close prompts against live session data.">
+        <span class="tool-btn-icon">✏️</span> Prompt Editor
       </a>
 
-      <a class="tool-card" href="/admin/books.html">
-        <div class="tool-card-icon">📚</div>
-        <div class="tool-card-tag">Curriculum</div>
-        <div class="tool-card-title">Book Ingestion</div>
-        <div class="tool-card-desc">Import extracted workbook JSON into staging, review and correct unit and piece data, then load verified books into production.</div>
-        <div class="tool-card-arrow">Open tool →</div>
+      <a class="tool-btn" href="/admin/books.html"
+        data-tip="Import extracted workbook JSON, review staged data, and load verified books to production.">
+        <span class="tool-btn-icon">📚</span> Book Ingestion
       </a>
 
     </div>

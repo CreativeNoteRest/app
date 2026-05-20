@@ -248,6 +248,27 @@
       <div class="action-bar">
         <button class="btn-primary" id="btn-import" disabled>Import to staging</button>
         <button class="btn-secondary" id="btn-reset">Start over</button>
+        <a class="btn-secondary hidden" id="btn-go-review" href="#review">Review staged books ↓</a>
+      </div>
+    </div>
+
+    <!-- ── Review staged books ────────────────────────────────────────── -->
+    <div id="review" class="card" style="margin-top:40px;">
+      <div class="card-tag">Review</div>
+      <div class="card-title">Review staged books</div>
+      <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:20px;line-height:1.55">
+        Books currently in staging are listed below. Expand a book to review units and pieces,
+        edit fields, and mark as <strong>Verified</strong> or <strong>Rejected</strong>.
+        Only verified books can be loaded to production.
+      </p>
+      <div id="review-loading" style="font-size:0.85rem;color:var(--text-light);padding:4px 0">
+        <span class="spinner spinner-dark"></span>Loading staged books…
+      </div>
+      <div id="review-empty" class="msg msg-warn hidden">No books currently in staging.</div>
+      <div id="review-error" class="msg msg-error hidden"></div>
+      <div id="review-list"></div>
+      <div style="margin-top:16px;">
+        <button class="btn-secondary" id="btn-refresh-review">↻ Refresh</button>
       </div>
     </div>
 
@@ -588,11 +609,10 @@ elBtnImport.addEventListener('click', async () => {
       elImportError.classList.remove('hidden');
     } else {
       elImportSuccess.textContent =
-        `✓ ${result.count} rows written to books_staging with status pending. ` +
-        `Book ID: ${bookId}. ` +
-        `Proceed to the Review tab to verify and approve the staged data.`;
+        `✓ ${result.count} rows written to books_staging with status pending. Book ID: ${bookId}.`;
       elImportSuccess.classList.remove('hidden');
-      elBtnImport.disabled = true; // prevent double-import
+      elBtnImport.disabled = true;
+      document.getElementById('btn-go-review').classList.remove('hidden');
     }
   } catch (err) {
     elImportError.textContent = 'Request failed: ' + err.message;
@@ -625,15 +645,113 @@ function resetAll() {
   elExtractedName.textContent = '—';
   elSelectedUuidWrap.classList.add('hidden');
   elSelectedUuid.value = '';
+  document.getElementById('btn-go-review').classList.add('hidden');
   elNewBookId.value = crypto.randomUUID();
   elBtnImport.disabled = true;
 }
+
+// ── Review section ─────────────────────────────────────────────────────
+async function loadReview() {
+  const elLoading = document.getElementById('review-loading');
+  const elEmpty   = document.getElementById('review-empty');
+  const elError   = document.getElementById('review-error');
+  const elList    = document.getElementById('review-list');
+
+  elLoading.classList.remove('hidden');
+  elEmpty.classList.add('hidden');
+  elError.classList.add('hidden');
+  elList.innerHTML = '';
+
+  // Fetch distinct books in staging
+  const { data, error } = await sb
+    .from('books_staging')
+    .select('book_id, book_display_name, full_display_name, edition, sequence_number, book_status, imported_at')
+    .eq('series_id', SERIES_ID)
+    .order('imported_at', { ascending: false });
+
+  elLoading.classList.add('hidden');
+
+  if (error) {
+    elError.textContent = 'Failed to load staged books: ' + error.message;
+    elError.classList.remove('hidden');
+    return;
+  }
+
+  // De-duplicate by book_id (one summary row per book)
+  const seen = new Map();
+  (data || []).forEach(row => {
+    if (!seen.has(row.book_id)) seen.set(row.book_id, { ...row, piece_count: 0 });
+    seen.get(row.book_id).piece_count++;
+  });
+
+  const books = [...seen.values()];
+
+  if (books.length === 0) {
+    elEmpty.classList.remove('hidden');
+    return;
+  }
+
+  books.forEach(book => {
+    const statusColour = {
+      pending:  'color:var(--warn);background:var(--warn-light);border:1px solid var(--warn-border)',
+      verified: 'color:var(--success);background:var(--success-light);border:1px solid var(--success-border)',
+      rejected: 'color:var(--danger);background:var(--danger-light);border:1px solid var(--danger-border)',
+    }[book.book_status] || '';
+
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;background:var(--card);';
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-family:\'DM Serif Display\',serif;font-size:1.05rem;color:var(--text);">${esc(book.full_display_name)}</div>
+          <div style="font-size:0.75rem;color:var(--text-light);margin-top:3px;font-family:monospace;">${esc(book.book_id)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:20px;${statusColour}">${book.book_status}</span>
+          <span style="font-size:0.78rem;color:var(--text-light);">${book.piece_count} pieces</span>
+          <span style="font-size:0.78rem;color:var(--text-light);">${new Date(book.imported_at).toLocaleDateString('en-CA')}</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;"
+          onclick="setBookStatus('${book.book_id}', 'verified', this.closest('div').parentElement)">✓ Mark verified</button>
+        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;border-color:var(--danger);color:var(--danger);"
+          onclick="setBookStatus('${book.book_id}', 'rejected', this.closest('div').parentElement)">✗ Mark rejected</button>
+        <button class="btn-secondary" style="height:34px;font-size:0.8rem;padding:0 14px;border-color:var(--danger);color:var(--danger);"
+          onclick="deleteStaging('${book.book_id}', this.closest('div').parentElement)">🗑 Delete from staging</button>
+      </div>
+    `;
+    elList.appendChild(card);
+  });
+}
+
+window.setBookStatus = async (bookId, status, cardEl) => {
+  const { error } = await sb
+    .from('books_staging')
+    .update({ book_status: status })
+    .eq('book_id', bookId);
+  if (error) { alert('Failed to update status: ' + error.message); return; }
+  await loadReview();
+};
+
+window.deleteStaging = async (bookId, cardEl) => {
+  if (!confirm('Delete all staging rows for this book? This cannot be undone.')) return;
+  const { error } = await sb
+    .from('books_staging')
+    .delete()
+    .eq('book_id', bookId);
+  if (error) { alert('Failed to delete: ' + error.message); return; }
+  await loadReview();
+};
+
+document.getElementById('btn-refresh-review').addEventListener('click', loadReview);
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── Init ───────────────────────────────────────────────────────────────
 checkSession();
+loadReview();
 </script>
 </body>
 </html>
