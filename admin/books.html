@@ -201,10 +201,19 @@
 
       <!-- Replace: dropdown of existing production books -->
       <div id="panel-replace" class="hidden">
+        <div class="section-label">Extracted book name</div>
+        <div id="extracted-book-name" style="font-size:0.92rem;color:var(--text);background:var(--brand-light);border:1px solid var(--brand);border-radius:8px;padding:9px 14px;margin-bottom:16px;font-weight:500;">—</div>
+
         <div class="section-label">Select production book to replace</div>
-        <div class="section-hint">The selected book's UUID will be used. All FK references (students, sessions) are preserved automatically.</div>
+        <div class="section-hint">Match the extracted name above to the correct production book. The selected book's UUID will be used — all FK references are preserved automatically.</div>
         <div id="books-loading" style="font-size:0.85rem;color:var(--text-light);padding:6px 0"><span class="spinner spinner-dark"></span>Loading production books…</div>
         <select id="existing-books" class="select-input hidden"><option value="">-- select a book --</option></select>
+
+        <div id="selected-uuid-wrap" class="hidden" style="margin-top:10px;">
+          <div class="section-label">Book ID that will be used</div>
+          <input type="text" id="selected-uuid" readonly style="width:100%;height:38px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;font-family:monospace;font-size:0.78rem;color:var(--text-mid);background:var(--surface);" />
+        </div>
+
         <div id="books-error" class="msg msg-error hidden mt8"></div>
       </div>
 
@@ -278,10 +287,13 @@ const elModeReplace  = document.getElementById('mode-replace');
 const elPanelNew     = document.getElementById('panel-new');
 const elPanelReplace = document.getElementById('panel-replace');
 const elNewBookId    = document.getElementById('new-book-id');
-const elBooksLoading = document.getElementById('books-loading');
-const elExistingBooks= document.getElementById('existing-books');
-const elBooksError   = document.getElementById('books-error');
-const elPreviewStrip = document.getElementById('preview-strip');
+const elBooksLoading    = document.getElementById('books-loading');
+const elExistingBooks   = document.getElementById('existing-books');
+const elBooksError      = document.getElementById('books-error');
+const elExtractedName   = document.getElementById('extracted-book-name');
+const elSelectedUuidWrap= document.getElementById('selected-uuid-wrap');
+const elSelectedUuid    = document.getElementById('selected-uuid');
+const elPreviewStrip    = document.getElementById('preview-strip');
 
 const elCardImport   = document.getElementById('card-import');
 const elImportCount  = document.getElementById('import-row-count');
@@ -476,7 +488,25 @@ elModeReplace.addEventListener('click', async () => {
   elModeNew.classList.remove('active');
   elPanelNew.classList.add('hidden');
   elPanelReplace.classList.remove('hidden');
+  // Show extracted book name for visual comparison
+  elExtractedName.textContent = parsedBook?.book_display_name
+    ? (parsedBook.edition
+        ? `${parsedBook.book_display_name} — ${parsedBook.edition}`
+        : parsedBook.book_display_name)
+    : '—';
   if (!booksLoaded) await loadProductionBooks();
+});
+
+// Show UUID when a book is selected from dropdown
+elExistingBooks.addEventListener('change', () => {
+  const uuid = elExistingBooks.value;
+  if (uuid) {
+    elSelectedUuid.value = uuid;
+    elSelectedUuidWrap.classList.remove('hidden');
+  } else {
+    elSelectedUuidWrap.classList.add('hidden');
+    elSelectedUuid.value = '';
+  }
 });
 
 async function loadProductionBooks() {
@@ -592,6 +622,9 @@ function resetAll() {
   elModeReplace.classList.remove('active');
   elPanelNew.classList.remove('hidden');
   elPanelReplace.classList.add('hidden');
+  elExtractedName.textContent = '—';
+  elSelectedUuidWrap.classList.add('hidden');
+  elSelectedUuid.value = '';
   elNewBookId.value = crypto.randomUUID();
   elBtnImport.disabled = true;
 }
