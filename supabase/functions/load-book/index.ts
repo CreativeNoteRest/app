@@ -89,7 +89,6 @@ Deno.serve(async (req) => {
     .rpc("load_book_to_production", { p_book_id: book_id });
 
   if (rpcError) {
-    // RPC itself failed to execute (network, auth, or function not found)
     console.error("RPC execution error:", rpcError);
     return respond(500, {
       error: "Load function failed to execute.",
@@ -106,8 +105,6 @@ Deno.serve(async (req) => {
   }
 
   if (!result.success) {
-    // The RPC ran but the load failed (bad status, count mismatch, etc.)
-    // All writes were rolled back inside Postgres.
     console.error("Load failed:", result.error_message);
     return respond(422, {
       error: result.error_message ?? "Load failed — no detail returned.",
@@ -116,10 +113,13 @@ Deno.serve(async (req) => {
 
   // ── Success ──────────────────────────────────────────────────────────
   return respond(200, {
-    success:       true,
-    books_action:  result.books_action,   // 'inserted' or 'updated'
-    units_loaded:  result.units_loaded,
-    pieces_loaded: result.pieces_loaded,
+    success:             true,
+    books_action:        result.books_action,        // 'inserted' or 'updated'
+    units_loaded:        result.units_loaded,
+    pieces_loaded:       result.pieces_loaded,
+    eligibility_direct:  result.eligibility_direct,  // preserved via direct match
+    eligibility_unit:    result.eligibility_unit,    // remapped via unit fallback
+    eligibility_book:    result.eligibility_book,    // remapped via book fallback
   });
 });
 

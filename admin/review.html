@@ -710,7 +710,8 @@ elRvBtnLoad.addEventListener('click', async () => {
         `✓ Loaded to production. ` +
         `Books: ${result.books_action}. ` +
         `Units: ${result.units_loaded}. ` +
-        `Pieces: ${result.pieces_loaded}.`;
+        `Pieces: ${result.pieces_loaded}. ` +
+        `Eligibility: ${result.eligibility_direct} direct · ${result.eligibility_unit} unit · ${result.eligibility_book} book fallback.`;
       // Staging rows are gone — remove book from selector and reset UI
       const opt = elRvSelect.querySelector(`option[value="${rvBookMeta.book_id}"]`);
       if (opt) opt.remove();
