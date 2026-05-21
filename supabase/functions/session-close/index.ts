@@ -69,6 +69,7 @@ Deno.serve(async (req: Request) => {
       assembled_prompt,
       phase1_output: supplied_phase1_output,
       improve_prompt,
+      prompt_override,
     } = body;
 
     // improve_prompt path — admin-only, direct Gemini call for prompt improvement modal
@@ -182,6 +183,11 @@ Deno.serve(async (req: Request) => {
     // -----------------------------------------------------------------------
 
     if (dry_run) {
+      // If caller supplied a working-copy template, use it instead of the saved DB version
+      if (typeof prompt_override === 'string' && prompt_override.trim()) {
+        promptMap.set('session_close_phase1', prompt_override);
+      }
+
       const phaseAiConfig = {
         phase1: resolvePhaseAIConfig(configMap, 1),
         phase2: resolvePhaseAIConfig(configMap, 2),
@@ -231,6 +237,11 @@ Deno.serve(async (req: Request) => {
 
     if (single_phase_run) {
       const phase = body.phase as number;
+
+      // If caller supplied a working-copy template, override the saved DB version for this phase
+      if (typeof prompt_override === 'string' && prompt_override.trim()) {
+        promptMap.set(`session_close_phase${phase}`, prompt_override);
+      }
 
       if (phase === 1) {
         if (!assembled_prompt) {
