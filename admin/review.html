@@ -87,6 +87,9 @@
     /* ── Buttons ──────────────────────────────────────────────────────── */
     .btn-secondary { height: 44px; padding: 0 18px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
     .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-load { height: 32px; padding: 0 14px; background: #1D4ED8; color: #fff; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-load:hover { opacity: 0.88; }
+    .btn-load:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .spinner { width: 16px; height: 16px; border: 2.5px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -193,6 +196,7 @@
           <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--success);color:var(--success);" id="rv-btn-verify">✓ Mark verified</button>
           <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;border-color:var(--danger);color:var(--danger);"  id="rv-btn-reject">✗ Mark rejected</button>
           <button class="btn-secondary" style="height:32px;font-size:0.78rem;padding:0 12px;" id="rv-btn-delete">🗑 Delete</button>
+          <button class="btn-load hidden" id="rv-btn-load">⬆ Load to Production</button>
         </div>
       </div>
 
@@ -246,6 +250,7 @@ const elRvBadge     = document.getElementById('rv-status-badge');
 const elRvBtnVerify = document.getElementById('rv-btn-verify');
 const elRvBtnReject = document.getElementById('rv-btn-reject');
 const elRvBtnDelete = document.getElementById('rv-btn-delete');
+const elRvBtnLoad   = document.getElementById('rv-btn-load');
 const elRvNotesBanner = document.getElementById('rv-notes-banner');
 const elRvUnits     = document.getElementById('rv-units');
 const elRvFooter    = document.getElementById('rv-footer');
@@ -642,6 +647,8 @@ function renderBadge(status) {
   };
   elRvBadge.style.cssText = s[status] || '';
   elRvBadge.textContent = status;
+  // Load button visible only when verified
+  elRvBtnLoad.classList.toggle('hidden', status !== 'verified');
 }
 
 async function setStatus(status) {
@@ -661,6 +668,78 @@ elRvBtnVerify.addEventListener('click',     () => setStatus('verified'));
 elRvBtnReject.addEventListener('click',     () => setStatus('rejected'));
 document.getElementById('rv-btn-verify-foot').addEventListener('click', () => setStatus('verified'));
 document.getElementById('rv-btn-reject-foot').addEventListener('click', () => setStatus('rejected'));
+
+// ── Load to production ─────────────────────────────────────────────────
+elRvBtnLoad.addEventListener('click', async () => {
+  if (!rvBookMeta?.book_id) return;
+
+  const bookName = rvBookMeta.full_display_name || rvBookMeta.book_id;
+  const confirmed = confirm(
+    `Load "${bookName}" to production?\n\n` +
+    `This will replace all Books_Units and Books_Pieces rows for this book in the live database. ` +
+    `This action cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  elRvBtnLoad.disabled = true;
+  elRvBtnLoad.textContent = '⏳ Loading…';
+
+  // Clear any previous load result message
+  const existingMsg = document.getElementById('rv-load-result');
+  if (existingMsg) existingMsg.remove();
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/load-book`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ book_id: rvBookMeta.book_id })
+    });
+
+    const result = await resp.json();
+    const msgEl = document.createElement('div');
+    msgEl.id = 'rv-load-result';
+    msgEl.className = 'msg ' + (result.success ? 'msg-success' : 'msg-error');
+    msgEl.style.marginTop = '14px';
+
+    if (result.success) {
+      msgEl.textContent =
+        `✓ Loaded to production. ` +
+        `Books: ${result.books_action}. ` +
+        `Units: ${result.units_loaded}. ` +
+        `Pieces: ${result.pieces_loaded}.`;
+      // Staging rows are gone — remove book from selector and reset UI
+      const opt = elRvSelect.querySelector(`option[value="${rvBookMeta.book_id}"]`);
+      if (opt) opt.remove();
+      elRvStrip.classList.add('hidden');
+      elRvNotesBanner.classList.add('hidden');
+      elRvFooter.classList.add('hidden');
+      elRvUnits.innerHTML = '';
+      rvAllRows = []; rvBookMeta = null;
+      elRvSelect.value = '';
+      history.replaceState(null, '', window.location.pathname);
+    } else {
+      msgEl.textContent = '✗ Load failed: ' + (result.error || 'Unknown error.');
+    }
+
+    // Insert result message above the unit accordion
+    elRvUnits.before(msgEl);
+
+  } catch (err) {
+    const msgEl = document.createElement('div');
+    msgEl.id = 'rv-load-result';
+    msgEl.className = 'msg msg-error';
+    msgEl.style.marginTop = '14px';
+    msgEl.textContent = '✗ Request failed: ' + err.message;
+    elRvUnits.before(msgEl);
+  }
+
+  elRvBtnLoad.disabled = false;
+  elRvBtnLoad.textContent = '⬆ Load to Production';
+});
 
 elRvBtnDelete.addEventListener('click', async () => {
   if (!rvBookMeta?.book_id) return;
