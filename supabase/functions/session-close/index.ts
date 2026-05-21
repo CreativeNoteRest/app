@@ -68,7 +68,44 @@ Deno.serve(async (req: Request) => {
       thinking_budget: thinking_budget_override,
       assembled_prompt,
       phase1_output: supplied_phase1_output,
+      improve_prompt,
     } = body;
+
+    // improve_prompt path — admin-only, direct Gemini call for prompt improvement modal
+    // Must sit before the required-field guard — improve calls carry no session fields.
+    // -----------------------------------------------------------------------
+    if (improve_prompt) {
+      const { contents, system_instruction, model: improveModel } = body;
+      if (!contents || !Array.isArray(contents) || !contents.length) {
+        return jsonResponse({ success: false, error: 'improve_prompt requires a non-empty contents array.' });
+      }
+      const model = (typeof improveModel === 'string' && ALLOWED_MODEL_OVERRIDES.includes(improveModel))
+        ? improveModel
+        : 'gemini-2.5-flash';
+      const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${geminiApiKey}`;
+      const geminiBody: Record<string, unknown> = {
+        contents,
+        generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
+      };
+      if (system_instruction) {
+        geminiBody.system_instruction = { parts: [{ text: system_instruction }] };
+      }
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        return jsonResponse({ success: false, error: `Gemini error: ${errText}` });
+      }
+      const json = await res.json();
+      const suggestion = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+      if (!suggestion) {
+        return jsonResponse({ success: false, error: 'Empty response from Gemini.' });
+      }
+      return jsonResponse({ success: true, suggestion });
+    }
 
     if (!session_id || !teacher_id || !student_id || !series_id || !lesson_book_id || !student_name) {
       return jsonResponse({ success: false, error: 'Missing required fields.' });

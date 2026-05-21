@@ -1307,7 +1307,6 @@ function esc(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 // PROMPT IMPROVEMENT MODAL
 // ══════════════════════════════════════════════════════════════════════
 
-const GEMINI_API_KEY         = 'AIzaSyBsIUjGznnegOoaUP6OuGaNPNbPNjX3PwA';
 const IMPROVE_MODEL_STORAGE_KEY = 'cn_improve_model';
 
 // State
@@ -1464,22 +1463,28 @@ Phase being edited: ${improveCtx.phaseLabel}`;
   }
 
   const model  = getImproveModel();
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    const res  = await fetch(apiUrl, {
+    const sd = await sb.auth.getSession();
+    if (!sd.data.session) throw new Error('Session expired. Please sign in again.');
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/session-close', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': 'Bearer ' + sd.data.session.access_token,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstruction }] },
+        improve_prompt: true,
+        model,
         contents,
-        generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
+        system_instruction: systemInstruction
       })
     });
     const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error?.message || 'Gemini API error ' + res.status);
+    if (!res.ok || !data.success) throw new Error(data.error || 'Edge Function error ' + res.status);
 
-    const suggestion = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const suggestion = data.suggestion?.trim();
     if (!suggestion) throw new Error('Empty response from Gemini.');
 
     // Append this round to history for next turn
