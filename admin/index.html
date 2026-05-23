@@ -73,6 +73,9 @@
     .tool-btn::after { content: attr(data-tip); position: absolute; top: calc(100% + 8px); left: 0; background: var(--text); color: #fff; font-size: 0.75rem; font-weight: 400; line-height: 1.45; padding: 7px 11px; border-radius: 7px; white-space: normal; width: 220px; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; }
     .tool-btn:hover::after { opacity: 1; }
 
+    /* ── Divider ──────────────────────────────────────────────────────── */
+    .sec-divider { height: 1px; background: var(--border); margin: 20px 0; }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -112,23 +115,34 @@
     <p class="page-subtitle">Select a tool below. All tools require administrator access.</p>
 
     <div class="tool-row">
-
       <a class="tool-btn" href="/admin/prompts.html"
         data-tip="Edit, test, and save session-close prompts against live session data.">
         <span class="tool-btn-icon">✏️</span> Prompt Editor
       </a>
+    </div>
 
+    <div class="sec-divider"></div>
+
+    <div class="tool-row">
       <a class="tool-btn" href="/admin/books.html"
         data-tip="Import extracted workbook JSON, confirm book identity, and write to staging.">
         <span class="tool-btn-icon">📚</span> Book Ingestion
       </a>
-
       <a class="tool-btn" href="/admin/review.html"
         data-tip="Review staged books unit by unit, edit fields, and mark verified or rejected.">
         <span class="tool-btn-icon">🔍</span> Book Review
       </a>
-
     </div>
+
+    <div class="sec-divider"></div>
+
+    <div class="tool-row">
+      <a class="tool-btn" href="/admin/book-editor.html"
+        data-tip="Edit production books, units, and pieces — titles, types, pages, and unit structure.">
+        <span class="tool-btn-icon">🗂️</span> Book Editor
+      </a>
+    </div>
+
   </main>
 </div>
 
@@ -141,15 +155,15 @@
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
   // ── Elements ────────────────────────────────────────────────────────────
-  const elLogin      = document.getElementById('view-login');
-  const elMenu       = document.getElementById('view-menu');
-  const elHeaderR    = document.getElementById('header-right');
-  const elHeaderEmail= document.getElementById('header-email');
-  const elBtnSignout = document.getElementById('btn-signout');
-  const elBtnLogin   = document.getElementById('btn-login');
-  const elInpEmail   = document.getElementById('inp-email');
-  const elInpPw      = document.getElementById('inp-password');
-  const elLoginErr   = document.getElementById('login-error');
+  const elLogin       = document.getElementById('view-login');
+  const elMenu        = document.getElementById('view-menu');
+  const elHeaderR     = document.getElementById('header-right');
+  const elHeaderEmail = document.getElementById('header-email');
+  const elBtnSignout  = document.getElementById('btn-signout');
+  const elBtnLogin    = document.getElementById('btn-login');
+  const elInpEmail    = document.getElementById('inp-email');
+  const elInpPw       = document.getElementById('inp-password');
+  const elLoginErr    = document.getElementById('login-error');
 
   // ── Auth state ──────────────────────────────────────────────────────────
   async function checkSession() {
@@ -191,7 +205,7 @@
     if (!email || !pw) { showLoginError('Email and password are required.'); return; }
 
     elBtnLogin.disabled = true;
-    elBtnLogin.innerHTML = '<span class="spinner"></span>Signing in…';
+    elBtnLogin.textContent = 'Signing in…';
     elLoginErr.classList.add('hidden');
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
