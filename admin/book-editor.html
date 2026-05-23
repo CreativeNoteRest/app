@@ -102,8 +102,8 @@
     /* ── Right panel: units top + pieces bottom ── */
     .right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); min-width: 0; }
 
-    /* Units section — top 30% */
-    .units-section { height: 30%; min-height: 160px; display: flex; flex-direction: column; border-bottom: 2px solid var(--border); background: var(--card); flex-shrink: 0; }
+    /* Units section — top 35% */
+    .units-section { height: 35%; min-height: 180px; display: flex; flex-direction: column; border-bottom: 2px solid var(--border); background: var(--card); flex-shrink: 0; }
     .section-header { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: var(--card); }
     .section-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text); }
     .section-hint { font-size: 0.72rem; color: var(--text-light); }
@@ -117,9 +117,9 @@
     .units-table tbody tr.unit-dirty { background: var(--warn-light); }
     .units-table td { padding: 4px 8px; vertical-align: middle; font-size: 0.85rem; }
 
-    .col-ulabel  { width: 60px; }
-    .col-usort   { width: 50px; }
-    .col-utitle  { min-width: 160px; }
+    .col-ulabel  { width: 72px; }
+    .col-usort   { width: 62px; }
+    .col-utitle  { min-width: 120px; }
     .col-uacts   { width: 80px; }
 
     .unit-label-badge { font-size: 0.68rem; font-weight: 700; background: var(--brand); color: #fff; border-radius: 5px; padding: 2px 7px; display: inline-block; }
@@ -128,7 +128,6 @@
     .unit-cell-inp:focus { border-color: var(--brand); background: var(--card); }
     .unit-cell-inp.dirty { background: var(--warn-light) !important; border-color: var(--warn-border) !important; }
 
-    .unit-add-bar { padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); }
 
     /* Pieces section — bottom 70% */
     .pieces-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -276,7 +275,13 @@
     <div class="units-section">
       <div class="section-header">
         <span class="section-title">Units</span>
-        <span class="section-hint" id="units-hint"></span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="section-hint" id="units-hint"></span>
+          <button class="btn-save-sm hidden" id="btn-add-unit"
+            style="background:var(--surface);color:var(--brand);border:1.5px dashed var(--brand);height:28px;padding:0 12px;font-size:0.78rem;">
+            + Add Unit
+          </button>
+        </div>
       </div>
       <div class="units-scroll">
         <div id="units-empty" class="empty-state">Select a book to view units.</div>
@@ -292,9 +297,7 @@
           <tbody id="units-tbody"></tbody>
         </table>
       </div>
-      <div class="unit-add-bar hidden" id="unit-add-bar">
-        <button class="btn-add" id="btn-add-unit">+ Add Unit</button>
-      </div>
+
     </div>
 
     <!-- Pieces — bottom 70% -->
@@ -545,8 +548,8 @@ function resetRightPanel() {
   document.getElementById('units-empty').textContent = 'Select a book to view units.';
   document.getElementById('units-empty').classList.remove('hidden');
   document.getElementById('units-table').classList.add('hidden');
-  document.getElementById('unit-add-bar').classList.add('hidden');
   document.getElementById('units-hint').textContent = '';
+  document.getElementById('btn-add-unit').classList.add('hidden');
   document.getElementById('pieces-empty').textContent = 'Select a book to view pieces.';
   document.getElementById('pieces-empty').classList.remove('hidden');
   document.getElementById('piece-table').classList.add('hidden');
@@ -562,10 +565,9 @@ function renderUnits() {
   const tbody = document.getElementById('units-tbody');
   const table = document.getElementById('units-table');
   const empty = document.getElementById('units-empty');
-  const addBar = document.getElementById('unit-add-bar');
 
   tbody.innerHTML = '';
-  addBar.classList.remove('hidden');
+  document.getElementById('btn-add-unit').classList.remove('hidden');
   document.getElementById('units-hint').textContent =
     allUnits.length ? 'Click a unit to filter pieces' : '';
 
