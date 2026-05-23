@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supplement Admin — Creative Note</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --success-border: #BBF7D0;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --info:           #2563EB;
+      --info-light:     #EFF6FF;
+      --info-border:    #BFDBFE;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--brand); }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-email { font-size: 0.78rem; color: var(--text-light); }
+    .btn-back { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-decoration: none; margin-right: 4px; transition: color 0.15s; }
+    .btn-back:hover { color: var(--brand); }
+    .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Login ── */
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+    .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .field-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .field-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; margin-bottom: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .btn-login { width: 100%; height: 48px; margin-top: 8px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s; }
+    .btn-login:hover { opacity: 0.88; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
+
+    /* ── Layout ── */
+    .main { max-width: 900px; margin: 0 auto; padding: 36px 24px 80px; }
+    .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 32px; line-height: 1.5; }
+
+    /* ── Mode toggle ── */
+    .mode-toggle { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; width: fit-content; margin-bottom: 28px; }
+    .mode-btn { height: 40px; padding: 0 24px; background: var(--card); color: var(--text-mid); border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .mode-btn:first-child { border-right: 1px solid var(--border); }
+    .mode-btn.active { background: var(--brand); color: #fff; }
+
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); margin-bottom: 18px; }
+
+    /* ── Cookie status bar ── */
+    .cookie-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.82rem; flex-wrap: wrap; }
+    .cookie-bar.ok   { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .cookie-bar.warn { background: var(--warn-light);    border: 1px solid var(--warn-border);    color: #92400E; }
+    .cookie-bar.err  { background: var(--danger-light);  border: 1px solid var(--danger-border);  color: var(--danger); }
+    .cookie-bar-left { display: flex; align-items: center; gap: 8px; }
+    .cookie-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cookie-dot.ok   { background: var(--success); }
+    .cookie-dot.warn { background: var(--warn); }
+    .cookie-dot.err  { background: var(--danger); }
+
+    /* ── Cookie help panel ── */
+    .cookie-help { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .cookie-help-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--info); margin-bottom: 14px; }
+    .cookie-steps { list-style: none; padding: 0; margin: 0 0 16px; counter-reset: steps; }
+    .cookie-steps li { counter-increment: steps; display: flex; gap: 10px; margin-bottom: 10px; font-size: 0.85rem; line-height: 1.55; color: var(--text-mid); }
+    .cookie-steps li::before { content: counter(steps); min-width: 22px; height: 22px; border-radius: 50%; background: var(--info); color: #fff; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .cookie-steps code { background: rgba(37,99,235,0.1); color: var(--info); padding: 1px 6px; border-radius: 4px; font-size: 0.82rem; font-family: monospace; }
+    .cookie-password-display { background: var(--card); border: 1px solid var(--info-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+    .cookie-password-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--info); margin-bottom: 4px; }
+    .cookie-password-value { font-family: monospace; font-size: 1rem; color: var(--text); letter-spacing: 0.05em; }
+    .cookie-paste-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+    .cookie-paste-input { flex: 1; min-width: 220px; height: 46px; padding: 0 14px; border: 1.5px solid var(--info-border); border-radius: 10px; font-family: monospace; font-size: 0.88rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; }
+    .cookie-paste-input:focus { border-color: var(--info); }
+    .cookie-open-btn { height: 46px; padding: 0 18px; background: var(--card); color: var(--info); border: 1.5px solid var(--info-border); border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .cookie-open-btn:hover { background: var(--info-light); }
+
+    /* ── Form elements ── */
+    .form-row { margin-bottom: 16px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-lbl { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .form-lbl span { font-weight: 400; color: var(--text-light); text-transform: none; letter-spacing: 0; font-size: 0.72rem; }
+    .form-inp { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .form-inp:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .form-inp:disabled { opacity: 0.5; cursor: not-allowed; }
+    .form-sel { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; }
+    .form-sel:focus { border-color: var(--brand); }
+    .form-sel:disabled { opacity: 0.45; cursor: not-allowed; }
+    .form-ta { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; line-height: 1.6; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .form-ta:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .form-row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .form-row-grid, .form-row-3 { grid-template-columns: 1fr; } }
+
+    /* ── Checkbox row ── */
+    .check-row { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--text-mid); cursor: pointer; }
+    .check-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
+
+    /* ── Thumbnail preview ── */
+    .thumb-preview { display: flex; align-items: flex-start; gap: 14px; }
+    .thumb-img { width: 80px; height: 80px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; }
+    .thumb-img.empty { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--text-light); }
+    .thumb-fields { flex: 1; }
+
+    /* ── Description panel ── */
+    .desc-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .desc-draft-banner { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--info); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .desc-draft-actions { display: flex; gap: 8px; }
+
+    /* ── Piece association ── */
+    .cascade-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .cascade-row { grid-template-columns: 1fr; } }
+    .cascade-hint { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .btn-primary { height: 44px; padding: 0 28px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(226,107,10,0.26); transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    .btn-secondary { height: 38px; padding: 0 16px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm-info { height: 34px; padding: 0 14px; background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-sm-info:hover { background: #DBEAFE; }
+    .btn-sm-info:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm-success { height: 34px; padding: 0 14px; background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-sm-success:hover { background: #DCFCE7; }
+    .btn-sm-success:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm-danger { height: 34px; padding: 0 14px; background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-sm-danger:hover { background: #FEE2E2; }
+
+    /* ── Action bar ── */
+    .action-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+    .action-spacer { flex: 1; }
+
+    /* ── Messages ── */
+    .msg { padding: 12px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.55; margin-bottom: 14px; }
+    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .msg-warn    { background: var(--warn-light);    border: 1px solid var(--warn-border);    color: #92400E; }
+    .msg-info    { background: var(--info-light);    border: 1px solid var(--info-border);    color: var(--info); }
+
+    /* ── Search / list (edit mode) ── */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .search-bar .form-inp { margin: 0; }
+    .supp-list { display: flex; flex-direction: column; gap: 8px; }
+    .supp-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .supp-item:hover { border-color: var(--brand); box-shadow: 0 2px 10px rgba(226,107,10,0.10); }
+    .supp-item-thumb { width: 48px; height: 48px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
+    .supp-item-body { flex: 1; min-width: 0; }
+    .supp-item-title { font-weight: 600; font-size: 0.92rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .supp-item-meta { font-size: 0.75rem; color: var(--text-light); display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+    .badge-free  { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-paid  { background: var(--warn-light);    color: #92400E;        border: 1px solid var(--warn-border); }
+    .badge-null  { background: var(--surface);       color: var(--text-light); border: 1px solid var(--border); }
+    .badge-wk    { background: var(--brand-light);   color: var(--brand);   border: 1px solid #F9C4A0; }
+    .badge-tpt   { background: var(--info-light);    color: var(--info);    border: 1px solid var(--info-border); }
+    .badge-multi { background: #F3E8FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+
+    /* ── Divider ── */
+    .sec-divider { height: 1px; background: var(--border); margin: 22px 0; }
+
+    /* ── Spinner ── */
+    .spinner { width: 15px; height: 15px; border: 2.5px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .spinner-dark { border-color: var(--border); border-top-color: var(--brand); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Scrape status ── */
+    .scrape-status { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-mid); padding: 10px 0; }
+
+    .hidden { display: none !important; }
+    .mt4  { margin-top: 4px; }
+    .mt8  { margin-top: 8px; }
+    .mt16 { margin-top: 16px; }
+    .mb8  { margin-bottom: 8px; }
+    .mb16 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <a class="btn-back" href="/admin/index.html">← Admin</a>
+    <span class="header-dot"></span>
+    <span class="header-title">Creative Note</span>
+    <span class="header-dot"></span>
+    <span class="header-sub">Supplement Admin</span>
+  </div>
+  <div class="header-right hidden" id="header-right">
+    <span class="header-email" id="header-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign out</button>
+  </div>
+</header>
+
+<!-- ── Login ── -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin sign in</div>
+    <div class="login-sub">Creative Note supplement administration. Access restricted to approved administrators.</div>
+    <label class="field-label" for="inp-email">Email</label>
+    <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
+    <label class="field-label" for="inp-password">Password</label>
+    <input class="field-input" id="inp-password" type="password" autocomplete="current-password" placeholder="Password" style="margin-bottom:0" />
+    <div id="login-error" class="login-error hidden"></div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+  </div>
+</div>
+
+<!-- ── Main app ── -->
+<div id="view-app" class="hidden">
+<main class="main">
+
+  <div class="page-label">Administration</div>
+  <h1 class="page-title">Supplement <em>admin</em></h1>
+  <p class="page-subtitle">Add new supplements or edit existing records. AI-assisted description generation from page and PDF content.</p>
+
+  <!-- Mode toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-new-btn" onclick="setMode('new')">➕ New supplement</button>
+    <button class="mode-btn" id="mode-edit-btn" onclick="setMode('edit')">✏️ Edit existing</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       COOKIE STATUS BARS
+       ════════════════════════════════════════════ -->
+  <div id="cookie-bar-wk" class="cookie-bar warn">
+    <div class="cookie-bar-left">
+      <div class="cookie-dot warn"></div>
+      <span><strong>WunderKeys cookie:</strong> Not set — scraping WK pages will fail</span>
+    </div>
+    <button class="btn-secondary" style="height:32px;padding:0 12px;font-size:0.78rem;" onclick="showCookieHelp('wk')">🔑 Set cookie</button>
+  </div>
+  <div id="cookie-bar-tpt" class="cookie-bar warn">
+    <div class="cookie-bar-left">
+      <div class="cookie-dot warn"></div>
+      <span><strong>TeachPianoToday cookie:</strong> Not set — scraping TPT pages will fail</span>
+    </div>
+    <button class="btn-secondary" style="height:32px;padding:0 12px;font-size:0.78rem;" onclick="showCookieHelp('tpt')">🔑 Set cookie</button>
+  </div>
+
+  <!-- Cookie help panel (shared, shown for wk or tpt) -->
+  <div id="cookie-help-panel" class="cookie-help hidden">
+    <div class="cookie-help-title" id="cookie-help-title">Set WunderKeys cookie</div>
+
+    <div id="cookie-password-block" class="cookie-password-display mb16">
+      <div class="cookie-password-label">Members password</div>
+      <div class="cookie-password-value" id="cookie-password-value">—</div>
+    </div>
+
+    <ol class="cookie-steps">
+      <li>Click the button below to open the members page in a new tab. Enter the password shown above.</li>
+      <li>Once logged in, press <code>F12</code> to open Developer Tools.</li>
+      <li>Click the <code>Application</code> tab (Chrome/Edge) or <code>Storage</code> tab (Firefox).</li>
+      <li>In the left panel, expand <code>Cookies</code> and click the site domain.</li>
+      <li>Find the cookie named <code>wp-postpass_…</code> — it starts with a long hash string.</li>
+      <li>Click on that row and copy the entire <strong>Value</strong> column (the hash string).</li>
+      <li>Paste it into the field below and click <strong>Save cookie</strong>.</li>
+    </ol>
+
+    <div class="cookie-paste-row mb8">
+      <a id="cookie-open-link" href="#" target="_blank" class="cookie-open-btn">🌐 Open members page</a>
+      <input class="cookie-paste-input" id="cookie-paste-input" type="text" placeholder="Paste wp-postpass_… value here" />
+      <button class="btn-sm-success" onclick="saveCookie()">Save cookie</button>
+      <button class="btn-secondary" style="height:46px;" onclick="hideCookieHelp()">Cancel</button>
+    </div>
+    <div id="cookie-save-msg" class="hidden"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MODE: NEW SUPPLEMENT
+       ════════════════════════════════════════════ -->
+  <div id="panel-new">
+
+    <!-- Step 1: URL entry -->
+    <div class="card">
+      <div class="card-tag">Step 1</div>
+      <div class="card-title">Supplement URL</div>
+
+      <div class="form-row">
+        <label class="form-lbl" for="new-url">Source URL <span>— wunderkeys.com or teachpianotoday.com</span></label>
+        <div style="display:flex;gap:10px;">
+          <input class="form-inp" id="new-url" type="url" placeholder="https://wunderkeys.com/…" style="margin:0;flex:1;" />
+          <button class="btn-primary" id="btn-scrape" onclick="scrapeUrl()" style="flex-shrink:0;">Fetch page</button>
+        </div>
+      </div>
+      <div id="scrape-status" class="scrape-status hidden">
+        <span class="spinner spinner-dark"></span> <span id="scrape-status-text">Fetching page…</span>
+      </div>
+      <div id="scrape-msg" class="hidden"></div>
+    </div>
+
+    <!-- Step 2: Extracted fields (shown after scrape) -->
+    <div id="fields-card" class="card hidden">
+      <div class="card-tag">Step 2</div>
+      <div class="card-title">Supplement details</div>
+      <div id="fields-msg" class="hidden"></div>
+
+      <!-- Thumbnail + title + source -->
+      <div class="thumb-preview mb16">
+        <div class="thumb-img empty" id="thumb-preview">🖼</div>
+        <div class="thumb-fields">
+          <div class="form-row">
+            <label class="form-lbl" for="new-title">Title</label>
+            <input class="form-inp" id="new-title" type="text" placeholder="Supplement title" />
+          </div>
+          <div class="form-row-grid">
+            <div>
+              <label class="form-lbl" for="new-source">Source</label>
+              <select class="form-sel" id="new-source">
+                <option value="wunderkeys">WunderKeys</option>
+                <option value="teachpianotoday">TeachPianoToday</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-lbl" for="new-is-free">Pricing</label>
+              <select class="form-sel" id="new-is-free">
+                <option value="">Unknown</option>
+                <option value="true">Free</option>
+                <option value="false">Paid</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-lbl" for="new-thumb-url">Thumbnail URL <span>— auto-detected</span></label>
+        <input class="form-inp" id="new-thumb-url" type="url" placeholder="https://…" />
+      </div>
+      <div class="form-row-grid">
+        <div>
+          <label class="form-lbl" for="new-pdf-url">PDF URL <span>— auto-detected</span></label>
+          <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" />
+        </div>
+        <div>
+          <label class="form-lbl" for="new-match-context">Match context <span>optional</span></label>
+          <select class="form-sel" id="new-match-context">
+            <option value="">— not set —</option>
+            <option value="lesson_skill">Lesson skill</option>
+            <option value="practice_behaviour">Practice behaviour</option>
+            <option value="recital_event">Recital / event</option>
+            <option value="studio_admin">Studio admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div>
+          <label class="form-lbl" for="new-season">Season <span>optional</span></label>
+          <input class="form-inp" id="new-season" type="text" placeholder="e.g. Christmas" />
+        </div>
+        <div>
+          <label class="form-lbl" for="new-season-start">Season start <span>MM-DD</span></label>
+          <input class="form-inp" id="new-season-start" type="text" placeholder="11-15" maxlength="5" />
+        </div>
+        <div>
+          <label class="form-lbl" for="new-season-end">Season end <span>MM-DD</span></label>
+          <input class="form-inp" id="new-season-end" type="text" placeholder="01-05" maxlength="5" />
+        </div>
+      </div>
+      <div class="form-row mt8">
+        <label class="check-row">
+          <input type="checkbox" id="new-is-multi" />
+          Multi-lesson workbook item — eligible for student assignments
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 3: Description -->
+    <div id="desc-card" class="card hidden">
+      <div class="card-tag">Step 3</div>
+      <div class="card-title">Search description</div>
+
+      <div class="form-row">
+        <label class="form-lbl" for="new-context">Additional context <span>— optional. Dictate or type notes from lead-up pages, blog posts, or your own curriculum knowledge. This supplements the auto-scraped content.</span></label>
+        <textarea class="form-ta" id="new-context" rows="3" placeholder="e.g. This printable accompanies the lesson on dotted rhythms in Unit 3. The blog post notes it works especially well for students who rush…"></textarea>
+      </div>
+
+      <div class="desc-toolbar">
+        <button class="btn-sm-info" id="btn-new-generate" onclick="generateDescription('new')">✨ Generate description</button>
+        <button class="btn-sm-info" id="btn-new-rescrape-pdf" onclick="rescrapePdf('new')">📄 Scrape PDF</button>
+        <button class="btn-sm-info" id="btn-new-resummarise" onclick="resummarise('new')" style="display:none;">🔄 Re-summarise</button>
+      </div>
+
+      <div id="new-desc-generating" class="scrape-status hidden">
+        <span class="spinner spinner-dark"></span> <span>Generating description…</span>
+      </div>
+
+      <!-- PDF scrape draft (shown when description exists and new PDF scraped) -->
+      <div id="new-pdf-draft-banner" class="desc-draft-banner hidden">
+        <span>New PDF content scraped. Accept to merge into description, or reject to keep existing.</span>
+        <div class="desc-draft-actions">
+          <button class="btn-sm-success" onclick="acceptPdfDraft('new')">Accept</button>
+          <button class="btn-sm-danger" onclick="rejectPdfDraft('new')">Reject</button>
+        </div>
+      </div>
+
+      <div class="form-row mt8">
+        <label class="form-lbl" for="new-description">Description <span>— editable. AI will optimise for searchability.</span></label>
+        <textarea class="form-ta" id="new-description" rows="5" placeholder="Description will appear here after generation. You can also type or dictate directly."></textarea>
+      </div>
+      <div id="new-desc-msg" class="hidden"></div>
+    </div>
+
+    <!-- Step 4: Piece association -->
+    <div id="piece-card" class="card hidden">
+      <div class="card-tag">Step 4</div>
+      <div class="card-title">Piece association <span style="font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:400;color:var(--text-light);">— optional but strongly preferred</span></div>
+
+      <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Select the earliest piece in the curriculum where this supplement becomes appropriate. If you select book + unit only, the supplement will be anchored to the first piece in that unit.</p>
+
+      <div class="cascade-row">
+        <div>
+          <label class="form-lbl" for="new-book">Book</label>
+          <select class="form-sel" id="new-book" onchange="onBookChange('new')">
+            <option value="">— select book —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl" for="new-unit">Unit</label>
+          <select class="form-sel" id="new-unit" disabled onchange="onUnitChange('new')">
+            <option value="">— select unit —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl" for="new-piece">Piece <span>optional</span></label>
+          <select class="form-sel" id="new-piece" disabled>
+            <option value="">— first piece in unit —</option>
+          </select>
+        </div>
+      </div>
+      <div id="new-cascade-hint" class="cascade-hint hidden"></div>
+    </div>
+
+    <!-- Save -->
+    <div id="save-card" class="card hidden">
+      <div id="save-msg" class="hidden"></div>
+      <div class="action-bar">
+        <button class="btn-primary" id="btn-save-new" onclick="saveNewSupplement()">Save supplement</button>
+        <button class="btn-secondary" onclick="resetNewForm()">Start over</button>
+      </div>
+    </div>
+
+  </div><!-- /panel-new -->
+
+  <!-- ════════════════════════════════════════════
+       MODE: EDIT EXISTING
+       ════════════════════════════════════════════ -->
+  <div id="panel-edit" class="hidden">
+
+    <!-- Search -->
+    <div class="card">
+      <div class="card-tag">Find supplement</div>
+      <div class="card-title">Search library</div>
+      <div class="search-bar">
+        <input class="form-inp" id="edit-search" type="text" placeholder="Search by title…" style="margin:0;" oninput="filterSupplements()" />
+        <select class="form-sel" id="edit-filter-source" style="width:180px;" onchange="filterSupplements()">
+          <option value="">All sources</option>
+          <option value="wunderkeys">WunderKeys</option>
+          <option value="teachpianotoday">TeachPianoToday</option>
+        </select>
+      </div>
+      <div id="edit-list-msg" class="hidden"></div>
+      <div id="supp-list" class="supp-list"></div>
+      <div id="edit-loading" class="scrape-status">
+        <span class="spinner spinner-dark"></span> Loading supplements…
+      </div>
+    </div>
+
+    <!-- Edit form (hidden until supplement selected) -->
+    <div id="edit-form-wrap" class="hidden">
+
+      <div class="card">
+        <div class="card-tag">Editing</div>
+        <div class="card-title" id="edit-card-title">Supplement</div>
+        <button class="btn-secondary mb16" onclick="closeEditForm()" style="height:32px;padding:0 12px;font-size:0.78rem;">← Back to list</button>
+
+        <div class="thumb-preview mb16">
+          <div class="thumb-img empty" id="edit-thumb-preview">🖼</div>
+          <div class="thumb-fields">
+            <div class="form-row">
+              <label class="form-lbl" for="edit-title">Title</label>
+              <input class="form-inp" id="edit-title" type="text" />
+            </div>
+            <div class="form-row-grid">
+              <div>
+                <label class="form-lbl" for="edit-source">Source</label>
+                <select class="form-sel" id="edit-source">
+                  <option value="wunderkeys">WunderKeys</option>
+                  <option value="teachpianotoday">TeachPianoToday</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-lbl" for="edit-is-free">Pricing</label>
+                <select class="form-sel" id="edit-is-free">
+                  <option value="">Unknown</option>
+                  <option value="true">Free</option>
+                  <option value="false">Paid</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-lbl" for="edit-source-url">Source URL</label>
+          <input class="form-inp" id="edit-source-url" type="url" />
+        </div>
+        <div class="form-row">
+          <label class="form-lbl" for="edit-thumb-url">Thumbnail URL</label>
+          <input class="form-inp" id="edit-thumb-url" type="url" oninput="updateThumbPreview('edit')" />
+        </div>
+        <div class="form-row-grid">
+          <div>
+            <label class="form-lbl" for="edit-pdf-url">PDF URL</label>
+            <input class="form-inp" id="edit-pdf-url" type="url" />
+          </div>
+          <div>
+            <label class="form-lbl" for="edit-match-context">Match context</label>
+            <select class="form-sel" id="edit-match-context">
+              <option value="">— not set —</option>
+              <option value="lesson_skill">Lesson skill</option>
+              <option value="practice_behaviour">Practice behaviour</option>
+              <option value="recital_event">Recital / event</option>
+              <option value="studio_admin">Studio admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div>
+            <label class="form-lbl" for="edit-season">Season</label>
+            <input class="form-inp" id="edit-season" type="text" placeholder="e.g. Christmas" />
+          </div>
+          <div>
+            <label class="form-lbl" for="edit-season-start">Season start <span>MM-DD</span></label>
+            <input class="form-inp" id="edit-season-start" type="text" maxlength="5" />
+          </div>
+          <div>
+            <label class="form-lbl" for="edit-season-end">Season end <span>MM-DD</span></label>
+            <input class="form-inp" id="edit-season-end" type="text" maxlength="5" />
+          </div>
+        </div>
+        <div class="form-row mt8">
+          <label class="check-row">
+            <input type="checkbox" id="edit-is-multi" />
+            Multi-lesson workbook item
+          </label>
+        </div>
+        <div class="form-row mt8">
+          <label class="check-row">
+            <input type="checkbox" id="edit-is-active" />
+            Active (uncheck to soft-delete)
+          </label>
+        </div>
+      </div>
+
+      <!-- Description card (edit mode) -->
+      <div class="card">
+        <div class="card-tag">Description</div>
+        <div class="card-title">Search description</div>
+
+        <div class="form-row">
+          <label class="form-lbl" for="edit-context">Additional context <span>— optional notes to fold into re-summarisation</span></label>
+          <textarea class="form-ta" id="edit-context" rows="2" placeholder="Any additional context for this supplement…"></textarea>
+        </div>
+
+        <div class="desc-toolbar">
+          <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="rescrapePdf('edit')">📄 Scrape PDF again</button>
+          <button class="btn-sm-info" id="btn-edit-resummarise" onclick="resummarise('edit')">🔄 Re-summarise</button>
+        </div>
+
+        <div id="edit-desc-generating" class="scrape-status hidden">
+          <span class="spinner spinner-dark"></span> <span>Generating description…</span>
+        </div>
+
+        <!-- PDF draft accept/reject (edit mode) -->
+        <div id="edit-pdf-draft-banner" class="desc-draft-banner hidden">
+          <span>New PDF content scraped. Accept to merge into description, or reject to keep existing.</span>
+          <div class="desc-draft-actions">
+            <button class="btn-sm-success" onclick="acceptPdfDraft('edit')">Accept</button>
+            <button class="btn-sm-danger" onclick="rejectPdfDraft('edit')">Reject</button>
+          </div>
+        </div>
+
+        <div class="form-row mt8">
+          <label class="form-lbl" for="edit-description">Description</label>
+          <textarea class="form-ta" id="edit-description" rows="5" placeholder="No description yet. Use 'Scrape PDF' or type/dictate here."></textarea>
+        </div>
+        <div id="edit-desc-msg" class="hidden"></div>
+      </div>
+
+      <!-- Piece association (edit mode) -->
+      <div class="card">
+        <div class="card-tag">Piece association</div>
+        <div class="card-title">Eligibility map entry</div>
+        <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Current piece association for this supplement. Change and save to update the eligibility map.</p>
+        <div class="cascade-row">
+          <div>
+            <label class="form-lbl" for="edit-book">Book</label>
+            <select class="form-sel" id="edit-book" onchange="onBookChange('edit')">
+              <option value="">— select book —</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-lbl" for="edit-unit">Unit</label>
+            <select class="form-sel" id="edit-unit" disabled onchange="onUnitChange('edit')">
+              <option value="">— select unit —</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-lbl" for="edit-piece">Piece <span>optional</span></label>
+            <select class="form-sel" id="edit-piece" disabled>
+              <option value="">— first piece in unit —</option>
+            </select>
+          </div>
+        </div>
+        <div id="edit-cascade-hint" class="cascade-hint hidden"></div>
+      </div>
+
+      <!-- Save (edit mode) -->
+      <div class="card">
+        <div id="edit-save-msg" class="hidden"></div>
+        <div class="action-bar">
+          <button class="btn-primary" id="btn-save-edit" onclick="saveEditSupplement()">Save changes</button>
+          <button class="btn-secondary" onclick="closeEditForm()">Discard changes</button>
+        </div>
+      </div>
+
+    </div><!-- /edit-form-wrap -->
+  </div><!-- /panel-edit -->
+
+</main>
+</div><!-- /view-app -->
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ── Config ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
+const SERIES_ID     = '96c05aaa-0329-4582-a35c-51423afc21dd';
+
+// Members page URLs — passwords and cookies loaded from Config table at runtime
+const SITE_CONFIG = {
+  wk:  { label: 'WunderKeys',      url: 'https://wunderkeys.com/members/' },
+  tpt: { label: 'TeachPianoToday', url: 'https://www.teachpianotoday.com/piano-homework-pages/' }
+};
+
+// Edge Function base URL
+const EF_BASE = `${SUPABASE_URL}/functions/v1`;
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── State ────────────────────────────────────────────────────────────────────
+const state = {
+  cookies:   { wk: '', tpt: '' },      // loaded from Config table on login
+  passwords: { wk: '', tpt: '' },      // loaded from Config table on login
+  activeCookieSite: null,     // 'wk' | 'tpt'
+  scrapeData: null,           // result from scrape-supplement EF
+  pdfDraft: { new: null, edit: null }, // pending PDF text awaiting accept/reject
+  allSupplements: [],         // full list for edit mode
+  editingSupplementId: null,  // UUID of supplement being edited
+  books: [],                  // [{book_id, title, sort_order}]
+};
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+const elLogin   = document.getElementById('view-login');
+const elApp     = document.getElementById('view-app');
+const elHeaderR = document.getElementById('header-right');
+const elEmail   = document.getElementById('header-email');
+
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await showApp(session.user.email);
+}
+
+async function showApp(email) {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.from('teachers').select('is_admin').eq('auth_user_id', user.id).single();
+  if (error || !data?.is_admin) { await sb.auth.signOut(); showLoginError('This account does not have administrator access.'); return; }
+  elLogin.classList.add('hidden');
+  elApp.classList.remove('hidden');
+  elHeaderR.classList.remove('hidden');
+  elEmail.textContent = email;
+  await loadConfig();
+  refreshCookieBars();
+  loadBooks();
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('inp-email').value.trim();
+  const pw    = document.getElementById('inp-password').value;
+  if (!email || !pw) { showLoginError('Email and password are required.'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  document.getElementById('login-error').classList.add('hidden');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error || !data.session) {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    showLoginError(error?.message || 'Sign-in failed.');
+    return;
+  }
+  await showApp(data.user.email);
+  btn.disabled = false; btn.textContent = 'Sign in';
+});
+document.getElementById('inp-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-login').click(); });
+document.getElementById('btn-signout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  elApp.classList.add('hidden'); elLogin.classList.remove('hidden'); elHeaderR.classList.add('hidden');
+  document.getElementById('inp-password').value = '';
+});
+
+// ── Config table ──────────────────────────────────────────────────────────────
+// Loads cookies and passwords for both sites from the Config table.
+// Config has anon SELECT open — no auth header needed for reads.
+// Cookie writes use the service role via the save-supplement-config Edge Function
+// (simpler: we write directly via the authenticated sb client since admins
+// have is_admin = true and Config has no row-level write restrictions for admins).
+async function loadConfig() {
+  const keys = [
+    'supplement_cookie_wk',
+    'supplement_cookie_tpt',
+    'supplement_password_wk',
+    'supplement_password_tpt',
+  ];
+  const { data, error } = await sb
+    .from('config')
+    .select('config_key, config_value')
+    .eq('series_id', SERIES_ID)
+    .in('config_key', keys);
+
+  if (error || !data) return; // Non-fatal — cookies stay empty, bars stay amber
+
+  for (const row of data) {
+    if (row.config_key === 'supplement_cookie_wk')    state.cookies.wk    = row.config_value || '';
+    if (row.config_key === 'supplement_cookie_tpt')   state.cookies.tpt   = row.config_value || '';
+    if (row.config_key === 'supplement_password_wk')  state.passwords.wk  = row.config_value || '';
+    if (row.config_key === 'supplement_password_tpt') state.passwords.tpt = row.config_value || '';
+  }
+}
+
+// ── Cookie management ─────────────────────────────────────────────────────────
+function refreshCookieBars() {
+  for (const site of ['wk', 'tpt']) {
+    const bar = document.getElementById(`cookie-bar-${site}`);
+    const dot = bar.querySelector('.cookie-dot');
+    const txt = bar.querySelector('span');
+    const label = SITE_CONFIG[site].label;
+    if (state.cookies[site]) {
+      bar.className = 'cookie-bar ok';
+      dot.className = 'cookie-dot ok';
+      txt.innerHTML = `<strong>${label} cookie:</strong> Set ✓ — scraping ready`;
+    } else {
+      bar.className = 'cookie-bar warn';
+      dot.className = 'cookie-dot warn';
+      txt.innerHTML = `<strong>${label} cookie:</strong> Not set — scraping ${label} pages will fail`;
+    }
+  }
+}
+
+window.showCookieHelp = function(site) {
+  state.activeCookieSite = site;
+  const cfg = SITE_CONFIG[site];
+  document.getElementById('cookie-help-title').textContent = `Set ${cfg.label} cookie`;
+  document.getElementById('cookie-password-value').textContent = state.passwords[site] || '(not set — contact administrator)';
+  document.getElementById('cookie-open-link').href = cfg.url;
+  document.getElementById('cookie-open-link').textContent = `🌐 Open ${cfg.label} members page`;
+  document.getElementById('cookie-paste-input').value = '';
+  document.getElementById('cookie-save-msg').classList.add('hidden');
+  document.getElementById('cookie-help-panel').classList.remove('hidden');
+  document.getElementById('cookie-help-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.hideCookieHelp = function() {
+  document.getElementById('cookie-help-panel').classList.add('hidden');
+  state.activeCookieSite = null;
+};
+
+window.saveCookie = async function() {
+  const val  = document.getElementById('cookie-paste-input').value.trim();
+  const msgEl = document.getElementById('cookie-save-msg');
+  if (!val) { showMsg(msgEl, 'error', 'Please paste the cookie value first.'); return; }
+
+  const site    = state.activeCookieSite;
+  const configKey = `supplement_cookie_${site}`;
+
+  showMsg(msgEl, 'info', 'Saving…');
+
+  // Upsert into Config table using authenticated client
+  // Config table has anon SELECT; writes require auth — admin session satisfies this
+  const { error } = await sb
+    .from('config')
+    .upsert(
+      { series_id: SERIES_ID, config_key: configKey, config_value: val },
+      { onConflict: 'series_id,config_key' }
+    );
+
+  if (error) {
+    showMsg(msgEl, 'error', `Failed to save: ${error.message}`);
+    return;
+  }
+
+  state.cookies[site] = val;
+  refreshCookieBars();
+  showMsg(msgEl, 'success', `${SITE_CONFIG[site].label} cookie saved ✓ — will persist across sessions.`);
+  setTimeout(hideCookieHelp, 1800);
+};
+
+// Detect which site a URL belongs to
+function siteFromUrl(url) {
+  if (!url) return null;
+  if (url.includes('wunderkeys.com')) return 'wk';
+  if (url.includes('teachpianotoday.com')) return 'tpt';
+  return null;
+}
+
+// ── Mode toggle ───────────────────────────────────────────────────────────────
+window.setMode = function(mode) {
+  document.getElementById('mode-new-btn').classList.toggle('active', mode === 'new');
+  document.getElementById('mode-edit-btn').classList.toggle('active', mode === 'edit');
+  document.getElementById('panel-new').classList.toggle('hidden', mode !== 'new');
+  document.getElementById('panel-edit').classList.toggle('hidden', mode !== 'edit');
+  if (mode === 'edit' && state.allSupplements.length === 0) loadSupplements();
+};
+
+// ── Books cascade ─────────────────────────────────────────────────────────────
+async function loadBooks() {
+  const { data, error } = await sb.from('books').select('book_id, title, sort_order').eq('series_id', SERIES_ID).eq('is_active', true).order('sort_order');
+  if (error || !data) return;
+  state.books = data;
+  for (const prefix of ['new', 'edit']) {
+    const sel = document.getElementById(`${prefix}-book`);
+    sel.innerHTML = '<option value="">— select book —</option>';
+    data.forEach(b => { const o = document.createElement('option'); o.value = b.book_id; o.textContent = b.title; sel.appendChild(o); });
+  }
+}
+
+window.onBookChange = async function(prefix) {
+  const bookId = document.getElementById(`${prefix}-book`).value;
+  const unitSel = document.getElementById(`${prefix}-unit`);
+  const pieceSel = document.getElementById(`${prefix}-piece`);
+  unitSel.innerHTML = '<option value="">— select unit —</option>';
+  pieceSel.innerHTML = '<option value="">— first piece in unit —</option>';
+  unitSel.disabled = !bookId;
+  pieceSel.disabled = true;
+  updateCascadeHint(prefix);
+  if (!bookId) return;
+  const { data } = await sb.from('books_units').select('unit_id, unit_label, unit_title, sort_order').eq('book_id', bookId).order('sort_order');
+  if (!data) return;
+  data.forEach(u => { const o = document.createElement('option'); o.value = u.unit_id; o.textContent = `${u.unit_label} — ${u.unit_title}`; unitSel.appendChild(o); });
+};
+
+window.onUnitChange = async function(prefix) {
+  const unitId = document.getElementById(`${prefix}-unit`).value;
+  const pieceSel = document.getElementById(`${prefix}-piece`);
+  pieceSel.innerHTML = '<option value="">— first piece in unit —</option>';
+  pieceSel.disabled = !unitId;
+  updateCascadeHint(prefix);
+  if (!unitId) return;
+  const { data } = await sb.from('books_pieces').select('piece_id, title, page_start, sort_order').eq('unit_id', unitId).order('sort_order');
+  if (!data) return;
+  data.forEach(p => { const o = document.createElement('option'); o.value = p.piece_id; o.textContent = `p.${p.page_start} — ${p.title}`; pieceSel.appendChild(o); });
+  pieceSel.disabled = false;
+};
+
+function updateCascadeHint(prefix) {
+  const bookId  = document.getElementById(`${prefix}-book`).value;
+  const unitId  = document.getElementById(`${prefix}-unit`).value;
+  const pieceId = document.getElementById(`${prefix}-piece`)?.value;
+  const hint    = document.getElementById(`${prefix}-cascade-hint`);
+  if (!bookId) { hint.classList.add('hidden'); return; }
+  hint.classList.remove('hidden');
+  if (bookId && unitId && !pieceId) {
+    hint.textContent = 'No piece selected — supplement will be anchored to the first piece in the selected unit.';
+  } else if (bookId && unitId && pieceId) {
+    hint.textContent = 'Supplement will be anchored to the selected piece.';
+  } else if (bookId && !unitId) {
+    hint.textContent = 'Select a unit to continue. Book-only anchoring is not supported — a unit or piece is required.';
+  }
+}
+// Update hint when piece changes
+['new-piece', 'edit-piece'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', () => updateCascadeHint(id.split('-')[0]));
+});
+
+// ── NEW MODE: Scrape URL ──────────────────────────────────────────────────────
+window.scrapeUrl = async function() {
+  const url = document.getElementById('new-url').value.trim();
+  if (!url) { showMsg(document.getElementById('scrape-msg'), 'error', 'Please enter a URL.'); return; }
+
+  const site = siteFromUrl(url);
+  if (!site) { showMsg(document.getElementById('scrape-msg'), 'error', 'URL must be from wunderkeys.com or teachpianotoday.com.'); return; }
+
+  const cookie = state.cookies[site];
+  const statusEl = document.getElementById('scrape-status');
+  const msgEl    = document.getElementById('scrape-msg');
+  msgEl.classList.add('hidden');
+  statusEl.classList.remove('hidden');
+  document.getElementById('scrape-status-text').textContent = 'Fetching page…';
+  document.getElementById('btn-scrape').disabled = true;
+
+  try {
+    const res = await fetch(`${EF_BASE}/scrape-supplement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ url, cookie, series_id: SERIES_ID })
+    });
+    const json = await res.json();
+
+    if (json.error === 'cookie_expired') {
+      statusEl.classList.add('hidden');
+      showMsg(msgEl, 'error', `Cookie for ${SITE_CONFIG[site].label} has expired.`);
+      showCookieHelp(site);
+      return;
+    }
+    if (!res.ok || json.error) {
+      statusEl.classList.add('hidden');
+      showMsg(msgEl, 'error', json.error || 'Scrape failed. Check the URL and try again.');
+      return;
+    }
+
+    state.scrapeData = json;
+    populateNewFields(json);
+    statusEl.classList.add('hidden');
+    ['fields-card','desc-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    document.getElementById('fields-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(e) {
+    statusEl.classList.add('hidden');
+    showMsg(msgEl, 'error', 'Network error. Please try again.');
+  } finally {
+    document.getElementById('btn-scrape').disabled = false;
+  }
+};
+
+function populateNewFields(data) {
+  document.getElementById('new-title').value       = data.title        || '';
+  document.getElementById('new-thumb-url').value   = data.thumbnail_url || '';
+  document.getElementById('new-pdf-url').value     = data.pdf_url       || '';
+  document.getElementById('new-source').value      = data.source        || siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys';
+  document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
+  updateThumbPreview('new');
+}
+
+function updateThumbPreview(prefix) {
+  const url   = document.getElementById(`${prefix}-thumb-url`).value.trim();
+  const el    = document.getElementById(`${prefix}-thumb-preview`);
+  if (url) {
+    el.innerHTML = `<img src="${url}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;" onerror="this.parentElement.innerHTML='🖼'" />`;
+  } else {
+    el.textContent = '🖼';
+  }
+}
+window.updateThumbPreview = updateThumbPreview;
+document.getElementById('new-thumb-url').addEventListener('input', () => updateThumbPreview('new'));
+
+// ── Description generation ────────────────────────────────────────────────────
+window.generateDescription = async function(prefix) {
+  const url      = prefix === 'new' ? document.getElementById('new-url').value.trim()
+                                    : document.getElementById('edit-source-url').value.trim();
+  const pdfUrl   = document.getElementById(`${prefix}-pdf-url`).value.trim();
+  const context  = document.getElementById(`${prefix}-context`).value.trim();
+  const site     = siteFromUrl(url);
+  const cookie   = site ? state.cookies[site] : '';
+  const genEl    = document.getElementById(`${prefix}-desc-generating`);
+  const msgEl    = document.getElementById(`${prefix}-desc-msg`);
+
+  genEl.classList.remove('hidden');
+  msgEl.classList.add('hidden');
+  setDescButtons(prefix, true);
+
+  try {
+    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ url, pdf_url: pdfUrl, context, cookie, page_text: prefix === 'new' ? (state.scrapeData?.page_text || '') : '' })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Generation failed.'); return; }
+    document.getElementById(`${prefix}-description`).value = json.description || '';
+    document.getElementById(`btn-${prefix}-resummarise`).style.display = 'inline-flex';
+  } catch(e) {
+    showMsg(msgEl, 'error', 'Network error during generation.');
+  } finally {
+    genEl.classList.add('hidden');
+    setDescButtons(prefix, false);
+  }
+};
+
+window.rescrapePdf = async function(prefix) {
+  const pdfUrl = document.getElementById(`${prefix}-pdf-url`).value.trim();
+  if (!pdfUrl) { showMsg(document.getElementById(`${prefix}-desc-msg`), 'warn', 'No PDF URL set. Enter a PDF URL first.'); return; }
+
+  const url    = prefix === 'new' ? document.getElementById('new-url').value.trim() : document.getElementById('edit-source-url').value.trim();
+  const site   = siteFromUrl(pdfUrl) || siteFromUrl(url);
+  const cookie = site ? state.cookies[site] : '';
+  const genEl  = document.getElementById(`${prefix}-desc-generating`);
+  const msgEl  = document.getElementById(`${prefix}-desc-msg`);
+
+  genEl.classList.remove('hidden');
+  msgEl.classList.add('hidden');
+  setDescButtons(prefix, true);
+
+  try {
+    const res = await fetch(`${EF_BASE}/scrape-pdf-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ pdf_url: pdfUrl, cookie })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'PDF scrape failed.'); return; }
+
+    const existing = document.getElementById(`${prefix}-description`).value.trim();
+    if (!existing) {
+      // No existing description — auto-populate and summarise
+      document.getElementById(`${prefix}-context`).value += (document.getElementById(`${prefix}-context`).value ? '\n\n' : '') + json.text;
+      await generateDescription(prefix);
+    } else {
+      // Existing description — store draft and show accept/reject
+      state.pdfDraft[prefix] = json.text;
+      document.getElementById(`${prefix}-pdf-draft-banner`).classList.remove('hidden');
+    }
+  } catch(e) {
+    showMsg(msgEl, 'error', 'Network error during PDF scrape.');
+  } finally {
+    genEl.classList.add('hidden');
+    setDescButtons(prefix, false);
+  }
+};
+
+window.acceptPdfDraft = function(prefix) {
+  const draft = state.pdfDraft[prefix];
+  if (!draft) return;
+  const ctx = document.getElementById(`${prefix}-context`);
+  ctx.value += (ctx.value ? '\n\n' : '') + draft;
+  state.pdfDraft[prefix] = null;
+  document.getElementById(`${prefix}-pdf-draft-banner`).classList.add('hidden');
+  generateDescription(prefix);
+};
+
+window.rejectPdfDraft = function(prefix) {
+  state.pdfDraft[prefix] = null;
+  document.getElementById(`${prefix}-pdf-draft-banner`).classList.add('hidden');
+};
+
+window.resummarise = async function(prefix) {
+  const desc    = document.getElementById(`${prefix}-description`).value.trim();
+  const context = document.getElementById(`${prefix}-context`).value.trim();
+  if (!desc && !context) { showMsg(document.getElementById(`${prefix}-desc-msg`), 'warn', 'Nothing to summarise — add a description or context first.'); return; }
+  const genEl = document.getElementById(`${prefix}-desc-generating`);
+  const msgEl = document.getElementById(`${prefix}-desc-msg`);
+  genEl.classList.remove('hidden');
+  msgEl.classList.add('hidden');
+  setDescButtons(prefix, true);
+
+  try {
+    const res = await fetch(`${EF_BASE}/resummarise-description`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ current_description: desc, context })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Re-summarise failed.'); return; }
+    document.getElementById(`${prefix}-description`).value = json.description || '';
+  } catch(e) {
+    showMsg(msgEl, 'error', 'Network error.');
+  } finally {
+    genEl.classList.add('hidden');
+    setDescButtons(prefix, false);
+  }
+};
+
+function setDescButtons(prefix, disabled) {
+  ['btn-new-generate','btn-new-rescrape-pdf','btn-new-resummarise',
+   'btn-edit-rescrape-pdf','btn-edit-resummarise'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+  });
+}
+
+// ── NEW: Save ─────────────────────────────────────────────────────────────────
+window.saveNewSupplement = async function() {
+  const msgEl = document.getElementById('save-msg');
+  msgEl.classList.add('hidden');
+  const btn = document.getElementById('btn-save-new');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const url    = document.getElementById('new-url').value.trim();
+  const title  = document.getElementById('new-title').value.trim();
+  if (!url || !title) { showMsg(msgEl, 'error', 'URL and title are required.'); btn.disabled=false; btn.textContent='Save supplement'; return; }
+
+  const bookId  = document.getElementById('new-book').value;
+  const unitId  = document.getElementById('new-unit').value;
+  const pieceId = document.getElementById('new-piece').value;
+
+  // Resolve piece: if unit selected but no piece, get first piece
+  let resolvedPieceId = pieceId || null;
+  if (unitId && !pieceId) {
+    const { data } = await sb.from('books_pieces').select('piece_id').eq('unit_id', unitId).order('sort_order').limit(1);
+    resolvedPieceId = data?.[0]?.piece_id || null;
+  }
+
+  const supplement = {
+    series_id:         SERIES_ID,
+    title,
+    source_url:        url,
+    source:            document.getElementById('new-source').value,
+    is_free:           document.getElementById('new-is-free').value === '' ? null : document.getElementById('new-is-free').value === 'true',
+    thumbnail_url:     document.getElementById('new-thumb-url').value.trim() || null,
+    pdf_url:           null, // expendable per schema — not written in current build
+    match_context:     document.getElementById('new-match-context').value || null,
+    season:            document.getElementById('new-season').value.trim() || null,
+    season_start_mmdd: document.getElementById('new-season-start').value.trim() || null,
+    season_end_mmdd:   document.getElementById('new-season-end').value.trim() || null,
+    is_multi_lesson:   document.getElementById('new-is-multi').checked,
+    search_description:document.getElementById('new-description').value.trim() || null,
+    is_active:         true,
+  };
+
+  try {
+    // Upsert on source_url + series_id
+    const { data: suppData, error: suppErr } = await sb.from('supplements').upsert(supplement, { onConflict: 'source_url,series_id', ignoreDuplicates: false }).select('supplement_id').single();
+    if (suppErr) { showMsg(msgEl, 'error', suppErr.message); return; }
+
+    // Write eligibility map if piece resolved
+    if (resolvedPieceId && bookId) {
+      await sb.from('supplement_eligibility_map').upsert({
+        supplement_id:  suppData.supplement_id,
+        series_id:      SERIES_ID,
+        book_id:        bookId,
+        earliest_piece_id: resolvedPieceId,
+      }, { onConflict: 'supplement_id,book_id' });
+    }
+
+    showMsg(msgEl, 'success', `Supplement saved${resolvedPieceId ? ' with piece association' : ' — no piece association set (flagged for manual mapping)'}.`);
+    setTimeout(resetNewForm, 2000);
+  } catch(e) {
+    showMsg(msgEl, 'error', 'Unexpected error. Please try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save supplement';
+  }
+};
+
+window.resetNewForm = function() {
+  ['new-url','new-title','new-thumb-url','new-pdf-url','new-season','new-season-start','new-season-end','new-context','new-description'].forEach(id => { document.getElementById(id).value = ''; });
+  ['new-source','new-is-free','new-match-context','new-book','new-unit','new-piece'].forEach(id => { document.getElementById(id).selectedIndex = 0; });
+  document.getElementById('new-is-multi').checked = false;
+  document.getElementById('new-unit').disabled = true;
+  document.getElementById('new-piece').disabled = true;
+  document.getElementById('new-thumb-preview').textContent = '🖼';
+  ['fields-card','desc-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['scrape-msg','save-msg','new-desc-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('new-pdf-draft-banner').classList.add('hidden');
+  document.getElementById('btn-new-resummarise').style.display = 'none';
+  state.scrapeData = null; state.pdfDraft.new = null;
+};
+
+// ── EDIT MODE: Load supplements ───────────────────────────────────────────────
+async function loadSupplements() {
+  document.getElementById('edit-loading').classList.remove('hidden');
+  document.getElementById('edit-list-msg').classList.add('hidden');
+  const { data, error } = await sb.from('supplements').select('supplement_id,title,source,source_url,thumbnail_url,is_free,is_multi_lesson,is_active,search_description').eq('series_id', SERIES_ID).order('title');
+  document.getElementById('edit-loading').classList.add('hidden');
+  if (error) { showMsg(document.getElementById('edit-list-msg'), 'error', 'Failed to load supplements.'); return; }
+  state.allSupplements = data || [];
+  renderSupplementList(state.allSupplements);
+}
+
+window.filterSupplements = function() {
+  const q      = document.getElementById('edit-search').value.toLowerCase();
+  const source = document.getElementById('edit-filter-source').value;
+  const filtered = state.allSupplements.filter(s =>
+    (!q || s.title.toLowerCase().includes(q)) &&
+    (!source || s.source === source)
+  );
+  renderSupplementList(filtered);
+};
+
+function renderSupplementList(list) {
+  const el = document.getElementById('supp-list');
+  if (!list.length) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-light);padding:12px 0;">No supplements found.</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const freeBadge = s.is_free === true ? '<span class="badge badge-free">Free</span>' : s.is_free === false ? '<span class="badge badge-paid">Paid</span>' : '<span class="badge badge-null">Unknown</span>';
+    const srcBadge  = s.source === 'wunderkeys' ? '<span class="badge badge-wk">WK</span>' : '<span class="badge badge-tpt">TPT</span>';
+    const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">Multi-lesson</span>' : '';
+    const inactive  = !s.is_active ? '<span class="badge" style="background:var(--danger-light);color:var(--danger);border:1px solid var(--danger-border);">Inactive</span>' : '';
+    const thumb     = s.thumbnail_url ? `<img src="${s.thumbnail_url}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;" onerror="this.outerHTML='<div style=\'width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text-light)\'>🖼</div>'" />` : '<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text-light)">🖼</div>';
+    return `<div class="supp-item" onclick="openEditForm('${s.supplement_id}')">
+      <div class="supp-item-thumb">${thumb}</div>
+      <div class="supp-item-body">
+        <div class="supp-item-title">${escHtml(s.title)}</div>
+        <div class="supp-item-meta">${srcBadge} ${freeBadge} ${multiBadge} ${inactive}</div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-light);white-space:nowrap;">Edit →</div>
+    </div>`;
+  }).join('');
+}
+
+// ── EDIT MODE: Open form ──────────────────────────────────────────────────────
+window.openEditForm = async function(id) {
+  state.editingSupplementId = id;
+  const s = state.allSupplements.find(x => x.supplement_id === id);
+  if (!s) return;
+
+  // Load full record
+  const { data } = await sb.from('supplements').select('*').eq('supplement_id', id).single();
+  if (!data) return;
+
+  document.getElementById('edit-card-title').textContent = data.title;
+  document.getElementById('edit-title').value        = data.title || '';
+  document.getElementById('edit-source').value       = data.source || 'wunderkeys';
+  document.getElementById('edit-is-free').value      = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
+  document.getElementById('edit-source-url').value   = data.source_url || '';
+  document.getElementById('edit-thumb-url').value    = data.thumbnail_url || '';
+  document.getElementById('edit-pdf-url').value      = data.pdf_url || '';
+  document.getElementById('edit-match-context').value= data.match_context || '';
+  document.getElementById('edit-season').value       = data.season || '';
+  document.getElementById('edit-season-start').value = data.season_start_mmdd || '';
+  document.getElementById('edit-season-end').value   = data.season_end_mmdd || '';
+  document.getElementById('edit-is-multi').checked   = !!data.is_multi_lesson;
+  document.getElementById('edit-is-active').checked  = !!data.is_active;
+  document.getElementById('edit-description').value  = data.search_description || '';
+  document.getElementById('edit-context').value      = '';
+  updateThumbPreview('edit');
+
+  // Load existing eligibility map entry if any
+  const { data: em } = await sb.from('supplement_eligibility_map').select('book_id, earliest_piece_id, books_pieces(unit_id)').eq('supplement_id', id).eq('series_id', SERIES_ID).limit(1).single();
+  if (em) {
+    document.getElementById('edit-book').value = em.book_id || '';
+    await onBookChange('edit');
+    if (em.books_pieces?.unit_id) {
+      document.getElementById('edit-unit').value = em.books_pieces.unit_id;
+      await onUnitChange('edit');
+      document.getElementById('edit-piece').value = em.earliest_piece_id || '';
+    }
+  }
+
+  state.pdfDraft.edit = null;
+  document.getElementById('edit-pdf-draft-banner').classList.add('hidden');
+  document.getElementById('edit-desc-msg').classList.add('hidden');
+  document.getElementById('edit-save-msg').classList.add('hidden');
+  document.getElementById('edit-form-wrap').classList.remove('hidden');
+  document.getElementById('edit-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.closeEditForm = function() {
+  document.getElementById('edit-form-wrap').classList.add('hidden');
+  state.editingSupplementId = null;
+};
+
+// ── EDIT MODE: Save ───────────────────────────────────────────────────────────
+window.saveEditSupplement = async function() {
+  const id = state.editingSupplementId;
+  if (!id) return;
+  const msgEl = document.getElementById('edit-save-msg');
+  msgEl.classList.add('hidden');
+  const btn = document.getElementById('btn-save-edit');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const bookId  = document.getElementById('edit-book').value;
+  const unitId  = document.getElementById('edit-unit').value;
+  const pieceId = document.getElementById('edit-piece').value;
+
+  let resolvedPieceId = pieceId || null;
+  if (unitId && !pieceId) {
+    const { data } = await sb.from('books_pieces').select('piece_id').eq('unit_id', unitId).order('sort_order').limit(1);
+    resolvedPieceId = data?.[0]?.piece_id || null;
+  }
+
+  const updates = {
+    title:             document.getElementById('edit-title').value.trim(),
+    source:            document.getElementById('edit-source').value,
+    source_url:        document.getElementById('edit-source-url').value.trim(),
+    is_free:           document.getElementById('edit-is-free').value === '' ? null : document.getElementById('edit-is-free').value === 'true',
+    thumbnail_url:     document.getElementById('edit-thumb-url').value.trim() || null,
+    match_context:     document.getElementById('edit-match-context').value || null,
+    season:            document.getElementById('edit-season').value.trim() || null,
+    season_start_mmdd: document.getElementById('edit-season-start').value.trim() || null,
+    season_end_mmdd:   document.getElementById('edit-season-end').value.trim() || null,
+    is_multi_lesson:   document.getElementById('edit-is-multi').checked,
+    is_active:         document.getElementById('edit-is-active').checked,
+    search_description:document.getElementById('edit-description').value.trim() || null,
+    updated_at:        new Date().toISOString(),
+  };
+
+  try {
+    const { error } = await sb.from('supplements').update(updates).eq('supplement_id', id);
+    if (error) { showMsg(msgEl, 'error', error.message); return; }
+
+    if (resolvedPieceId && bookId) {
+      await sb.from('supplement_eligibility_map').upsert({
+        supplement_id:     id,
+        series_id:         SERIES_ID,
+        book_id:           bookId,
+        earliest_piece_id: resolvedPieceId,
+      }, { onConflict: 'supplement_id,book_id' });
+    }
+
+    // Refresh list
+    const idx = state.allSupplements.findIndex(s => s.supplement_id === id);
+    if (idx >= 0) Object.assign(state.allSupplements[idx], updates);
+    renderSupplementList(state.allSupplements);
+
+    showMsg(msgEl, 'success', 'Changes saved.');
+  } catch(e) {
+    showMsg(msgEl, 'error', 'Unexpected error. Please try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save changes';
+  }
+};
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function showMsg(el, type, msg) {
+  el.className = `msg msg-${type}`;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+checkSession();
+</script>
+</body>
+</html>
