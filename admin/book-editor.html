@@ -61,19 +61,17 @@
     .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
     .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
 
-    /* ── Two-panel layout ── */
+    /* ── Editor layout: left panel + right panel ── */
     .editor-wrap { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
-    /* ── Left panel ── */
-    .left-panel { width: 300px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; overflow: hidden; }
+    /* ── Left panel: book selector + book details ── */
+    .left-panel { width: 280px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; overflow-y: auto; }
     .panel-section { padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-section-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 10px; }
 
-    /* Book selector */
     .select-input { width: 100%; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; }
     .select-input:focus { border-color: var(--brand); }
 
-    /* Book fields */
     .book-field { margin-bottom: 10px; }
     .book-field:last-child { margin-bottom: 0; }
     .form-lbl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); display: block; margin-bottom: 5px; }
@@ -89,6 +87,8 @@
     .equiv-item input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
 
     .book-save-row { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+    /* ── Buttons ── */
     .btn-save-sm { height: 34px; padding: 0 16px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
     .btn-save-sm:hover:not(:disabled) { opacity: 0.88; }
     .btn-save-sm:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -96,87 +96,92 @@
     .btn-ghost-sm:hover { border-color: var(--brand); color: var(--brand); }
     .btn-danger-sm { height: 34px; padding: 0 14px; background: none; color: var(--danger); border: 1.5px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-danger-sm:hover { background: var(--danger-light); }
-
-    /* Units list */
-    .units-scroll { flex: 1; overflow-y: auto; }
-    .unit-row { border-bottom: 1px solid var(--border); }
-    .unit-row-header { display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; transition: background 0.1s; user-select: none; }
-    .unit-row-header:hover { background: var(--surface); }
-    .unit-row.selected > .unit-row-header { background: var(--brand-light); }
-    .unit-label-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; background: var(--brand); color: #fff; border-radius: 5px; padding: 2px 7px; flex-shrink: 0; }
-    .unit-title-text { font-size: 0.88rem; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-    .unit-sort-num { font-size: 0.72rem; color: var(--text-light); flex-shrink: 0; }
-    .unit-dirty-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); flex-shrink: 0; display: none; }
-    .unit-row.unit-dirty .unit-dirty-dot { display: block; }
-
-    .unit-edit-area { display: none; padding: 10px 12px 12px; background: var(--info-light); border-top: 1px solid var(--info-border); }
-    .unit-row.selected .unit-edit-area { display: block; }
-    .unit-edit-grid { display: grid; grid-template-columns: 1fr 72px 64px; gap: 6px; margin-bottom: 8px; }
-    .unit-edit-field label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); display: block; margin-bottom: 4px; }
-    .unit-edit-field input { width: 100%; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: var(--card); outline: none; }
-    .unit-edit-field input:focus { border-color: var(--brand); }
-    .unit-edit-field input.dirty { background: var(--warn-light); border-color: var(--warn-border); }
-    .unit-edit-actions { display: flex; align-items: center; justify-content: space-between; }
-
-    .add-unit-footer { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
     .btn-add { width: 100%; height: 36px; background: var(--surface); color: var(--brand); border: 1.5px dashed var(--brand); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-add:hover { background: var(--brand-light); }
 
-    /* ── Right panel ── */
-    .right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); }
-    .right-header { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--card); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .right-header-left { display: flex; align-items: baseline; gap: 10px; }
-    .right-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); }
-    .piece-count-badge { font-size: 0.72rem; color: var(--text-light); font-weight: 500; }
+    /* ── Right panel: units top + pieces bottom ── */
+    .right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); min-width: 0; }
 
-    /* Piece table */
+    /* Units section — top 30% */
+    .units-section { height: 30%; min-height: 160px; display: flex; flex-direction: column; border-bottom: 2px solid var(--border); background: var(--card); flex-shrink: 0; }
+    .section-header { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: var(--card); }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text); }
+    .section-hint { font-size: 0.72rem; color: var(--text-light); }
+
+    .units-scroll { flex: 1; overflow-y: auto; }
+    .units-table { width: 100%; border-collapse: collapse; }
+    .units-table thead th { position: sticky; top: 0; background: var(--surface); border-bottom: 2px solid var(--border); padding: 6px 10px; text-align: left; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); z-index: 1; white-space: nowrap; }
+    .units-table tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.08s; }
+    .units-table tbody tr:hover { background: var(--brand-light); }
+    .units-table tbody tr.unit-selected { background: var(--brand-light); border-left: 3px solid var(--brand); }
+    .units-table tbody tr.unit-dirty { background: var(--warn-light); }
+    .units-table td { padding: 4px 8px; vertical-align: middle; font-size: 0.85rem; }
+
+    .col-ulabel  { width: 60px; }
+    .col-usort   { width: 50px; }
+    .col-utitle  { min-width: 160px; }
+    .col-uacts   { width: 80px; }
+
+    .unit-label-badge { font-size: 0.68rem; font-weight: 700; background: var(--brand); color: #fff; border-radius: 5px; padding: 2px 7px; display: inline-block; }
+    .unit-cell-inp { width: 100%; padding: 3px 6px; border: 1.5px solid transparent; border-radius: 5px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: transparent; outline: none; transition: border-color 0.12s, background 0.12s; }
+    .unit-cell-inp:hover { border-color: var(--border); background: var(--card); }
+    .unit-cell-inp:focus { border-color: var(--brand); background: var(--card); }
+    .unit-cell-inp.dirty { background: var(--warn-light) !important; border-color: var(--warn-border) !important; }
+
+    .unit-add-bar { padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); }
+
+    /* Pieces section — bottom 70% */
+    .pieces-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .pieces-header { padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--card); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .pieces-header-left { display: flex; align-items: baseline; gap: 10px; }
+    .pieces-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--text); }
+    .piece-count-badge { font-size: 0.72rem; color: var(--text-light); }
+    .filter-badge { font-size: 0.72rem; font-weight: 600; background: var(--brand-light); color: var(--brand); border-radius: 20px; padding: 2px 9px; cursor: pointer; border: none; display: none; }
+    .filter-badge:hover { background: var(--brand); color: #fff; }
+
     .piece-scroll { flex: 1; overflow-y: auto; }
     .piece-table { width: 100%; border-collapse: collapse; }
-    .piece-table thead th { position: sticky; top: 0; background: var(--surface); border-bottom: 2px solid var(--border); padding: 8px 10px; text-align: left; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); z-index: 1; white-space: nowrap; }
+    .piece-table thead th { position: sticky; top: 0; background: var(--surface); border-bottom: 2px solid var(--border); padding: 7px 8px; text-align: left; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); z-index: 1; white-space: nowrap; }
     .piece-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
     .piece-table tbody tr:hover { background: #fff; }
     .piece-table tbody tr.row-dirty { background: var(--warn-light); }
     .piece-table tbody tr.row-new { background: var(--success-light); }
     .piece-table td { padding: 3px 6px; vertical-align: middle; }
 
-    .col-pgstart  { width: 50px; }
-    .col-pgend    { width: 50px; }
-    .col-title    { width: 220px; }
-    .col-type     { width: 155px; }
-    .col-unit     { width: 72px; }
-    .col-actions  { width: 72px; }
+    .col-pgstart { width: 50px; }
+    .col-pgend   { width: 50px; }
+    .col-title   { width: 220px; }
+    .col-type    { width: 155px; }
+    .col-unit    { width: 72px; }
+    .col-actions { width: 72px; }
 
-    /* Inline cell inputs */
-    .cell-inp { width: 100%; padding: 4px 7px; border: 1.5px solid transparent; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: transparent; outline: none; transition: border-color 0.12s, background 0.12s; }
+    .cell-inp { width: 100%; padding: 4px 6px; border: 1.5px solid transparent; border-radius: 5px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: transparent; outline: none; transition: border-color 0.12s, background 0.12s; }
     .cell-inp:hover { border-color: var(--border); background: var(--card); }
     .cell-inp:focus { border-color: var(--brand); background: var(--card); }
     .cell-inp.dirty { background: var(--warn-light) !important; border-color: var(--warn-border) !important; }
-    select.cell-inp { cursor: pointer; padding-right: 4px; }
+    select.cell-inp { cursor: pointer; }
 
     .row-acts { display: flex; gap: 3px; justify-content: flex-end; align-items: center; }
-    .act-btn { width: 28px; height: 28px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; justify-content: center; transition: background 0.12s; background: transparent; }
+    .act-btn { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; justify-content: center; background: transparent; transition: background 0.12s; }
     .act-btn:hover { background: var(--surface); }
-    .act-btn.save-btn  { color: var(--success); }
-    .act-btn.save-btn:hover  { background: var(--success-light); }
+    .act-btn.save-btn { color: var(--success); }
+    .act-btn.save-btn:hover { background: var(--success-light); }
     .act-btn.revert-btn { color: var(--text-light); }
     .act-btn.delete-btn { color: var(--danger); }
     .act-btn.delete-btn:hover { background: var(--danger-light); }
 
-    .piece-add-bar { padding: 10px 16px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
+    .piece-add-bar { padding: 8px 12px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
 
-    /* ── Messages / toast ── */
-    .msg { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 10px; }
-    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
-    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
-    .msg-warn    { background: var(--warn-light);    border: 1px solid var(--warn-border);    color: var(--warn); }
+    /* ── Unit row actions (inline) ── */
+    .unit-row-acts { display: flex; gap: 3px; justify-content: flex-end; }
 
+    /* ── Messages / toast / modal ── */
     #toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 200; }
     #toast.show { opacity: 1; }
     #toast.t-success { background: var(--success); }
     #toast.t-error   { background: var(--danger); }
     #toast.t-warn    { background: var(--warn); color: var(--text); }
 
-    /* ── Modal ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); align-items: center; justify-content: center; z-index: 100; }
     .modal-overlay.open { display: flex; }
     .modal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 380px; box-shadow: var(--shadow); }
@@ -184,11 +189,7 @@
     .modal-body { font-size: 0.88rem; color: var(--text-mid); line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-    /* ── Empty / loading states ── */
-    .empty-state { padding: 48px 24px; text-align: center; color: var(--text-light); font-size: 0.88rem; line-height: 1.6; }
-
-    .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { padding: 32px 24px; text-align: center; color: var(--text-light); font-size: 0.88rem; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -225,10 +226,9 @@
 <!-- ══ Editor ══ -->
 <div id="view-editor" class="editor-wrap hidden">
 
-  <!-- ── Left panel ── -->
+  <!-- ── Left panel: book selector + book details ── -->
   <div class="left-panel">
 
-    <!-- Book selector -->
     <div class="panel-section">
       <div class="panel-section-title">Book</div>
       <select class="select-input" id="book-select">
@@ -236,7 +236,6 @@
       </select>
     </div>
 
-    <!-- Book fields -->
     <div class="panel-section hidden" id="book-fields">
       <div class="panel-section-title">Book Details</div>
 
@@ -268,44 +267,72 @@
       </div>
     </div>
 
-    <!-- Units -->
-    <div class="panel-section hidden" id="units-header-row" style="padding-bottom:8px">
-      <div class="panel-section-title" style="margin-bottom:0">Units</div>
-    </div>
-    <div class="units-scroll" id="units-list"></div>
-    <div class="add-unit-footer hidden" id="add-unit-footer">
-      <button class="btn-add" id="btn-add-unit">+ Add Unit</button>
-    </div>
-
   </div>
 
   <!-- ── Right panel ── -->
   <div class="right-panel">
-    <div class="right-header">
-      <div class="right-header-left">
-        <span class="right-title">Pieces</span>
-        <span class="piece-count-badge" id="piece-count"></span>
-      </div>
-      <button class="btn-save-sm hidden" id="btn-add-piece" style="background:var(--surface);color:var(--brand);border:1.5px dashed var(--brand);">+ Add Piece</button>
-    </div>
-    <div class="piece-scroll">
-      <div id="pieces-empty" class="empty-state">Select a book to view its pieces.</div>
-      <table class="piece-table hidden" id="piece-table">
-        <thead>
-          <tr>
-            <th class="col-pgstart">Pg Start</th>
-            <th class="col-pgend">Pg End</th>
-            <th class="col-title">Title</th>
-            <th class="col-type">Type</th>
-            <th class="col-unit">Unit</th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody id="piece-tbody"></tbody>
-      </table>
-    </div>
-  </div>
 
+    <!-- Units — top 30% -->
+    <div class="units-section">
+      <div class="section-header">
+        <span class="section-title">Units</span>
+        <span class="section-hint" id="units-hint"></span>
+      </div>
+      <div class="units-scroll">
+        <div id="units-empty" class="empty-state">Select a book to view units.</div>
+        <table class="units-table hidden" id="units-table">
+          <thead>
+            <tr>
+              <th class="col-ulabel">Label</th>
+              <th class="col-usort">Sort</th>
+              <th class="col-utitle">Title</th>
+              <th class="col-uacts"></th>
+            </tr>
+          </thead>
+          <tbody id="units-tbody"></tbody>
+        </table>
+      </div>
+      <div class="unit-add-bar hidden" id="unit-add-bar">
+        <button class="btn-add" id="btn-add-unit">+ Add Unit</button>
+      </div>
+    </div>
+
+    <!-- Pieces — bottom 70% -->
+    <div class="pieces-section">
+      <div class="pieces-header">
+        <div class="pieces-header-left">
+          <span class="pieces-title">Pieces</span>
+          <span class="piece-count-badge" id="piece-count"></span>
+          <button class="filter-badge" id="filter-badge" title="Click to show all pieces">
+            Filtered · click to clear
+          </button>
+        </div>
+        <button class="btn-save-sm hidden" id="btn-add-piece"
+          style="background:var(--surface);color:var(--brand);border:1.5px dashed var(--brand);">
+          + Add Piece
+        </button>
+      </div>
+      <div class="piece-scroll">
+        <div id="pieces-empty" class="empty-state">Select a book to view pieces.</div>
+        <table class="piece-table hidden" id="piece-table">
+          <thead>
+            <tr>
+              <th class="col-pgstart">Pg Start</th>
+              <th class="col-pgend">Pg End</th>
+              <th class="col-title">Title</th>
+              <th class="col-type">Type</th>
+              <th class="col-unit">Unit</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="piece-tbody"></tbody>
+        </table>
+      </div>
+      <div class="piece-add-bar hidden" id="piece-add-bar">
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- ══ Confirm modal ══ -->
@@ -320,34 +347,28 @@
   </div>
 </div>
 
-<!-- ══ Toast ══ -->
 <div id="toast"></div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// ── Config ──────────────────────────────────────────────────────────────
 const SUPABASE_URL  = 'https://xaayekfrlphyyxenhcjl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
 const SERIES_ID     = '96c05aaa-0329-4582-a35c-51423afc21dd';
 
 const PIECE_TYPES = [
-  'Lesson Piece',
-  'Challenge Piece',
-  'Getting Ready Exercises',
-  'Duet with Teacher',
-  'Lesson Worksheet'
+  'Lesson Piece', 'Challenge Piece', 'Getting Ready Exercises',
+  'Duet with Teacher', 'Lesson Worksheet'
 ];
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── State ───────────────────────────────────────────────────────────────
-let allBooks      = [];
-let allUnits      = [];
-let allPieces     = [];
-let currentBook   = null;
-let selectedUnitId= null;
-let bookDirty     = false;
+let allBooks       = [];
+let allUnits       = [];
+let allPieces      = [];
+let currentBook    = null;
+let activeUnitFilter = null;  // unit_label string or null
 
 // ── Auth ────────────────────────────────────────────────────────────────
 async function checkSession() {
@@ -373,18 +394,12 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   const email = document.getElementById('inp-email').value.trim();
   const pw    = document.getElementById('inp-password').value;
   if (!email || !pw) { showLoginError('Email and password are required.'); return; }
-
   const btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = 'Signing in…';
   document.getElementById('login-error').classList.add('hidden');
-
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
   btn.disabled = false; btn.textContent = 'Sign in';
-
-  if (error || !data.session) {
-    showLoginError(error?.message || 'Sign-in failed.');
-    return;
-  }
+  if (error || !data.session) { showLoginError(error?.message || 'Sign-in failed.'); return; }
   await tryShowEditor(data.user.email, data.user.id);
 });
 
@@ -393,14 +408,12 @@ document.getElementById('inp-password').addEventListener('keydown', e => {
 });
 
 document.getElementById('btn-signout').addEventListener('click', async () => {
-  await sb.auth.signOut();
-  location.reload();
+  await sb.auth.signOut(); location.reload();
 });
 
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.classList.remove('hidden');
+  el.textContent = msg; el.classList.remove('hidden');
 }
 
 // ── Books ────────────────────────────────────────────────────────────────
@@ -410,29 +423,24 @@ async function loadBooks() {
     .select('book_id, full_display_name, sequence_number, is_active, equivalent_books')
     .eq('series_id', SERIES_ID)
     .order('sequence_number');
-
   if (error) { toast('Failed to load books', 'error'); return; }
-
   allBooks = data || [];
   const sel = document.getElementById('book-select');
   sel.innerHTML = '<option value="">— select a book —</option>';
   allBooks.forEach(b => {
     const opt = document.createElement('option');
-    opt.value = b.book_id;
-    opt.textContent = b.full_display_name;
+    opt.value = b.book_id; opt.textContent = b.full_display_name;
     sel.appendChild(opt);
   });
 }
 
 document.getElementById('book-select').addEventListener('change', async () => {
   const bookId = document.getElementById('book-select').value;
+  activeUnitFilter = null;
   resetRightPanel();
 
   if (!bookId) {
     document.getElementById('book-fields').classList.add('hidden');
-    document.getElementById('units-header-row').classList.add('hidden');
-    document.getElementById('add-unit-footer').classList.add('hidden');
-    document.getElementById('units-list').innerHTML = '';
     currentBook = null;
     return;
   }
@@ -449,20 +457,18 @@ function renderBookFields() {
   document.getElementById('book-active').checked = b.is_active;
   document.getElementById('book-active-label').textContent = b.is_active ? 'Active' : 'Inactive';
 
-  // Equivalent books checklist
   const container = document.getElementById('equiv-list');
   container.innerHTML = '';
   const equivIds = b.equivalent_books || [];
   const others = allBooks.filter(ob => ob.book_id !== b.book_id);
-  if (others.length === 0) {
+  if (!others.length) {
     container.innerHTML = '<span style="font-size:0.78rem;color:var(--text-light)">No other books in series</span>';
   } else {
     others.forEach(ob => {
       const item = document.createElement('label');
       item.className = 'equiv-item';
       const chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.checked = equivIds.includes(ob.book_id);
+      chk.type = 'checkbox'; chk.checked = equivIds.includes(ob.book_id);
       chk.addEventListener('change', markBookDirty);
       item.appendChild(chk);
       item.appendChild(document.createTextNode(ob.full_display_name));
@@ -472,13 +478,8 @@ function renderBookFields() {
 
   clearBookDirty();
   document.getElementById('book-fields').classList.remove('hidden');
-  document.getElementById('units-header-row').classList.remove('hidden');
-  document.getElementById('add-unit-footer').classList.remove('hidden');
-
-  // Wire book field change listeners
-  ['book-name','book-seq'].forEach(id => {
-    document.getElementById(id).oninput = markBookDirty;
-  });
+  document.getElementById('book-name').oninput = markBookDirty;
+  document.getElementById('book-seq').oninput  = markBookDirty;
   document.getElementById('book-active').onchange = () => {
     markBookDirty();
     document.getElementById('book-active-label').textContent =
@@ -487,12 +488,9 @@ function renderBookFields() {
 }
 
 function markBookDirty() {
-  bookDirty = true;
   document.getElementById('book-save-btn').disabled = false;
 }
-
 function clearBookDirty() {
-  bookDirty = false;
   document.getElementById('book-save-btn').disabled = true;
 }
 
@@ -500,29 +498,20 @@ document.getElementById('book-save-btn').addEventListener('click', async () => {
   const name   = document.getElementById('book-name').value.trim();
   const seq    = parseInt(document.getElementById('book-seq').value);
   const active = document.getElementById('book-active').checked;
-
   if (!name) { toast('Display name cannot be empty', 'warn'); return; }
 
   const others = allBooks.filter(ob => ob.book_id !== currentBook.book_id);
-  const equivIds = others
-    .filter(ob => {
-      const el = document.querySelector(`#equiv-list input[type=checkbox]`);
-      // Find by position matching others array order
-      const items = document.querySelectorAll('#equiv-list input[type=checkbox]');
-      const idx = others.indexOf(ob);
-      return items[idx]?.checked;
-    })
-    .map(ob => ob.book_id);
+  const equivIds = others.filter((ob, i) => {
+    const items = document.querySelectorAll('#equiv-list input[type=checkbox]');
+    return items[i]?.checked;
+  }).map(ob => ob.book_id);
 
   const { error } = await sb.from('books').update({
-    full_display_name: name,
-    sequence_number:   isNaN(seq) ? null : seq,
-    is_active:         active,
-    equivalent_books:  equivIds.length ? equivIds : null
+    full_display_name: name, sequence_number: isNaN(seq) ? null : seq,
+    is_active: active, equivalent_books: equivIds.length ? equivIds : null
   }).eq('book_id', currentBook.book_id);
 
   if (error) { toast('Save failed: ' + error.message, 'error'); return; }
-
   Object.assign(currentBook, { full_display_name: name, sequence_number: seq, is_active: active, equivalent_books: equivIds });
   const opt = document.querySelector(`#book-select option[value="${currentBook.book_id}"]`);
   if (opt) opt.textContent = name;
@@ -530,7 +519,7 @@ document.getElementById('book-save-btn').addEventListener('click', async () => {
   toast('Book saved', 'success');
 });
 
-// ── Units ────────────────────────────────────────────────────────────────
+// ── Load units + pieces ──────────────────────────────────────────────────
 async function loadUnitsAndPieces(bookId) {
   const [uRes, pRes] = await Promise.all([
     sb.from('books_units')
@@ -542,215 +531,46 @@ async function loadUnitsAndPieces(bookId) {
       .eq('book_id', bookId).eq('series_id', SERIES_ID)
       .order('page_start')
   ]);
-
   if (uRes.error || pRes.error) { toast('Failed to load book data', 'error'); return; }
-
   allUnits  = uRes.data || [];
   allPieces = pRes.data || [];
-  selectedUnitId = null;
-
   renderUnits();
   renderPieces();
 }
 
-function renderUnits() {
-  const list = document.getElementById('units-list');
-  list.innerHTML = '';
-
-  if (!allUnits.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:24px">No units yet.</div>';
-    return;
-  }
-
-  allUnits.forEach(u => {
-    const row = document.createElement('div');
-    row.className = 'unit-row';
-    row.dataset.uid = u.unit_id;
-
-    row.innerHTML = `
-      <div class="unit-row-header">
-        <span class="unit-dirty-dot"></span>
-        <span class="unit-label-badge">${esc(u.unit_label)}</span>
-        <span class="unit-title-text">${esc(u.unit_title || '—')}</span>
-        <span class="unit-sort-num">#${u.unit_sort_order}</span>
-      </div>
-      <div class="unit-edit-area">
-        <div class="unit-edit-grid">
-          <div class="unit-edit-field">
-            <label>Title</label>
-            <input type="text" id="ut-${u.unit_id}" value="${esc(u.unit_title || '')}" />
-          </div>
-          <div class="unit-edit-field">
-            <label>Label</label>
-            <input type="text" id="ul-${u.unit_id}" value="${esc(u.unit_label)}" />
-          </div>
-          <div class="unit-edit-field">
-            <label>Sort</label>
-            <input type="number" id="us-${u.unit_id}" value="${u.unit_sort_order}" />
-          </div>
-        </div>
-        <div class="unit-edit-actions">
-          <button class="btn-danger-sm" onclick="confirmDeleteUnit('${u.unit_id}')">Delete</button>
-          <div style="display:flex;gap:6px">
-            <button class="btn-ghost-sm" onclick="revertUnit('${u.unit_id}')">Revert</button>
-            <button class="btn-save-sm" id="usave-${u.unit_id}" onclick="saveUnit('${u.unit_id}')" disabled>Save</button>
-          </div>
-        </div>
-      </div>`;
-
-    row.querySelector('.unit-row-header').addEventListener('click', () => selectUnit(u.unit_id));
-
-    // Wire dirty detection
-    const wireInput = (id, fn) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('input', fn);
-    };
-    wireInput(`ut-${u.unit_id}`, () => onUnitTitleInput(u.unit_id));
-    wireInput(`ul-${u.unit_id}`, () => markUnitDirty(u.unit_id));
-    wireInput(`us-${u.unit_id}`, () => markUnitDirty(u.unit_id));
-
-    list.appendChild(row);
-  });
-}
-
-function selectUnit(unitId) {
-  selectedUnitId = unitId;
-  document.querySelectorAll('.unit-row').forEach(r => {
-    r.classList.toggle('selected', r.dataset.uid === unitId);
-  });
-}
-
-function onUnitTitleInput(unitId) {
-  markUnitDirty(unitId);
-  const titleVal = document.getElementById(`ut-${unitId}`)?.value.trim();
-  const asInt = parseInt(titleVal);
-  if (String(asInt) === titleVal) {
-    document.getElementById(`us-${unitId}`).value = asInt;
-  }
-}
-
-function markUnitDirty(unitId) {
-  document.getElementById(`usave-${unitId}`).disabled = false;
-  const row = document.querySelector(`.unit-row[data-uid="${unitId}"]`);
-  if (row) row.classList.add('unit-dirty');
-}
-
-function revertUnit(unitId) {
-  const u = allUnits.find(x => x.unit_id === unitId);
-  if (!u) return;
-  document.getElementById(`ut-${unitId}`).value = u.unit_title || '';
-  document.getElementById(`ul-${unitId}`).value = u.unit_label;
-  document.getElementById(`us-${unitId}`).value = u.unit_sort_order;
-  document.getElementById(`usave-${unitId}`).disabled = true;
-  document.querySelector(`.unit-row[data-uid="${unitId}"]`)?.classList.remove('unit-dirty');
-}
-
-window.confirmDeleteUnit = async (unitId) => {
-  const u = allUnits.find(x => x.unit_id === unitId);
-  if (!u) return;
-  const pieces = allPieces.filter(p => p.unit_label === u.unit_label);
-  if (pieces.length) {
-    toast(`Cannot delete — unit has ${pieces.length} piece(s). Remove pieces first.`, 'warn');
-    return;
-  }
-  const ok = await confirmAsync('Delete Unit', `Delete unit "${u.unit_label}${u.unit_title ? ' — ' + u.unit_title : ''}"?\n\nThis cannot be undone.`);
-  if (!ok) return;
-  const { error } = await sb.from('books_units').delete().eq('unit_id', unitId);
-  if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
-  allUnits = allUnits.filter(x => x.unit_id !== unitId);
-  if (selectedUnitId === unitId) selectedUnitId = null;
-  renderUnits();
-  toast('Unit deleted', 'success');
-};
-
-window.saveUnit = async (unitId) => {
-  const u = allUnits.find(x => x.unit_id === unitId);
-  const newTitle = document.getElementById(`ut-${unitId}`).value.trim();
-  const newLabel = document.getElementById(`ul-${unitId}`).value.trim();
-  const newSort  = parseInt(document.getElementById(`us-${unitId}`).value);
-
-  if (!newLabel) { toast('Unit label cannot be empty', 'warn'); return; }
-  if (isNaN(newSort)) { toast('Sort order must be a number', 'warn'); return; }
-
-  const labelChanged = newLabel !== u.unit_label;
-  if (labelChanged) {
-    const affected = allPieces.filter(p => p.unit_label === u.unit_label);
-    if (affected.length) {
-      const ok = await confirmAsync(
-        'Unit Label Change',
-        `Changing the label from "${u.unit_label}" to "${newLabel}" will update ${affected.length} piece(s).\n\nProceed?`
-      );
-      if (!ok) return;
-    }
-  }
-
-  const { error } = await sb.from('books_units').update({
-    unit_title: newTitle || null,
-    unit_label: newLabel,
-    unit_sort_order: newSort
-  }).eq('unit_id', unitId);
-  if (error) { toast('Save failed: ' + error.message, 'error'); return; }
-
-  // Cascade to pieces
-  const affectedPieces = allPieces.filter(p => p.unit_label === u.unit_label);
-  for (const p of affectedPieces) {
-    await sb.from('books_pieces').update({
-      unit_label: newLabel,
-      unit_sort_order: newSort
-    }).eq('piece_id', p.piece_id);
-    p.unit_label     = newLabel;
-    p.unit_sort_order = newSort;
-  }
-
-  u.unit_title     = newTitle;
-  u.unit_label     = newLabel;
-  u.unit_sort_order = newSort;
-
-  allUnits.sort((a, b) => a.unit_sort_order - b.unit_sort_order);
-  renderUnits();
-  selectUnit(unitId);
-  renderPieces();
-  toast('Unit saved', 'success');
-};
-
-document.getElementById('btn-add-unit').addEventListener('click', async () => {
-  const maxSort = allUnits.length ? Math.max(...allUnits.map(u => u.unit_sort_order)) + 1 : 1;
-  const newId = crypto.randomUUID();
-  const newUnit = {
-    unit_id: newId, series_id: SERIES_ID, book_id: currentBook.book_id,
-    unit_label: 'NEW', unit_sort_order: maxSort, unit_title: ''
-  };
-  const { error } = await sb.from('books_units').insert(newUnit);
-  if (error) { toast('Add failed: ' + error.message, 'error'); return; }
-  allUnits.push(newUnit);
-  renderUnits();
-  selectUnit(newId);
-  toast('Unit added — edit and save', 'success');
-});
-
-// ── Pieces ───────────────────────────────────────────────────────────────
 function resetRightPanel() {
-  document.getElementById('pieces-empty').textContent = 'Select a book to view its pieces.';
+  activeUnitFilter = null;
+  allUnits  = [];
+  allPieces = [];
+  document.getElementById('units-empty').textContent = 'Select a book to view units.';
+  document.getElementById('units-empty').classList.remove('hidden');
+  document.getElementById('units-table').classList.add('hidden');
+  document.getElementById('unit-add-bar').classList.add('hidden');
+  document.getElementById('units-hint').textContent = '';
+  document.getElementById('pieces-empty').textContent = 'Select a book to view pieces.';
   document.getElementById('pieces-empty').classList.remove('hidden');
   document.getElementById('piece-table').classList.add('hidden');
-  document.getElementById('piece-count').textContent = '';
   document.getElementById('btn-add-piece').classList.add('hidden');
+  document.getElementById('piece-count').textContent = '';
+  document.getElementById('filter-badge').style.display = 'none';
+  document.getElementById('units-tbody').innerHTML = '';
   document.getElementById('piece-tbody').innerHTML = '';
-  allPieces = [];
 }
 
-function renderPieces() {
-  const tbody  = document.getElementById('piece-tbody');
-  const table  = document.getElementById('piece-table');
-  const empty  = document.getElementById('pieces-empty');
-  const addBtn = document.getElementById('btn-add-piece');
+// ── Units ────────────────────────────────────────────────────────────────
+function renderUnits() {
+  const tbody = document.getElementById('units-tbody');
+  const table = document.getElementById('units-table');
+  const empty = document.getElementById('units-empty');
+  const addBar = document.getElementById('unit-add-bar');
 
   tbody.innerHTML = '';
-  addBtn.classList.remove('hidden');
-  document.getElementById('piece-count').textContent = `${allPieces.length} piece${allPieces.length !== 1 ? 's' : ''}`;
+  addBar.classList.remove('hidden');
+  document.getElementById('units-hint').textContent =
+    allUnits.length ? 'Click a unit to filter pieces' : '';
 
-  if (!allPieces.length) {
-    empty.textContent = 'No pieces yet. Add one above.';
+  if (!allUnits.length) {
+    empty.textContent = 'No units yet.';
     empty.classList.remove('hidden');
     table.classList.add('hidden');
     return;
@@ -759,7 +579,208 @@ function renderPieces() {
   empty.classList.add('hidden');
   table.classList.remove('hidden');
 
-  const sorted = [...allPieces].sort((a, b) => (a.page_start ?? 9999) - (b.page_start ?? 9999));
+  allUnits.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.dataset.uid = u.unit_id;
+    if (activeUnitFilter === u.unit_label) tr.classList.add('unit-selected');
+
+    tr.innerHTML = `
+      <td class="col-ulabel">
+        <input class="unit-cell-inp" type="text" data-field="unit_label"
+          value="${esc(u.unit_label)}" data-orig="${esc(u.unit_label)}" />
+      </td>
+      <td class="col-usort">
+        <input class="unit-cell-inp" type="number" data-field="unit_sort_order"
+          value="${u.unit_sort_order}" data-orig="${u.unit_sort_order}" />
+      </td>
+      <td class="col-utitle">
+        <input class="unit-cell-inp" type="text" data-field="unit_title"
+          value="${esc(u.unit_title || '')}" data-orig="${esc(u.unit_title || '')}" />
+      </td>
+      <td class="col-uacts">
+        <div class="unit-row-acts">
+          <button class="act-btn save-btn hidden" id="usave-${u.unit_id}" title="Save unit" onclick="saveUnit('${u.unit_id}')">✓</button>
+          <button class="act-btn revert-btn hidden" id="urevert-${u.unit_id}" title="Revert" onclick="revertUnit('${u.unit_id}')">↩</button>
+          <button class="act-btn delete-btn" title="Delete unit" onclick="confirmDeleteUnit('${u.unit_id}')">✕</button>
+        </div>
+      </td>`;
+
+    // Click row to toggle unit filter (but not when clicking inputs)
+    tr.addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      toggleUnitFilter(u.unit_label, tr);
+    });
+
+    // Title auto-populates sort if numeric
+    const titleInp = tr.querySelector('[data-field="unit_title"]');
+    titleInp.addEventListener('input', () => {
+      const v = titleInp.value.trim();
+      const n = parseInt(v);
+      if (String(n) === v) tr.querySelector('[data-field="unit_sort_order"]').value = n;
+      markUnitRowDirty(tr, u.unit_id);
+    });
+
+    tr.querySelector('[data-field="unit_label"]').addEventListener('input', () => markUnitRowDirty(tr, u.unit_id));
+    tr.querySelector('[data-field="unit_sort_order"]').addEventListener('input', () => markUnitRowDirty(tr, u.unit_id));
+
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleUnitFilter(unitLabel, tr) {
+  if (activeUnitFilter === unitLabel) {
+    // Deselect — show all
+    activeUnitFilter = null;
+    document.querySelectorAll('#units-tbody tr').forEach(r => r.classList.remove('unit-selected'));
+    document.getElementById('filter-badge').style.display = 'none';
+  } else {
+    activeUnitFilter = unitLabel;
+    document.querySelectorAll('#units-tbody tr').forEach(r => r.classList.remove('unit-selected'));
+    tr.classList.add('unit-selected');
+    document.getElementById('filter-badge').style.display = 'inline-block';
+  }
+  renderPieces();
+}
+
+function markUnitRowDirty(tr, unitId) {
+  tr.classList.add('unit-dirty');
+  document.getElementById(`usave-${unitId}`)?.classList.remove('hidden');
+  document.getElementById(`urevert-${unitId}`)?.classList.remove('hidden');
+}
+
+window.revertUnit = (unitId) => {
+  const tr = document.querySelector(`#units-tbody tr[data-uid="${unitId}"]`);
+  if (!tr) return;
+  tr.querySelectorAll('[data-orig]').forEach(el => { el.value = el.dataset.orig; });
+  tr.classList.remove('unit-dirty');
+  document.getElementById(`usave-${unitId}`)?.classList.add('hidden');
+  document.getElementById(`urevert-${unitId}`)?.classList.add('hidden');
+};
+
+window.saveUnit = async (unitId) => {
+  const tr = document.querySelector(`#units-tbody tr[data-uid="${unitId}"]`);
+  if (!tr) return;
+  const u = allUnits.find(x => x.unit_id === unitId);
+  const newLabel = tr.querySelector('[data-field="unit_label"]').value.trim();
+  const newSort  = parseInt(tr.querySelector('[data-field="unit_sort_order"]').value);
+  const newTitle = tr.querySelector('[data-field="unit_title"]').value.trim();
+
+  if (!newLabel) { toast('Unit label cannot be empty', 'warn'); return; }
+  if (isNaN(newSort)) { toast('Sort order must be a number', 'warn'); return; }
+
+  const labelChanged = newLabel !== u.unit_label;
+  if (labelChanged) {
+    const affected = allPieces.filter(p => p.unit_label === u.unit_label);
+    if (affected.length) {
+      const ok = await confirmAsync('Unit Label Change',
+        `Changing label from "${u.unit_label}" to "${newLabel}" will update ${affected.length} piece(s).\n\nProceed?`);
+      if (!ok) return;
+    }
+  }
+
+  const { error } = await sb.from('books_units').update({
+    unit_label: newLabel, unit_sort_order: newSort, unit_title: newTitle || null
+  }).eq('unit_id', unitId);
+  if (error) { toast('Save failed: ' + error.message, 'error'); return; }
+
+  // Cascade label + sort to pieces
+  for (const p of allPieces.filter(p => p.unit_label === u.unit_label)) {
+    await sb.from('books_pieces').update({ unit_label: newLabel, unit_sort_order: newSort }).eq('piece_id', p.piece_id);
+    p.unit_label = newLabel; p.unit_sort_order = newSort;
+  }
+
+  // Update active filter if label changed
+  if (labelChanged && activeUnitFilter === u.unit_label) activeUnitFilter = newLabel;
+
+  u.unit_label = newLabel; u.unit_sort_order = newSort; u.unit_title = newTitle;
+  allUnits.sort((a, b) => a.unit_sort_order - b.unit_sort_order);
+
+  // Update orig baselines on row
+  tr.querySelectorAll('[data-orig]').forEach(el => { el.dataset.orig = el.value; });
+  tr.classList.remove('unit-dirty');
+  document.getElementById(`usave-${unitId}`)?.classList.add('hidden');
+  document.getElementById(`urevert-${unitId}`)?.classList.add('hidden');
+
+  renderUnits();
+  renderPieces();
+  toast('Unit saved', 'success');
+};
+
+window.confirmDeleteUnit = async (unitId) => {
+  const u = allUnits.find(x => x.unit_id === unitId);
+  if (!u) return;
+  const pieces = allPieces.filter(p => p.unit_label === u.unit_label);
+  if (pieces.length) { toast(`Cannot delete — unit has ${pieces.length} piece(s). Remove pieces first.`, 'warn'); return; }
+  const ok = await confirmAsync('Delete Unit',
+    `Delete unit "${u.unit_label}${u.unit_title ? ' — ' + u.unit_title : ''}"?\n\nThis cannot be undone.`);
+  if (!ok) return;
+  const { error } = await sb.from('books_units').delete().eq('unit_id', unitId);
+  if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
+  allUnits = allUnits.filter(x => x.unit_id !== unitId);
+  if (activeUnitFilter === u.unit_label) { activeUnitFilter = null; document.getElementById('filter-badge').style.display = 'none'; }
+  renderUnits();
+  renderPieces();
+  toast('Unit deleted', 'success');
+};
+
+document.getElementById('btn-add-unit').addEventListener('click', async () => {
+  const maxSort = allUnits.length ? Math.max(...allUnits.map(u => u.unit_sort_order)) + 1 : 1;
+  const newId = crypto.randomUUID();
+  const newUnit = { unit_id: newId, series_id: SERIES_ID, book_id: currentBook.book_id,
+    unit_label: 'NEW', unit_sort_order: maxSort, unit_title: '' };
+  const { error } = await sb.from('books_units').insert(newUnit);
+  if (error) { toast('Add failed: ' + error.message, 'error'); return; }
+  allUnits.push(newUnit);
+  renderUnits();
+  // Focus the label cell of new row
+  const newRow = document.querySelector(`#units-tbody tr[data-uid="${newId}"]`);
+  newRow?.querySelector('[data-field="unit_label"]')?.focus();
+  toast('Unit added — edit and save', 'success');
+});
+
+// Filter badge — click to clear filter
+document.getElementById('filter-badge').addEventListener('click', () => {
+  activeUnitFilter = null;
+  document.querySelectorAll('#units-tbody tr').forEach(r => r.classList.remove('unit-selected'));
+  document.getElementById('filter-badge').style.display = 'none';
+  renderPieces();
+});
+
+// ── Pieces ───────────────────────────────────────────────────────────────
+function renderPieces() {
+  const tbody  = document.getElementById('piece-tbody');
+  const table  = document.getElementById('piece-table');
+  const empty  = document.getElementById('pieces-empty');
+  const addBtn = document.getElementById('btn-add-piece');
+  const countEl = document.getElementById('piece-count');
+
+  tbody.innerHTML = '';
+  addBtn.classList.remove('hidden');
+
+  // Apply unit filter if active
+  const visible = activeUnitFilter
+    ? allPieces.filter(p => p.unit_label === activeUnitFilter)
+    : allPieces;
+
+  const total = allPieces.length;
+  const shown = visible.length;
+  countEl.textContent = activeUnitFilter
+    ? `${shown} of ${total} pieces`
+    : `${total} piece${total !== 1 ? 's' : ''}`;
+
+  if (!visible.length) {
+    empty.textContent = activeUnitFilter
+      ? `No pieces in unit ${activeUnitFilter}.`
+      : (currentBook ? 'No pieces yet. Add one above.' : 'Select a book to view pieces.');
+    empty.classList.remove('hidden');
+    table.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  table.classList.remove('hidden');
+
+  const sorted = [...visible].sort((a, b) => (a.page_start ?? 9999) - (b.page_start ?? 9999));
   sorted.forEach(p => tbody.appendChild(buildPieceRow(p)));
 }
 
@@ -792,14 +813,12 @@ function buildPieceRow(p, isNew = false) {
     </td>
     <td class="col-type">
       <select class="cell-inp" data-field="piece_type" data-orig="${esc(p.piece_type || '')}">
-        <option value="">—</option>
-        ${typeOptions(p.piece_type)}
+        <option value="">—</option>${typeOptions(p.piece_type)}
       </select>
     </td>
     <td class="col-unit">
       <select class="cell-inp" data-field="unit_label" data-orig="${esc(p.unit_label || '')}">
-        <option value="">—</option>
-        ${unitOptions(p.unit_label)}
+        <option value="">—</option>${unitOptions(p.unit_label)}
       </select>
     </td>
     <td class="col-actions">
@@ -810,22 +829,20 @@ function buildPieceRow(p, isNew = false) {
       </div>
     </td>`;
 
-  // Wire events
-  const pgStart = tr.querySelector('[data-field="page_start"]');
-  pgStart.addEventListener('input', () => {
+  tr.querySelector('[data-field="page_start"]').addEventListener('input', () => {
     tr.querySelector('[data-field="page_end"]').value = '';
     markRowDirty(tr);
   });
-
-  tr.querySelectorAll('[data-field="page_end"],[data-field="piece_title"],[data-field="piece_type"],[data-field="unit_label"]')
-    .forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => markRowDirty(tr)));
+  tr.querySelectorAll('[data-field="page_end"],[data-field="piece_title"]')
+    .forEach(el => el.addEventListener('input', () => markRowDirty(tr)));
+  tr.querySelectorAll('[data-field="piece_type"],[data-field="unit_label"]')
+    .forEach(el => el.addEventListener('change', () => markRowDirty(tr)));
 
   return tr;
 }
 
 function markRowDirty(tr) {
-  tr.classList.add('row-dirty');
-  tr.classList.remove('row-new');
+  tr.classList.add('row-dirty'); tr.classList.remove('row-new');
   const pid = tr.dataset.pid;
   document.getElementById(`psave-${pid}`)?.classList.remove('hidden');
   document.getElementById(`prev-${pid}`)?.classList.remove('hidden');
@@ -843,37 +860,26 @@ window.revertPiece = (pieceId) => {
 window.savePiece = async (pieceId) => {
   const tr = document.querySelector(`tr[data-pid="${pieceId}"]`);
   if (!tr) return;
-
   const get = f => tr.querySelector(`[data-field="${f}"]`)?.value;
-
   const title     = get('piece_title')?.trim();
   const type      = get('piece_type') || null;
   const unitLabel = get('unit_label') || null;
   const pgStartRaw = get('page_start');
   const pgEndRaw   = get('page_end');
-
   if (!title) { toast('Title cannot be empty', 'warn'); return; }
-
   const pageStart = pgStartRaw !== '' ? parseInt(pgStartRaw) : null;
   const pageEnd   = pgEndRaw   !== '' ? parseInt(pgEndRaw)   : null;
-
   const unit = allUnits.find(u => u.unit_label === unitLabel);
-  const unitSortOrder = unit?.unit_sort_order ?? null;
-
-  const updates = { piece_title: title, piece_type: type, page_start: pageStart, page_end: pageEnd, unit_label: unitLabel, unit_sort_order: unitSortOrder };
-
+  const updates = { piece_title: title, piece_type: type, page_start: pageStart, page_end: pageEnd,
+    unit_label: unitLabel, unit_sort_order: unit?.unit_sort_order ?? null };
   const { error } = await sb.from('books_pieces').update(updates).eq('piece_id', pieceId);
   if (error) { toast('Save failed: ' + error.message, 'error'); return; }
-
   const p = allPieces.find(x => x.piece_id === pieceId);
   if (p) Object.assign(p, updates);
-
-  // Update orig baselines
   tr.querySelectorAll('[data-orig]').forEach(el => { el.dataset.orig = el.value; });
   tr.classList.remove('row-dirty', 'row-new');
   document.getElementById(`psave-${pieceId}`)?.classList.add('hidden');
   document.getElementById(`prev-${pieceId}`)?.classList.add('hidden');
-
   resortRows();
   toast('Piece saved', 'success');
 };
@@ -891,7 +897,9 @@ function resortRows() {
 
 document.getElementById('btn-add-piece').addEventListener('click', async () => {
   const newId = crypto.randomUUID();
-  const firstUnit = allUnits[0];
+  const firstUnit = activeUnitFilter
+    ? allUnits.find(u => u.unit_label === activeUnitFilter)
+    : allUnits[0];
   const newPiece = {
     piece_id: newId, series_id: SERIES_ID, book_id: currentBook.book_id,
     piece_title: 'New Piece', piece_type: 'Lesson Piece',
@@ -899,65 +907,48 @@ document.getElementById('btn-add-piece').addEventListener('click', async () => {
     unit_label: firstUnit?.unit_label || null,
     unit_sort_order: firstUnit?.unit_sort_order || null
   };
-
   const { error } = await sb.from('books_pieces').insert(newPiece);
   if (error) { toast('Add failed: ' + error.message, 'error'); return; }
-
   allPieces.push(newPiece);
-
-  const tbody = document.getElementById('piece-tbody');
   document.getElementById('piece-table').classList.remove('hidden');
   document.getElementById('pieces-empty').classList.add('hidden');
-
+  const tbody = document.getElementById('piece-tbody');
   const tr = buildPieceRow(newPiece, true);
   tbody.insertBefore(tr, tbody.firstChild);
   tr.querySelector('[data-field="piece_title"]')?.focus();
   tr.querySelector('[data-field="piece_title"]')?.select();
-
-  document.getElementById('piece-count').textContent = `${allPieces.length} piece${allPieces.length !== 1 ? 's' : ''}`;
+  const total = allPieces.length;
+  const shown = activeUnitFilter ? allPieces.filter(p => p.unit_label === activeUnitFilter).length : total;
+  document.getElementById('piece-count').textContent = activeUnitFilter
+    ? `${shown} of ${total} pieces` : `${total} piece${total !== 1 ? 's' : ''}`;
 });
 
 window.confirmDeletePiece = async (pieceId) => {
   const p = allPieces.find(x => x.piece_id === pieceId);
   if (!p) return;
-
-  // Check for open sessions on this book
   let warning = '';
-  const { data: openSessions } = await sb
-    .from('active_sessions')
-    .select('session_id')
-    .eq('series_id', SERIES_ID);
-
+  const { data: openSessions } = await sb.from('active_sessions').select('session_id').eq('series_id', SERIES_ID);
   if (openSessions?.length) {
     const ids = openSessions.map(s => s.session_id).filter(Boolean);
     if (ids.length) {
-      const { data: matching } = await sb
-        .from('sessions')
-        .select('session_id')
-        .eq('lesson_book_id', currentBook.book_id)
-        .in('session_id', ids);
-      if (matching?.length) {
-        warning = '\n\nWarning: there is an open session for this book. Deleting this piece may affect session close for that teacher.';
-      }
+      const { data: matching } = await sb.from('sessions').select('session_id')
+        .eq('lesson_book_id', currentBook.book_id).in('session_id', ids);
+      if (matching?.length) warning = '\n\nWarning: there is an open session for this book. Deleting this piece may affect session close for that teacher.';
     }
   }
-
-  const ok = await confirmAsync(
-    'Delete Piece',
-    `Delete "${p.piece_title}"? This cannot be undone.${warning}`
-  );
+  const ok = await confirmAsync('Delete Piece', `Delete "${p.piece_title}"? This cannot be undone.${warning}`);
   if (!ok) return;
-
   const { error } = await sb.from('books_pieces').delete().eq('piece_id', pieceId);
   if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
-
   allPieces = allPieces.filter(x => x.piece_id !== pieceId);
   document.querySelector(`tr[data-pid="${pieceId}"]`)?.remove();
-  document.getElementById('piece-count').textContent = `${allPieces.length} piece${allPieces.length !== 1 ? 's' : ''}`;
-
-  if (!allPieces.length) {
+  const total = allPieces.length;
+  const shown = activeUnitFilter ? allPieces.filter(p => p.unit_label === activeUnitFilter).length : total;
+  document.getElementById('piece-count').textContent = activeUnitFilter
+    ? `${shown} of ${total} pieces` : `${total} piece${total !== 1 ? 's' : ''}`;
+  if (!document.querySelector('#piece-tbody tr')) {
     document.getElementById('piece-table').classList.add('hidden');
-    document.getElementById('pieces-empty').textContent = 'No pieces yet. Add one above.';
+    document.getElementById('pieces-empty').textContent = activeUnitFilter ? `No pieces in unit ${activeUnitFilter}.` : 'No pieces yet.';
     document.getElementById('pieces-empty').classList.remove('hidden');
   }
   toast('Piece deleted', 'success');
@@ -965,7 +956,6 @@ window.confirmDeletePiece = async (pieceId) => {
 
 // ── Modal ────────────────────────────────────────────────────────────────
 let _modalResolve = null;
-
 function confirmAsync(title, body) {
   return new Promise(resolve => {
     _modalResolve = resolve;
@@ -975,20 +965,17 @@ function confirmAsync(title, body) {
     document.getElementById('modal-confirm').onclick = () => { closeModal(); resolve(true); };
   });
 }
-
 function closeModal() {
   document.getElementById('confirm-modal').classList.remove('open');
   if (_modalResolve) { _modalResolve(false); _modalResolve = null; }
 }
-
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 
 // ── Toast ────────────────────────────────────────────────────────────────
 let _toastTimer = null;
 function toast(msg, type = 'success') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `show t-${type}`;
+  el.textContent = msg; el.className = `show t-${type}`;
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => { el.className = ''; }, 3000);
 }
