@@ -982,22 +982,23 @@ window.scrapeUrl = async function() {
     // ── Duplicate check: use canonical URL returned by scraper ─────────────
     const canonicalUrl = json.url || url;
     const normUrl = (canonicalUrl.startsWith('http') ? canonicalUrl : `https://${canonicalUrl}`).replace(/\/?$/, '/');
-    console.log('[dup-check] comparing normUrl:', normUrl);
-    const { data: existing, error: dupErr } = await sb
+    const { data: existing } = await sb
       .from('supplements')
       .select('supplement_id, title')
       .eq('source_url', normUrl)
       .eq('series_id', SERIES_ID)
       .maybeSingle();
-    console.log('[dup-check] existing:', JSON.stringify(existing), 'error:', JSON.stringify(dupErr));
 
     if (existing) {
       statusEl.classList.add('hidden');
       showMsg(msgEl, 'warn',
         `This URL already exists in the library as "${existing.title}". Opening in Edit mode…`);
-      await loadSupplements();
       setTimeout(() => {
         setMode('edit');
+        // Add the record to state minimally so closeEditForm can return to list
+        if (!state.allSupplements.find(s => s.supplement_id === existing.supplement_id)) {
+          state.allSupplements.push(existing);
+        }
         openEditForm(existing.supplement_id);
       }, 1200);
       return;
