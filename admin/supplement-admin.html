@@ -978,6 +978,27 @@ window.scrapeUrl = async function() {
     }
 
     state.scrapeData = json;
+
+    // ── Duplicate check: see if source_url already exists ──────────────────
+    const { data: existing } = await sb
+      .from('supplements')
+      .select('supplement_id, title')
+      .eq('source_url', url)
+      .eq('series_id', SERIES_ID)
+      .maybeSingle();
+
+    if (existing) {
+      statusEl.classList.add('hidden');
+      showMsg(msgEl, 'warn',
+        `This URL already exists in the library as "${existing.title}". Opening in Edit mode…`);
+      await loadSupplements();
+      setTimeout(() => {
+        setMode('edit');
+        openEditForm(existing.supplement_id);
+      }, 1200);
+      return;
+    }
+
     populateNewFields(json);
     statusEl.classList.add('hidden');
     ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
