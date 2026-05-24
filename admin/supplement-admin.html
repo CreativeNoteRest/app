@@ -402,6 +402,13 @@
 
       <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Select the earliest piece in the curriculum where this supplement becomes appropriate. If you select book + unit only, the supplement will be anchored to the first piece in that unit.</p>
 
+      <!-- Association clues extracted from scraped page content -->
+      <div id="new-assoc-hints" class="hidden" style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:9px;padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:6px;">📚 Curriculum clues from page</div>
+        <ul id="new-assoc-hints-list" style="margin:0;padding-left:16px;font-size:0.82rem;color:#92400E;line-height:1.7;"></ul>
+        <div style="font-size:0.72rem;color:#B45309;margin-top:6px;">These are text extracts — use them as a guide for the selections below.</div>
+      </div>
+
       <div class="cascade-row">
         <div>
           <label class="form-lbl" for="new-book">Book</label>
@@ -981,6 +988,59 @@ window.scrapeUrl = async function() {
   }
 };
 
+function extractAssociationHints(data) {
+  const hintsEl = document.getElementById('new-assoc-hints');
+  const listEl  = document.getElementById('new-assoc-hints-list');
+  listEl.innerHTML = '';
+
+  // Build corpus: title + page text
+  const corpus = [data.title || '', data.page_text || ''].join(' ');
+
+  // Keywords that suggest curriculum association
+  const keywords = [
+    /\b(primer|preschool|beginner|intermediate|advanced)\b/gi,
+    /\blevel\s*\d*[AB]?\b/gi,
+    /\bunit\s*\d+\b/gi,
+    /\bbook\s*\d+\b/gi,
+    /\b(volume|vol\.?)\s*\d+\b/gi,
+    /\b[12][AB]\b/g,   // e.g. 1A, 1B, 2A, 2B
+    /\bgrade\s*\d+\b/gi,
+  ];
+
+  const snippets = new Set();
+
+  for (const pattern of keywords) {
+    let match;
+    const re = new RegExp(pattern.source, pattern.flags);
+    while ((match = re.exec(corpus)) !== null) {
+      // Extract ~80 chars of context around the match
+      const start = Math.max(0, match.index - 40);
+      const end   = Math.min(corpus.length, match.index + match[0].length + 40);
+      let snippet = corpus.slice(start, end).trim();
+      // Clean up whitespace
+      snippet = snippet.replace(/\s+/g, ' ');
+      // Add ellipsis if truncated
+      if (start > 0) snippet = '…' + snippet;
+      if (end < corpus.length) snippet = snippet + '…';
+      snippets.add(snippet);
+      if (snippets.size >= 5) break;
+    }
+    if (snippets.size >= 5) break;
+  }
+
+  if (!snippets.size) {
+    hintsEl.classList.add('hidden');
+    return;
+  }
+
+  snippets.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    listEl.appendChild(li);
+  });
+  hintsEl.classList.remove('hidden');
+}
+
 function populateNewFields(data) {
   document.getElementById('new-title').value       = data.title        || '';
   document.getElementById('new-thumb-url').value   = data.thumbnail_url || '';
@@ -988,6 +1048,9 @@ function populateNewFields(data) {
   document.getElementById('new-source').value      = data.source || (siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys');
   document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
   updateThumbPreview('new');
+
+  // Extract curriculum association clues from scraped content
+  extractAssociationHints(data);
 
   // Season detection — scan all available strings for season label keywords
   const combined = [
@@ -1193,6 +1256,8 @@ window.resetNewForm = function() {
   document.getElementById('new-thumb-preview').textContent = '🖼';
   const suggEl = document.getElementById('new-season-suggested');
   if (suggEl) { suggEl.style.display = 'none'; suggEl.classList.add('hidden'); }
+  const hintsEl = document.getElementById('new-assoc-hints');
+  if (hintsEl) hintsEl.classList.add('hidden');
   ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
   ['scrape-msg','save-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
   state.scrapeData = null;
