@@ -842,7 +842,10 @@ window.setMode = function(mode) {
 
 // ── Seasons (dynamic from DB) ─────────────────────────────────────────────────
 async function loadSeasons() {
-  const { data, error } = await sb.from('season_windows').select('season_label').order('season_label');
+  const { data, error, status, statusText } = await sb.from('season_windows').select('season_label').order('season_label');
+  console.log('[loadSeasons] status:', status, statusText);
+  console.log('[loadSeasons] error:', JSON.stringify(error));
+  console.log('[loadSeasons] data:', JSON.stringify(data));
   if (error) { console.warn('[loadSeasons] query error:', error); return; }
   if (!data || !data.length) { console.warn('[loadSeasons] no rows returned — check series_id filter'); return; }
   state.seasons = data.map(r => r.season_label);
