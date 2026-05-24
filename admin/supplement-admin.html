@@ -335,7 +335,10 @@
     <!-- Step 2: Extracted fields (shown after scrape or edit load) -->
     <div id="fields-card" class="card hidden">
       <div class="card-tag" id="fields-card-tag">Step 2</div>
-      <div class="card-title" id="fields-card-title">Supplement details</div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;">
+        <div class="card-title" id="fields-card-title" style="margin-bottom:0;">Supplement details</div>
+        <a id="btn-open-pdf" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;flex-shrink:0;">📄 Open PDF</a>
+      </div>
       <div id="fields-msg" class="hidden"></div>
 
       <!-- Thumbnail + title + source -->
@@ -373,11 +376,7 @@
       <div class="form-row-grid">
         <div>
           <label class="form-lbl" for="new-pdf-url">PDF URL <span>— auto-detected</span></label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" style="flex:1;margin:0;" oninput="updatePdfLink()" />
-            <a id="btn-open-pdf" href="#" target="_blank" rel="noopener" class="btn-secondary hidden" style="height:46px;display:inline-flex;align-items:center;padding:0 14px;text-decoration:none;flex-shrink:0;">📄 Open PDF</a>
-            <button class="btn-secondary" id="btn-refetch-pdf-url" onclick="refetchPdfUrl()" title="Re-fetch source page to recover PDF URL" style="height:46px;flex-shrink:0;">↺ Find PDF URL</button>
-          </div>
+          <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" oninput="updatePdfLink()" />
         </div>
         <div>
           <label class="form-lbl" for="new-match-context">Match context <span>optional</span></label>
@@ -1275,6 +1274,22 @@ window.openEditForm = async function(id) {
   updateThumbPreview('new');
   updatePdfLink();
 
+  // If no PDF URL in database, silently re-fetch from source page in background
+  if (!data.pdf_url && data.source_url) {
+    const site   = siteFromUrl(data.source_url);
+    const cookie = site ? state.cookies[site] : '';
+    fetch(`${EF_BASE}/scrape-supplement`, {
+      method: 'POST',
+      headers: EF_HEADERS,
+      body: JSON.stringify({ url: data.source_url, cookie, series_id: SERIES_ID, auth_user_id: state.authUserId })
+    }).then(r => r.json()).then(json => {
+      if (json.pdf_url) {
+        document.getElementById('new-pdf-url').value = json.pdf_url;
+        updatePdfLink();
+      }
+    }).catch(() => {}); // silent — no error shown to user
+  }
+
   // Description
   document.getElementById('edit-scraped-content').value = data.search_description || '';
   document.getElementById('edit-sme-notes').value       = '';
@@ -1383,50 +1398,6 @@ window.toggleDictation = function(targetId) {
   };
 
   recognition.start();
-};
-
-// ── Re-fetch PDF URL from source page ────────────────────────────────────────
-window.refetchPdfUrl = async function() {
-  const url = document.getElementById('new-url').value.trim();
-  if (!url) { return; }
-
-  const site   = siteFromUrl(url);
-  const cookie = site ? state.cookies[site] : '';
-  const btn    = document.getElementById('btn-refetch-pdf-url');
-  const msgEl  = document.getElementById('fields-msg');
-
-  btn.disabled = true;
-  btn.textContent = 'Fetching…';
-  msgEl.classList.add('hidden');
-
-  try {
-    const res = await fetch(`${EF_BASE}/scrape-supplement`, {
-      method: 'POST',
-      headers: EF_HEADERS,
-      body: JSON.stringify({ url, cookie, series_id: SERIES_ID, auth_user_id: state.authUserId })
-    });
-    const json = await res.json();
-
-    if (!res.ok || json.error) {
-      showMsg(msgEl, 'error', json.error === 'cookie_expired'
-        ? `Cookie expired — update the ${SITE_CONFIG[site]?.label || site} cookie and try again.`
-        : (json.error || 'Failed to fetch page.'));
-      return;
-    }
-
-    if (json.pdf_url) {
-      document.getElementById('new-pdf-url').value = json.pdf_url;
-      updatePdfLink();
-      showMsg(msgEl, 'success', 'PDF URL found — save the record to persist it.');
-    } else {
-      showMsg(msgEl, 'warn', 'No PDF URL found on this page.');
-    }
-  } catch(e) {
-    showMsg(msgEl, 'error', `Network error: ${e.message}`);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↺ Find PDF URL';
-  }
 };
 
 // ── PDF link helper ───────────────────────────────────────────────────────────
