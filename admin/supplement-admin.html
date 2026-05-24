@@ -980,10 +980,9 @@ window.scrapeUrl = async function() {
     state.scrapeData = json;
 
     // ── Duplicate check: use canonical URL returned by scraper ─────────────
-    // json.url is the post-redirect resolved URL — matches what was stored on
-    // original ingest. Normalise to ensure https:// prefix is present.
+    // Normalise: ensure https:// prefix and trailing slash to match DB storage.
     const canonicalUrl = json.url || url;
-    const normUrl = canonicalUrl.startsWith('http') ? canonicalUrl : `https://${canonicalUrl}`;
+    const normUrl = (canonicalUrl.startsWith('http') ? canonicalUrl : `https://${canonicalUrl}`).replace(/\/?$/, '/');
     const { data: existing } = await sb
       .from('supplements')
       .select('supplement_id, title')
