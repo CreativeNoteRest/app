@@ -162,7 +162,7 @@
     .btn-secondary { height: 38px; padding: 0 16px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
     .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
     .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-sm-info { height: 34px; padding: 0 14px; background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-sm-info { height: 34px; padding: 0 14px; background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; display: inline-flex; align-items: center; }
     .btn-sm-info:hover { background: #DBEAFE; }
     .btn-sm-info:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-sm-success { height: 34px; padding: 0 14px; background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
@@ -1088,7 +1088,12 @@ window.rescrapePdf = async function(prefix) {
       const raw = await res.text();
       let json;
       try { json = JSON.parse(raw); } catch { showMsg(msgEl, 'error', `Parse error: ${raw.slice(0,100)}`); return; }
-      if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'PDF scrape failed.'); return; }
+      if (!res.ok || json.error) {
+        const msg = json.error === 'Could not extract text from PDF.'
+          ? 'Could not extract text from this PDF — it may be image-based or compressed. Try Generate description instead, which can use the page text.'
+          : (json.error || 'PDF scrape failed.');
+        showMsg(msgEl, 'error', msg); return;
+      }
       state.pdfDraft[prefix] = json.description || '';
       document.getElementById(`${prefix}-pdf-draft-banner`).classList.remove('hidden');
     }
@@ -1126,7 +1131,7 @@ window.resummarise = async function(prefix) {
   setDescButtons(prefix, true);
 
   try {
-    const res = await fetch(`${EF_BASE}/resummarise-description`, {
+    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
       body: JSON.stringify({ current_description: desc, context, auth_user_id: state.authUserId })
