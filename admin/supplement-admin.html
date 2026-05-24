@@ -141,7 +141,7 @@
 
     /* ── Thumbnail preview ── */
     .thumb-preview { display: flex; align-items: flex-start; gap: 14px; }
-    .thumb-img { width: 80px; height: 80px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; }
+    .thumb-img { width: 62px; height: 80px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; }
     .thumb-img.empty { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--text-light); }
     .thumb-fields { flex: 1; }
 
@@ -230,6 +230,8 @@
     <span class="header-sub">Supplement Admin</span>
   </div>
   <div class="header-right hidden" id="header-right">
+    <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp('wk')" title="WunderKeys cookie: Not set — scraping WK pages will fail">🔑 WK cookie</button>
+    <button class="btn-cookie-indicator" id="cookie-btn-tpt" onclick="showCookieHelp('tpt')" title="TeachPianoToday cookie: Not set — scraping TPT pages will fail">🔑 TPT cookie</button>
     <span class="header-email" id="header-email"></span>
     <button class="btn-signout" id="btn-signout">Sign out</button>
   </div>
@@ -256,12 +258,6 @@
   <div class="page-label">Administration</div>
   <h1 class="page-title">Supplement <em>admin</em></h1>
   <p class="page-subtitle">Add new supplements or edit existing records. AI-assisted description generation from page and PDF content.</p>
-
-  <!-- Cookie buttons row -->
-  <div style="display:flex;gap:8px;margin-bottom:28px;">
-    <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp('wk')" title="WunderKeys cookie: Not set — scraping WK pages will fail">🔑 WK cookie</button>
-    <button class="btn-cookie-indicator" id="cookie-btn-tpt" onclick="showCookieHelp('tpt')" title="TeachPianoToday cookie: Not set — scraping TPT pages will fail">🔑 TPT cookie</button>
-  </div>
 
   <!-- Cookie help panel (shared, shown for wk or tpt) -->
   <div id="cookie-help-panel" class="cookie-help hidden">
@@ -377,7 +373,10 @@
       <div class="form-row-grid">
         <div>
           <label class="form-lbl" for="new-pdf-url">PDF URL <span>— auto-detected</span></label>
-          <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" />
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" style="flex:1;margin:0;" oninput="updatePdfLink()" />
+            <a id="btn-open-pdf" href="#" target="_blank" rel="noopener" class="btn-secondary hidden" style="height:46px;display:inline-flex;align-items:center;padding:0 14px;text-decoration:none;flex-shrink:0;">📄 Open PDF</a>
+          </div>
         </div>
         <div>
           <label class="form-lbl" for="new-match-context">Match context <span>optional</span></label>
@@ -476,14 +475,14 @@
 
         <div class="form-row">
           <label class="form-lbl" for="edit-scraped-content">Scraped content <span>— from PDF and page. Edit or prune before combining.</span></label>
-          <div style="position:relative;">
+          <div>
             <textarea class="form-ta" id="edit-scraped-content" rows="4" placeholder="Click 'Scrape PDF' below to populate, or paste content manually."></textarea>
-            <button class="btn-mic" id="mic-edit-scraped" onclick="toggleDictation('edit-scraped-content')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
 
         <div class="desc-toolbar">
           <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape PDF</button>
+          <a id="btn-open-pdf-desc" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;">🔗 Open PDF</a>
         </div>
         <div id="edit-desc-generating" class="scrape-status hidden">
           <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
@@ -966,6 +965,7 @@ function populateNewFields(data) {
   document.getElementById('new-source').value      = data.source || (siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys');
   document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
   updateThumbPreview('new');
+  updatePdfLink();
 
   // Extract curriculum association clues from scraped content
   extractAssociationHints(data);
@@ -1028,7 +1028,7 @@ window.scrapeIntoBox = async function() {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ pdf_url: pdfUrl, url, cookie, page_text: '', auth_user_id: state.authUserId })
+      body: JSON.stringify({ pdf_url: pdfUrl, url, cookie, pdf_only: true, auth_user_id: state.authUserId })
     });
     const json = await res.json();
     if (!res.ok || json.error) {
@@ -1272,6 +1272,7 @@ window.openEditForm = async function(id) {
   document.getElementById('new-is-active').checked  = !!data.is_active;
   document.getElementById('new-is-active-row').style.display = '';
   updateThumbPreview('new');
+  updatePdfLink();
 
   // Description
   document.getElementById('edit-scraped-content').value = data.search_description || '';
@@ -1381,6 +1382,17 @@ window.toggleDictation = function(targetId) {
   };
 
   recognition.start();
+};
+
+// ── PDF link helper ───────────────────────────────────────────────────────────
+window.updatePdfLink = function() {
+  const val = document.getElementById('new-pdf-url').value.trim();
+  // Fields card button
+  const btn = document.getElementById('btn-open-pdf');
+  if (btn) { if (val) { btn.href = val; btn.classList.remove('hidden'); } else { btn.href = '#'; btn.classList.add('hidden'); } }
+  // Description section button
+  const btn2 = document.getElementById('btn-open-pdf-desc');
+  if (btn2) { if (val) { btn2.href = val; btn2.classList.remove('hidden'); } else { btn2.href = '#'; btn2.classList.add('hidden'); } }
 };
 
 // ── Init ──────────────────────────────────────────────────────────────────────
