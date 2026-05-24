@@ -406,6 +406,10 @@
       <div id="new-assoc-hints" class="hidden" style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:9px;padding:12px 14px;margin-bottom:16px;">
         <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:6px;">📚 Curriculum clues from page</div>
         <ul id="new-assoc-hints-list" style="margin:0;padding-left:16px;font-size:0.82rem;color:#92400E;line-height:1.7;"></ul>
+        <div id="new-assoc-pdf-link" class="hidden" style="margin-top:8px;font-size:0.82rem;">
+          <a id="new-assoc-pdf-anchor" href="#" target="_blank" rel="noopener" style="color:var(--info);font-weight:600;">📄 Open PDF in new tab</a>
+          <span style="color:#B45309;font-size:0.72rem;"> — review for additional curriculum context</span>
+        </div>
         <div style="font-size:0.72rem;color:#B45309;margin-top:6px;">These are text extracts — use them as a guide for the selections below.</div>
       </div>
 
@@ -1028,7 +1032,17 @@ function extractAssociationHints(data) {
     if (snippets.size >= 5) break;
   }
 
-  if (!snippets.size) {
+  // PDF link — always show if available, regardless of text clues
+  const pdfLinkWrap = document.getElementById('new-assoc-pdf-link');
+  const pdfAnchor   = document.getElementById('new-assoc-pdf-anchor');
+  if (data.pdf_url) {
+    pdfAnchor.href = data.pdf_url;
+    pdfLinkWrap.classList.remove('hidden');
+  } else {
+    pdfLinkWrap.classList.add('hidden');
+  }
+
+  if (!snippets.size && !data.pdf_url) {
     hintsEl.classList.add('hidden');
     return;
   }
