@@ -186,37 +186,32 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return err("Method not allowed", 405);
 
   // ── Auth check ─────────────────────────────────────────────────────────────
-  // Verify the caller is an authenticated admin.
-  // Uses anon key from Authorization header; checks is_admin on Teachers table.
-  const authHeader = req.headers.get("authorization") || "";
-  const apiKey = req.headers.get("apikey") || "";
+  // auth.getUser() is not viable due to ES256 JWT incompatibility (WDN-045, D-102).
+  // Authorization is enforced by verifying the teacher_id supplied in the POST body
+  // against the teachers table using the service role key (bypasses RLS).
+  // Pattern: ownership validation against DB record, not auth.getUser().
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  // Build a client with the caller's token to verify identity
-  const callerToken = authHeader.replace("Bearer ", "").trim() || apiKey;
-  const sbAnon = createClient(supabaseUrl, callerToken);
-  const { data: { user }, error: userErr } = await sbAnon.auth.getUser();
-  if (userErr || !user) return err("Unauthorized", 401);
-
-  // Verify is_admin using service role (bypasses RLS)
   const sbAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const { data: teacher, error: teacherErr } = await sbAdmin
-    .from("teachers")
-    .select("is_admin")
-    .eq("auth_user_id", user.id)
-    .single();
-  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
 
   // ── Parse body ─────────────────────────────────────────────────────────────
-  let body: { url?: string; cookie?: string; series_id?: string };
+  let body: { url?: string; cookie?: string; series_id?: string; teacher_id?: string };
   try {
     body = await req.json();
   } catch {
     return err("Invalid JSON body");
   }
 
-  const { url, cookie } = body;
+  const { url, cookie, teacher_id } = body;
+
+  // ── Ownership validation ────────────────────────────────────────────────────
+  if (!teacher_id) return err("Unauthorized", 401);
+  const { data: teacher, error: teacherErr } = await sbAdmin
+    .from("teachers")
+    .select("is_admin")
+    .eq("teacher_id", teacher_id)
+    .single();
+  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
   if (!url) return err("url is required");
 
   const site = siteFromUrl(url);

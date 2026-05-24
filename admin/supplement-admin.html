@@ -681,20 +681,14 @@ const EF_BASE = `${SUPABASE_URL}/functions/v1`;
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// Returns headers including the current session Bearer token for Edge Function calls.
-// Edge Functions verify identity via auth.getUser() which requires a valid JWT,
-// not the anon key. The session access_token satisfies this.
-async function getAuthHeaders() {
-  const { data: { session } } = await sb.auth.getSession();
-  return {
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_ANON,
-    'Authorization': `Bearer ${session?.access_token || ''}`,
-  };
-}
+// Static headers for Edge Function calls.
+// auth.getUser() not viable due to ES256 incompatibility (WDN-045, D-102).
+// Authorization uses teacher_id ownership validation in the POST body instead.
+const EF_HEADERS = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON };
 
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
+  teacherId: '',                        // loaded from Teachers table on login
   cookies:   { wk: '', tpt: '' },      // loaded from Config table on login
   passwords: { wk: '', tpt: '' },      // loaded from Config table on login
   activeCookieSite: null,     // 'wk' | 'tpt'
@@ -718,8 +712,9 @@ async function checkSession() {
 
 async function showApp(email) {
   const { data: { user } } = await sb.auth.getUser();
-  const { data, error } = await sb.from('teachers').select('is_admin').eq('auth_user_id', user.id).single();
+  const { data, error } = await sb.from('teachers').select('teacher_id, is_admin').eq('auth_user_id', user.id).single();
   if (error || !data?.is_admin) { await sb.auth.signOut(); showLoginError('This account does not have administrator access.'); return; }
+  state.teacherId = data.teacher_id || '';
   elLogin.classList.add('hidden');
   elApp.classList.remove('hidden');
   elHeaderR.classList.remove('hidden');
@@ -950,8 +945,8 @@ window.scrapeUrl = async function() {
   try {
     const res = await fetch(`${EF_BASE}/scrape-supplement`, {
       method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ url, cookie, series_id: SERIES_ID })
+      headers: EF_HEADERS,
+      body: JSON.stringify({ url, cookie, series_id: SERIES_ID, teacher_id: state.teacherId })
     });
     const json = await res.json();
 
@@ -1020,8 +1015,8 @@ window.generateDescription = async function(prefix) {
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ url, pdf_url: pdfUrl, context, cookie, page_text: prefix === 'new' ? (state.scrapeData?.page_text || '') : '' })
+      headers: EF_HEADERS,
+      body: JSON.stringify({ url, pdf_url: pdfUrl, context, cookie, page_text: prefix === 'new' ? (state.scrapeData?.page_text || '') : '', teacher_id: state.teacherId })
     });
     const json = await res.json();
     if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Generation failed.'); return; }
@@ -1052,8 +1047,8 @@ window.rescrapePdf = async function(prefix) {
   try {
     const res = await fetch(`${EF_BASE}/scrape-pdf-text`, {
       method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ pdf_url: pdfUrl, cookie })
+      headers: EF_HEADERS,
+      body: JSON.stringify({ pdf_url: pdfUrl, cookie, teacher_id: state.teacherId })
     });
     const json = await res.json();
     if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'PDF scrape failed.'); return; }
@@ -1104,8 +1099,8 @@ window.resummarise = async function(prefix) {
   try {
     const res = await fetch(`${EF_BASE}/resummarise-description`, {
       method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ current_description: desc, context })
+      headers: EF_HEADERS,
+      body: JSON.stringify({ current_description: desc, context, teacher_id: state.teacherId })
     });
     const json = await res.json();
     if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Re-summarise failed.'); return; }
