@@ -980,15 +980,16 @@ window.scrapeUrl = async function() {
     state.scrapeData = json;
 
     // ── Duplicate check: use canonical URL returned by scraper ─────────────
-    // Normalise: ensure https:// prefix and trailing slash to match DB storage.
     const canonicalUrl = json.url || url;
     const normUrl = (canonicalUrl.startsWith('http') ? canonicalUrl : `https://${canonicalUrl}`).replace(/\/?$/, '/');
-    const { data: existing } = await sb
+    console.log('[dup-check] comparing normUrl:', normUrl);
+    const { data: existing, error: dupErr } = await sb
       .from('supplements')
       .select('supplement_id, title')
       .eq('source_url', normUrl)
       .eq('series_id', SERIES_ID)
       .maybeSingle();
+    console.log('[dup-check] existing:', JSON.stringify(existing), 'error:', JSON.stringify(dupErr));
 
     if (existing) {
       statusEl.classList.add('hidden');
