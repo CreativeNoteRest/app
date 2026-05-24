@@ -257,27 +257,19 @@
   <h1 class="page-title">Supplement <em>admin</em></h1>
   <p class="page-subtitle">Add new supplements or edit existing records. AI-assisted description generation from page and PDF content.</p>
 
-  <!-- Mode toggle + cookie buttons in one row -->
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px;">
-    <div class="mode-toggle" style="margin-bottom:0;">
-      <button class="mode-btn active" id="mode-new-btn" onclick="setMode('new')">➕ New supplement</button>
-      <button class="mode-btn" id="mode-edit-btn" onclick="setMode('edit')">✏️ Edit existing</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-left:auto;">
-      <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp('wk')" title="WunderKeys cookie: Not set — scraping WK pages will fail">🔑 WK cookie</button>
-      <button class="btn-cookie-indicator" id="cookie-btn-tpt" onclick="showCookieHelp('tpt')" title="TeachPianoToday cookie: Not set — scraping TPT pages will fail">🔑 TPT cookie</button>
-    </div>
+  <!-- Cookie buttons row -->
+  <div style="display:flex;gap:8px;margin-bottom:28px;">
+    <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp('wk')" title="WunderKeys cookie: Not set — scraping WK pages will fail">🔑 WK cookie</button>
+    <button class="btn-cookie-indicator" id="cookie-btn-tpt" onclick="showCookieHelp('tpt')" title="TeachPianoToday cookie: Not set — scraping TPT pages will fail">🔑 TPT cookie</button>
   </div>
 
   <!-- Cookie help panel (shared, shown for wk or tpt) -->
   <div id="cookie-help-panel" class="cookie-help hidden">
     <div class="cookie-help-title" id="cookie-help-title">Set WunderKeys cookie</div>
-
     <div id="cookie-password-block" class="cookie-password-display mb16">
       <div class="cookie-password-label">Members password</div>
       <div class="cookie-password-value" id="cookie-password-value">—</div>
     </div>
-
     <ol class="cookie-steps">
       <li>Click the button below to open the members page in a new tab. Enter the password shown above.</li>
       <li>Once logged in, press <code>F12</code> to open Developer Tools.</li>
@@ -287,7 +279,6 @@
       <li>Click on that row and copy the entire <strong>Value</strong> column (the hash string).</li>
       <li>Paste it into the field below and click <strong>Save cookie</strong>.</li>
     </ol>
-
     <div class="cookie-paste-row mb8">
       <a id="cookie-open-link" href="#" target="_blank" class="cookie-open-btn">🌐 Open members page</a>
       <input class="cookie-paste-input" id="cookie-paste-input" type="text" placeholder="Paste wp-postpass_… value here" />
@@ -298,15 +289,40 @@
   </div>
 
   <!-- ════════════════════════════════════════════
-       MODE: NEW SUPPLEMENT
+       UNIFIED SUPPLEMENT FORM
        ════════════════════════════════════════════ -->
-  <div id="panel-new">
+  <div id="panel-main">
+
+    <!-- Find existing (collapsible) -->
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleSearchPanel()">
+        <div>
+          <div class="card-tag" style="margin-bottom:2px;">Find existing</div>
+          <div style="font-size:0.88rem;font-weight:600;color:var(--text);">Search library to edit an existing supplement</div>
+        </div>
+        <div id="search-panel-chevron" style="font-size:1rem;color:var(--text-light);transition:transform 0.2s;">▼</div>
+      </div>
+      <div id="search-panel" class="hidden" style="margin-top:16px;">
+        <div class="search-bar">
+          <input class="form-inp" id="edit-search" type="text" placeholder="Search by title…" style="margin:0;" oninput="filterSupplements()" />
+          <select class="form-sel" id="edit-filter-source" style="width:180px;" onchange="filterSupplements()">
+            <option value="">All sources</option>
+            <option value="wunderkeys">WunderKeys</option>
+            <option value="teachpianotoday">TeachPianoToday</option>
+          </select>
+        </div>
+        <div id="edit-list-msg" class="hidden"></div>
+        <div id="supp-list" class="supp-list"></div>
+        <div id="edit-loading" class="scrape-status hidden">
+          <span class="spinner spinner-dark"></span> Loading supplements…
+        </div>
+      </div>
+    </div>
 
     <!-- Step 1: URL entry -->
     <div class="card">
       <div class="card-tag">Step 1</div>
       <div class="card-title">Supplement URL</div>
-
       <div class="form-row">
         <label class="form-lbl" for="new-url">Source URL <span>— wunderkeys.com or teachpianotoday.com</span></label>
         <div style="display:flex;gap:10px;">
@@ -320,10 +336,10 @@
       <div id="scrape-msg" class="hidden"></div>
     </div>
 
-    <!-- Step 2: Extracted fields (shown after scrape) -->
+    <!-- Step 2: Extracted fields (shown after scrape or edit load) -->
     <div id="fields-card" class="card hidden">
-      <div class="card-tag">Step 2</div>
-      <div class="card-title">Supplement details</div>
+      <div class="card-tag" id="fields-card-tag">Step 2</div>
+      <div class="card-title" id="fields-card-title">Supplement details</div>
       <div id="fields-msg" class="hidden"></div>
 
       <!-- Thumbnail + title + source -->
@@ -356,7 +372,7 @@
 
       <div class="form-row">
         <label class="form-lbl" for="new-thumb-url">Thumbnail URL <span>— auto-detected</span></label>
-        <input class="form-inp" id="new-thumb-url" type="url" placeholder="https://…" />
+        <input class="form-inp" id="new-thumb-url" type="url" placeholder="https://…" oninput="updateThumbPreview('new')" />
       </div>
       <div class="form-row-grid">
         <div>
@@ -393,16 +409,22 @@
           Multi-lesson workbook item — eligible for student assignments
         </label>
       </div>
+      <!-- Active toggle — only shown when editing existing -->
+      <div class="form-row mt8" id="new-is-active-row" style="display:none;">
+        <label class="check-row">
+          <input type="checkbox" id="new-is-active" checked />
+          Active (uncheck to soft-delete)
+        </label>
+      </div>
     </div>
 
     <!-- Step 3: Piece association -->
     <div id="piece-card" class="card hidden">
-      <div class="card-tag">Step 3</div>
+      <div class="card-tag" id="piece-card-tag">Step 3</div>
       <div class="card-title">Piece association <span style="font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:400;color:var(--text-light);">— optional but strongly preferred</span></div>
-
       <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Select the earliest piece in the curriculum where this supplement becomes appropriate. If you select book + unit only, the supplement will be anchored to the first piece in that unit.</p>
 
-      <!-- Association clues extracted from scraped page content -->
+      <!-- Association clues -->
       <div id="new-assoc-hints" class="hidden" style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:9px;padding:12px 14px;margin-bottom:16px;">
         <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:6px;">📚 Curriculum clues from page</div>
         <ul id="new-assoc-hints-list" style="margin:0;padding-left:16px;font-size:0.82rem;color:#92400E;line-height:1.7;"></ul>
@@ -440,123 +462,18 @@
     <div id="save-card" class="card hidden">
       <div id="save-msg" class="hidden"></div>
       <div class="action-bar">
-        <button class="btn-primary" id="btn-save-new" onclick="saveNewSupplement()">Save supplement</button>
-        <button class="btn-secondary" onclick="resetNewForm()">Start over</button>
+        <button class="btn-primary" id="btn-save-new" onclick="saveSupplement()">Save supplement</button>
+        <button class="btn-secondary" onclick="resetForm()">Start over</button>
       </div>
     </div>
 
-  </div><!-- /panel-new -->
-
-  <!-- ════════════════════════════════════════════
-       MODE: EDIT EXISTING
-       ════════════════════════════════════════════ -->
-  <div id="panel-edit" class="hidden">
-
-    <!-- Search -->
-    <div class="card">
-      <div class="card-tag">Find supplement</div>
-      <div class="card-title">Search library</div>
-      <div class="search-bar">
-        <input class="form-inp" id="edit-search" type="text" placeholder="Search by title…" style="margin:0;" oninput="filterSupplements()" />
-        <select class="form-sel" id="edit-filter-source" style="width:180px;" onchange="filterSupplements()">
-          <option value="">All sources</option>
-          <option value="wunderkeys">WunderKeys</option>
-          <option value="teachpianotoday">TeachPianoToday</option>
-        </select>
-      </div>
-      <div id="edit-list-msg" class="hidden"></div>
-      <div id="supp-list" class="supp-list"></div>
-      <div id="edit-loading" class="scrape-status">
-        <span class="spinner spinner-dark"></span> Loading supplements…
-      </div>
-    </div>
-
-    <!-- Edit form (hidden until supplement selected) -->
-    <div id="edit-form-wrap" class="hidden">
-
-      <div class="card">
-        <div class="card-tag">Editing</div>
-        <div class="card-title" id="edit-card-title">Supplement</div>
-        <button class="btn-secondary mb16" onclick="closeEditForm()" style="height:32px;padding:0 12px;font-size:0.78rem;">← Back to list</button>
-
-        <div class="thumb-preview mb16">
-          <div class="thumb-img empty" id="edit-thumb-preview">🖼</div>
-          <div class="thumb-fields">
-            <div class="form-row">
-              <label class="form-lbl" for="edit-title">Title</label>
-              <input class="form-inp" id="edit-title" type="text" />
-            </div>
-            <div class="form-row-grid">
-              <div>
-                <label class="form-lbl" for="edit-source">Source</label>
-                <select class="form-sel" id="edit-source">
-                  <option value="wunderkeys">WunderKeys</option>
-                  <option value="teachpianotoday">TeachPianoToday</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-lbl" for="edit-is-free">Pricing</label>
-                <select class="form-sel" id="edit-is-free">
-                  <option value="">Unknown</option>
-                  <option value="true">Free</option>
-                  <option value="false">Paid</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label class="form-lbl" for="edit-source-url">Source URL</label>
-          <input class="form-inp" id="edit-source-url" type="url" />
-        </div>
-        <div class="form-row">
-          <label class="form-lbl" for="edit-thumb-url">Thumbnail URL</label>
-          <input class="form-inp" id="edit-thumb-url" type="url" oninput="updateThumbPreview('edit')" />
-        </div>
-        <div class="form-row-grid">
-          <div>
-            <label class="form-lbl" for="edit-pdf-url">PDF URL</label>
-            <input class="form-inp" id="edit-pdf-url" type="url" />
-          </div>
-          <div>
-            <label class="form-lbl" for="edit-match-context">Match context</label>
-            <select class="form-sel" id="edit-match-context">
-              <option value="">— not set —</option>
-              <option value="lesson_skill">Lesson skill</option>
-              <option value="practice_behaviour">Practice behaviour</option>
-              <option value="recital_event">Recital / event</option>
-              <option value="studio_admin">Studio admin</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <label class="form-lbl" for="edit-season">Season</label>
-          <select class="form-sel" id="edit-season">
-            <option value="">— no seasonal theme —</option>
-          </select>
-        </div>
-        <div class="form-row mt8">
-          <label class="check-row">
-            <input type="checkbox" id="edit-is-multi" />
-            Multi-lesson workbook item
-          </label>
-        </div>
-        <div class="form-row mt8">
-          <label class="check-row">
-            <input type="checkbox" id="edit-is-active" />
-            Active (uncheck to soft-delete)
-          </label>
-        </div>
-      </div>
-
-      <!-- Description card (edit mode) — two-box model -->
+    <!-- Description (shown after save / when editing existing) -->
+    <div id="desc-section" class="hidden">
       <div class="card">
         <div class="card-tag">Description</div>
         <div class="card-title">Search description</div>
         <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Build the description from two sources, then combine. The final description is what gets saved.</p>
 
-        <!-- Box 1: Scraped content -->
         <div class="form-row">
           <label class="form-lbl" for="edit-scraped-content">Scraped content <span>— from PDF and page. Edit or prune before combining.</span></label>
           <div style="position:relative;">
@@ -565,7 +482,6 @@
           </div>
         </div>
 
-        <!-- Scrape PDF button -->
         <div class="desc-toolbar">
           <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape PDF</button>
         </div>
@@ -575,7 +491,6 @@
 
         <div class="sec-divider"></div>
 
-        <!-- Box 2: SME notes -->
         <div class="form-row">
           <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
           <div style="position:relative;">
@@ -584,14 +499,12 @@
           </div>
         </div>
 
-        <!-- Combine button -->
         <div class="desc-toolbar">
           <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
         </div>
 
         <div class="sec-divider"></div>
 
-        <!-- Box 3: Final description -->
         <div class="form-row mt8">
           <label class="form-lbl" for="edit-description">Final description <span>— editable. This is saved to the database.</span></label>
           <div style="position:relative;">
@@ -602,45 +515,17 @@
         <div id="edit-desc-msg" class="hidden"></div>
       </div>
 
-      <!-- Piece association (edit mode) -->
-      <div class="card">
-        <div class="card-tag">Piece association</div>
-        <div class="card-title">Eligibility map entry</div>
-        <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Current piece association for this supplement. Change and save to update the eligibility map.</p>
-        <div class="cascade-row">
-          <div>
-            <label class="form-lbl" for="edit-book">Book</label>
-            <select class="form-sel" id="edit-book" onchange="onBookChange('edit')">
-              <option value="">— select book —</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-lbl" for="edit-unit">Unit</label>
-            <select class="form-sel" id="edit-unit" disabled onchange="onUnitChange('edit')">
-              <option value="">— select unit —</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-lbl" for="edit-piece">Piece <span>optional</span></label>
-            <select class="form-sel" id="edit-piece" disabled>
-              <option value="">— first piece in unit —</option>
-            </select>
-          </div>
-        </div>
-        <div id="edit-cascade-hint" class="cascade-hint hidden"></div>
-      </div>
-
-      <!-- Save (edit mode) -->
+      <!-- Save description + all changes -->
       <div class="card">
         <div id="edit-save-msg" class="hidden"></div>
         <div class="action-bar">
-          <button class="btn-primary" id="btn-save-edit" onclick="saveEditSupplement()">Save changes</button>
-          <button class="btn-secondary" onclick="closeEditForm()">Discard changes</button>
+          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
+          <button class="btn-secondary" onclick="resetForm()">Start over</button>
         </div>
       </div>
+    </div>
 
-    </div><!-- /edit-form-wrap -->
-  </div><!-- /panel-edit -->
+  </div><!-- /panel-main -->
 
 </main>
 </div><!-- /view-app -->
@@ -843,12 +728,13 @@ function siteFromUrl(url) {
 }
 
 // ── Mode toggle ───────────────────────────────────────────────────────────────
-window.setMode = function(mode) {
-  document.getElementById('mode-new-btn').classList.toggle('active', mode === 'new');
-  document.getElementById('mode-edit-btn').classList.toggle('active', mode === 'edit');
-  document.getElementById('panel-new').classList.toggle('hidden', mode !== 'new');
-  document.getElementById('panel-edit').classList.toggle('hidden', mode !== 'edit');
-  if (mode === 'edit' && state.allSupplements.length === 0) loadSupplements();
+window.toggleSearchPanel = function() {
+  const panel   = document.getElementById('search-panel');
+  const chevron = document.getElementById('search-panel-chevron');
+  const isHidden = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !isHidden);
+  chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+  if (isHidden && state.allSupplements.length === 0) loadSupplements();
 };
 
 // ── Seasons (dynamic from DB) ─────────────────────────────────────────────────
@@ -857,16 +743,14 @@ async function loadSeasons() {
   if (error) { console.warn('[loadSeasons] query error:', error); return; }
   if (!data || !data.length) { console.warn('[loadSeasons] no rows returned'); return; }
   state.seasons = data.map(r => r.season_label);
-  for (const prefix of ['new', 'edit']) {
-    const sel = document.getElementById(`${prefix}-season`);
-    while (sel.options.length > 1) sel.remove(1);
-    state.seasons.forEach(label => {
-      const o = document.createElement('option');
-      o.value = label;
-      o.textContent = label;
-      sel.appendChild(o);
-    });
-  }
+  const sel = document.getElementById('new-season');
+  while (sel.options.length > 1) sel.remove(1);
+  state.seasons.forEach(label => {
+    const o = document.createElement('option');
+    o.value = label;
+    o.textContent = label;
+    sel.appendChild(o);
+  });
 }
 
 // ── Books cascade ─────────────────────────────────────────────────────────────
@@ -874,11 +758,9 @@ async function loadBooks() {
   const { data, error } = await sb.from('books').select('book_id, display_name, sequence_number').eq('series_id', SERIES_ID).eq('is_active', true).order('sequence_number');
   if (error || !data) return;
   state.books = data;
-  for (const prefix of ['new', 'edit']) {
-    const sel = document.getElementById(`${prefix}-book`);
-    sel.innerHTML = '<option value="">— select book —</option>';
-    data.forEach(b => { const o = document.createElement('option'); o.value = b.book_id; o.textContent = b.display_name; sel.appendChild(o); });
-  }
+  const sel = document.getElementById('new-book');
+  sel.innerHTML = '<option value="">— select book —</option>';
+  data.forEach(b => { const o = document.createElement('option'); o.value = b.book_id; o.textContent = b.display_name; sel.appendChild(o); });
 }
 
 window.onBookChange = async function(prefix) {
@@ -925,9 +807,9 @@ function updateCascadeHint(prefix) {
   }
 }
 // Update hint when piece changes
-['new-piece', 'edit-piece'].forEach(id => {
+['new-piece'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('change', () => updateCascadeHint(id.split('-')[0]));
+  if (el) el.addEventListener('change', () => updateCascadeHint('new'));
 });
 
 // ── NEW MODE: Scrape URL ──────────────────────────────────────────────────────
@@ -992,13 +874,9 @@ window.scrapeUrl = async function() {
     if (existing) {
       statusEl.classList.add('hidden');
       showMsg(msgEl, 'warn',
-        `This URL already exists in the library as "${existing.title}". Opening in Edit mode…`);
+        `This URL already exists in the library as "${existing.title}". Loading for editing…`);
       setTimeout(() => {
-        setMode('edit');
-        // Add the record to state minimally so closeEditForm can return to list
-        if (!state.allSupplements.find(s => s.supplement_id === existing.supplement_id)) {
-          state.allSupplements.push(existing);
-        }
+        resetForm();
         openEditForm(existing.supplement_id);
       }, 1200);
       return;
@@ -1130,8 +1008,8 @@ document.getElementById('new-thumb-url').addEventListener('input', () => updateT
 
 // ── EDIT: Scrape PDF into Box 1 ───────────────────────────────────────────────
 window.scrapeIntoBox = async function() {
-  const pdfUrl = document.getElementById('edit-pdf-url').value.trim();
-  const url    = document.getElementById('edit-source-url').value.trim();
+  const pdfUrl = document.getElementById('new-pdf-url').value.trim();
+  const url    = document.getElementById('new-url').value.trim();
   if (!pdfUrl) { showMsg(document.getElementById('edit-desc-msg'), 'warn', 'No PDF URL set for this supplement.'); return; }
 
   const site   = siteFromUrl(pdfUrl) || siteFromUrl(url);
@@ -1222,75 +1100,96 @@ function setDescButtons(prefix, disabled) {
   });
 }
 
-// ── NEW: Save ─────────────────────────────────────────────────────────────────
-window.saveNewSupplement = async function() {
-  const msgEl = document.getElementById('save-msg');
+// ── Unified Save ──────────────────────────────────────────────────────────────
+window.saveSupplement = async function() {
+  const isEditing = !!state.editingSupplementId;
+  const msgEl = document.getElementById(isEditing ? 'edit-save-msg' : 'save-msg');
   msgEl.classList.add('hidden');
-  const btn = document.getElementById('btn-save-new');
+  const btn = document.getElementById(isEditing ? 'btn-save-edit' : 'btn-save-new');
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  const url    = document.getElementById('new-url').value.trim();
-  const title  = document.getElementById('new-title').value.trim();
-  if (!url || !title) { showMsg(msgEl, 'error', 'URL and title are required.'); btn.disabled=false; btn.textContent='Save supplement'; return; }
+  const url   = document.getElementById('new-url').value.trim();
+  const title = document.getElementById('new-title').value.trim();
+  if (!url || !title) { showMsg(msgEl, 'error', 'URL and title are required.'); btn.disabled=false; btn.textContent=isEditing?'Save changes':'Save supplement'; return; }
 
   const bookId  = document.getElementById('new-book').value;
   const unitId  = document.getElementById('new-unit').value;
   const pieceId = document.getElementById('new-piece').value;
 
-  // Resolve piece: if unit selected but no piece, get first piece
   let resolvedPieceId = pieceId || null;
   if (unitId && !pieceId) {
     const { data } = await sb.from('books_pieces').select('piece_id').eq('unit_id', unitId).order('sort_order').limit(1);
     resolvedPieceId = data?.[0]?.piece_id || null;
   }
 
-  const supplement = {
-    series_id:         SERIES_ID,
+  const record = {
+    series_id:          SERIES_ID,
     title,
-    source_url:        url,
-    source:            document.getElementById('new-source').value,
-    is_free:           document.getElementById('new-is-free').value === '' ? null : document.getElementById('new-is-free').value === 'true',
-    thumbnail_url:     document.getElementById('new-thumb-url').value.trim() || null,
-    pdf_url:           document.getElementById('new-pdf-url').value.trim() || null,
-    match_context:     document.getElementById('new-match-context').value || null,
-    season:            document.getElementById('new-season').value || null,
-    is_multi_lesson:   document.getElementById('new-is-multi').checked,
-    search_description:null,
-    is_active:         true,
+    source_url:         url,
+    source:             document.getElementById('new-source').value,
+    is_free:            document.getElementById('new-is-free').value === '' ? null : document.getElementById('new-is-free').value === 'true',
+    thumbnail_url:      document.getElementById('new-thumb-url').value.trim() || null,
+    pdf_url:            document.getElementById('new-pdf-url').value.trim() || null,
+    match_context:      document.getElementById('new-match-context').value || null,
+    season:             document.getElementById('new-season').value || null,
+    is_multi_lesson:    document.getElementById('new-is-multi').checked,
+    is_active:          isEditing ? document.getElementById('new-is-active').checked : true,
+    search_description: document.getElementById('edit-description').value.trim() || null,
+    updated_at:         new Date().toISOString(),
   };
 
   try {
-    const { data: suppData, error: suppErr } = await sb.from('supplements').upsert(supplement, { onConflict: 'source_url,series_id', ignoreDuplicates: false }).select('supplement_id').single();
-    if (suppErr) { showMsg(msgEl, 'error', suppErr.message); return; }
+    let supplementId = state.editingSupplementId;
+
+    if (isEditing) {
+      const { error } = await sb.from('supplements').update(record).eq('supplement_id', supplementId);
+      if (error) { showMsg(msgEl, 'error', error.message); return; }
+      // Refresh list cache
+      const idx = state.allSupplements.findIndex(s => s.supplement_id === supplementId);
+      if (idx >= 0) Object.assign(state.allSupplements[idx], record);
+    } else {
+      const { data: suppData, error: suppErr } = await sb.from('supplements')
+        .upsert(record, { onConflict: 'source_url,series_id', ignoreDuplicates: false })
+        .select('supplement_id').single();
+      if (suppErr) { showMsg(msgEl, 'error', suppErr.message); return; }
+      supplementId = suppData.supplement_id;
+      state.editingSupplementId = supplementId;
+    }
 
     if (resolvedPieceId && bookId) {
       await sb.from('supplement_eligibility_map').upsert({
-        supplement_id:  suppData.supplement_id,
-        series_id:      SERIES_ID,
-        book_id:        bookId,
+        supplement_id:     supplementId,
+        series_id:         SERIES_ID,
+        book_id:           bookId,
         earliest_piece_id: resolvedPieceId,
       }, { onConflict: 'supplement_id,book_id' });
     }
 
-    showMsg(msgEl, 'success', 'Saved — opening edit mode for description…');
-    // Reload supplements list then transition to edit mode for this record
-    await loadSupplements();
-    setTimeout(() => {
-      resetNewForm();
-      setMode('edit');
-      openEditForm(suppData.supplement_id);
-    }, 1000);
+    showMsg(msgEl, 'success', isEditing ? 'Changes saved.' : 'Supplement saved — add description below.');
+
+    if (!isEditing) {
+      // First save: show description section, switch button to Save changes
+      document.getElementById('desc-section').classList.remove('hidden');
+      document.getElementById('btn-save-new').textContent = 'Save changes';
+      document.getElementById('new-is-active-row').style.display = '';
+      document.getElementById('new-is-active').checked = true;
+      document.getElementById('desc-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   } catch(e) {
     showMsg(msgEl, 'error', 'Unexpected error. Please try again.');
   } finally {
-    btn.disabled = false; btn.textContent = 'Save supplement';
+    btn.disabled = false;
+    btn.textContent = state.editingSupplementId ? 'Save changes' : 'Save supplement';
   }
 };
 
-window.resetNewForm = function() {
-  ['new-url','new-title','new-thumb-url','new-pdf-url'].forEach(id => { document.getElementById(id).value = ''; });
-  ['new-source','new-is-free','new-match-context','new-season','new-book','new-unit','new-piece'].forEach(id => { document.getElementById(id).selectedIndex = 0; });
+// ── Reset unified form ────────────────────────────────────────────────────────
+window.resetForm = function() {
+  ['new-url','new-title','new-thumb-url','new-pdf-url'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['new-source','new-is-free','new-match-context','new-season','new-book','new-unit','new-piece'].forEach(id => { const el = document.getElementById(id); if(el) el.selectedIndex = 0; });
   document.getElementById('new-is-multi').checked = false;
+  document.getElementById('new-is-active').checked = true;
+  document.getElementById('new-is-active-row').style.display = 'none';
   document.getElementById('new-unit').disabled = true;
   document.getElementById('new-piece').disabled = true;
   document.getElementById('new-thumb-preview').textContent = '🖼';
@@ -1299,11 +1198,16 @@ window.resetNewForm = function() {
   const hintsEl = document.getElementById('new-assoc-hints');
   if (hintsEl) hintsEl.classList.add('hidden');
   ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
-  ['scrape-msg','save-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('desc-section').classList.add('hidden');
+  ['scrape-msg','save-msg','edit-save-msg','edit-desc-msg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+  ['edit-scraped-content','edit-sme-notes','edit-description'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('fields-card-tag').textContent  = 'Step 2';
+  document.getElementById('fields-card-title').textContent = 'Supplement details';
+  document.getElementById('piece-card-tag').textContent   = 'Step 3';
+  document.getElementById('btn-save-new').textContent = 'Save supplement';
   state.scrapeData = null;
+  state.editingSupplementId = null;
 };
-
-// ── EDIT MODE: Load supplements ───────────────────────────────────────────────
 async function loadSupplements() {
   document.getElementById('edit-loading').classList.remove('hidden');
   document.getElementById('edit-list-msg').classList.add('hidden');
@@ -1313,7 +1217,6 @@ async function loadSupplements() {
   state.allSupplements = data || [];
   renderSupplementList(state.allSupplements);
 }
-
 window.filterSupplements = function() {
   const q      = document.getElementById('edit-search').value.toLowerCase();
   const source = document.getElementById('edit-filter-source').value;
@@ -1344,113 +1247,72 @@ function renderSupplementList(list) {
   }).join('');
 }
 
-// ── EDIT MODE: Open form ──────────────────────────────────────────────────────
+// ── Open record into unified form ─────────────────────────────────────────────
 window.openEditForm = async function(id) {
   state.editingSupplementId = id;
-  const s = state.allSupplements.find(x => x.supplement_id === id);
-  if (!s) return;
 
   // Load full record
   const { data } = await sb.from('supplements').select('*').eq('supplement_id', id).single();
   if (!data) return;
 
-  document.getElementById('edit-card-title').textContent = data.title;
-  document.getElementById('edit-title').value        = data.title || '';
-  document.getElementById('edit-source').value       = data.source || 'wunderkeys';
-  document.getElementById('edit-is-free').value      = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
-  document.getElementById('edit-source-url').value   = data.source_url || '';
-  document.getElementById('edit-thumb-url').value    = data.thumbnail_url || '';
-  document.getElementById('edit-pdf-url').value      = data.pdf_url || '';
-  document.getElementById('edit-match-context').value= data.match_context || '';
-  document.getElementById('edit-season').value       = data.season || '';
-  document.getElementById('edit-is-multi').checked   = !!data.is_multi_lesson;
-  document.getElementById('edit-is-active').checked  = !!data.is_active;
-  // Two-box description model: existing description goes into Box 1 (scraped content)
+  // Collapse search panel
+  document.getElementById('search-panel').classList.add('hidden');
+  document.getElementById('search-panel-chevron').style.transform = '';
+
+  // Populate unified form fields
+  document.getElementById('new-url').value          = data.source_url || '';
+  document.getElementById('new-title').value        = data.title || '';
+  document.getElementById('new-source').value       = data.source || 'wunderkeys';
+  document.getElementById('new-is-free').value      = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
+  document.getElementById('new-thumb-url').value    = data.thumbnail_url || '';
+  document.getElementById('new-pdf-url').value      = data.pdf_url || '';
+  document.getElementById('new-match-context').value= data.match_context || '';
+  document.getElementById('new-season').value       = data.season || '';
+  document.getElementById('new-is-multi').checked   = !!data.is_multi_lesson;
+  document.getElementById('new-is-active').checked  = !!data.is_active;
+  document.getElementById('new-is-active-row').style.display = '';
+  updateThumbPreview('new');
+
+  // Description
   document.getElementById('edit-scraped-content').value = data.search_description || '';
   document.getElementById('edit-sme-notes').value       = '';
   document.getElementById('edit-description').value     = data.search_description || '';
-  updateThumbPreview('edit');
 
-  // Load existing eligibility map entry if any
-  const { data: em } = await sb.from('supplement_eligibility_map').select('book_id, earliest_piece_id, books_pieces(unit_id)').eq('supplement_id', id).eq('series_id', SERIES_ID).limit(1).single();
-  if (em) {
-    document.getElementById('edit-book').value = em.book_id || '';
-    await onBookChange('edit');
-    if (em.books_pieces?.unit_id) {
-      document.getElementById('edit-unit').value = em.books_pieces.unit_id;
-      await onUnitChange('edit');
-      document.getElementById('edit-piece').value = em.earliest_piece_id || '';
+  // Show all cards + description section
+  document.getElementById('fields-card-tag').textContent  = 'Details';
+  document.getElementById('fields-card-title').textContent = data.title;
+  document.getElementById('piece-card-tag').textContent   = 'Piece association';
+  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  document.getElementById('desc-section').classList.remove('hidden');
+  document.getElementById('btn-save-new').textContent = 'Save changes';
+
+  // Update save msg refs
+  document.getElementById('edit-desc-msg').classList.add('hidden');
+  document.getElementById('edit-save-msg').classList.add('hidden');
+
+  // Load eligibility map
+  const { data: em } = await sb.from('supplement_eligibility_map')
+    .select('book_id, earliest_piece_id')
+    .eq('supplement_id', id).eq('series_id', SERIES_ID).limit(1).maybeSingle();
+  if (em?.book_id) {
+    document.getElementById('new-book').value = em.book_id;
+    await onBookChange('new');
+    if (em.earliest_piece_id) {
+      // Find the unit for this piece
+      const { data: pc } = await sb.from('books_pieces').select('unit_id').eq('piece_id', em.earliest_piece_id).maybeSingle();
+      if (pc?.unit_id) {
+        document.getElementById('new-unit').value = pc.unit_id;
+        await onUnitChange('new');
+        document.getElementById('new-piece').value = em.earliest_piece_id;
+      }
     }
   }
 
-  document.getElementById('edit-desc-msg').classList.add('hidden');
-  document.getElementById('edit-save-msg').classList.add('hidden');
-  document.getElementById('edit-form-wrap').classList.remove('hidden');
-  document.getElementById('edit-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('fields-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.closeEditForm = function() {
-  document.getElementById('edit-form-wrap').classList.add('hidden');
-  state.editingSupplementId = null;
-};
-
-// ── EDIT MODE: Save ───────────────────────────────────────────────────────────
-window.saveEditSupplement = async function() {
-  const id = state.editingSupplementId;
-  if (!id) return;
-  const msgEl = document.getElementById('edit-save-msg');
-  msgEl.classList.add('hidden');
-  const btn = document.getElementById('btn-save-edit');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  const bookId  = document.getElementById('edit-book').value;
-  const unitId  = document.getElementById('edit-unit').value;
-  const pieceId = document.getElementById('edit-piece').value;
-
-  let resolvedPieceId = pieceId || null;
-  if (unitId && !pieceId) {
-    const { data } = await sb.from('books_pieces').select('piece_id').eq('unit_id', unitId).order('sort_order').limit(1);
-    resolvedPieceId = data?.[0]?.piece_id || null;
-  }
-
-  const updates = {
-    title:             document.getElementById('edit-title').value.trim(),
-    source:            document.getElementById('edit-source').value,
-    source_url:        document.getElementById('edit-source-url').value.trim(),
-    is_free:           document.getElementById('edit-is-free').value === '' ? null : document.getElementById('edit-is-free').value === 'true',
-    thumbnail_url:     document.getElementById('edit-thumb-url').value.trim() || null,
-    match_context:     document.getElementById('edit-match-context').value || null,
-    season:            document.getElementById('edit-season').value || null,
-    is_multi_lesson:   document.getElementById('edit-is-multi').checked,
-    is_active:         document.getElementById('edit-is-active').checked,
-    search_description:document.getElementById('edit-description').value.trim() || null,
-    updated_at:        new Date().toISOString(),
-  };
-
-  try {
-    const { error } = await sb.from('supplements').update(updates).eq('supplement_id', id);
-    if (error) { showMsg(msgEl, 'error', error.message); return; }
-
-    if (resolvedPieceId && bookId) {
-      await sb.from('supplement_eligibility_map').upsert({
-        supplement_id:     id,
-        series_id:         SERIES_ID,
-        book_id:           bookId,
-        earliest_piece_id: resolvedPieceId,
-      }, { onConflict: 'supplement_id,book_id' });
-    }
-
-    // Refresh list
-    const idx = state.allSupplements.findIndex(s => s.supplement_id === id);
-    if (idx >= 0) Object.assign(state.allSupplements[idx], updates);
-    renderSupplementList(state.allSupplements);
-
-    showMsg(msgEl, 'success', 'Changes saved.');
-  } catch(e) {
-    showMsg(msgEl, 'error', 'Unexpected error. Please try again.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save changes';
-  }
+  resetForm();
 };
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
