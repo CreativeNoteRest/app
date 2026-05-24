@@ -149,21 +149,32 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return err("Method not allowed", 405);
 
   // ── Auth check ─────────────────────────────────────────────────────────────
-  // auth.getUser() not viable — ES256 incompatibility (WDN-045, D-102).
-  // Ownership validation via teacher_id in POST body against service role client.
+  const authHeader = req.headers.get("authorization") || "";
+  const apiKey = req.headers.get("apikey") || "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const callerToken = authHeader.replace("Bearer ", "").trim() || apiKey;
+  const sbAnon = createClient(supabaseUrl, callerToken);
+  const { data: { user }, error: userErr } = await sbAnon.auth.getUser();
+  if (userErr || !user) return err("Unauthorized", 401);
+
   const sbAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const { data: teacher, error: teacherErr } = await sbAdmin
+    .from("teachers")
+    .select("is_admin")
+    .eq("auth_user_id", user.id)
+    .single();
+  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
 
   // ── Parse body ─────────────────────────────────────────────────────────────
   let body: {
-    teacher_id?: string;
     // Mode A — generate
     url?: string;
     pdf_url?: string;
     context?: string;
     cookie?: string;
-    page_text?: string;
+    page_text?: string;  // optional — scrape-supplement already extracted this
     // Mode B — re-summarise
     current_description?: string;
   };
@@ -174,16 +185,7 @@ Deno.serve(async (req: Request) => {
     return err("Invalid JSON body");
   }
 
-  const { teacher_id, url, pdf_url, context, cookie, page_text, current_description } = body;
-
-  // ── Ownership validation ────────────────────────────────────────────────────
-  if (!teacher_id) return err("Unauthorized", 401);
-  const { data: teacher, error: teacherErr } = await sbAdmin
-    .from("teachers")
-    .select("is_admin")
-    .eq("teacher_id", teacher_id)
-    .single();
-  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
+  const { url, pdf_url, context, cookie, page_text, current_description } = body;
 
   // ── Mode B: Re-summarise ───────────────────────────────────────────────────
   if (current_description && !url && !pdf_url) {
