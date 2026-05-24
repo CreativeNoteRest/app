@@ -843,11 +843,12 @@ window.setMode = function(mode) {
 // ── Seasons (dynamic from DB) ─────────────────────────────────────────────────
 async function loadSeasons() {
   const { data, error } = await sb.from('season_windows').select('season_label').eq('series_id', SERIES_ID).order('season_label');
-  if (error || !data) return;
+  if (error) { console.warn('[loadSeasons] query error:', error); return; }
+  if (!data || !data.length) { console.warn('[loadSeasons] no rows returned — check series_id filter'); return; }
   state.seasons = data.map(r => r.season_label);
+  console.log('[loadSeasons] loaded:', state.seasons);
   for (const prefix of ['new', 'edit']) {
     const sel = document.getElementById(`${prefix}-season`);
-    // Clear all options except the first (— no seasonal theme —)
     while (sel.options.length > 1) sel.remove(1);
     state.seasons.forEach(label => {
       const o = document.createElement('option');
@@ -989,13 +990,17 @@ function populateNewFields(data) {
   document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
   updateThumbPreview('new');
 
-  // Season detection — client-side keyword match against loaded season labels
-  const pageText = (data.page_text || '').toLowerCase();
-  const title    = (data.title || '').toLowerCase();
-  const combined = pageText + ' ' + title;
+  // Season detection — scan all available strings for season label keywords
+  const combined = [
+    data.page_text  || '',
+    data.title      || '',
+    data.thumbnail_url || '',
+    data.pdf_url    || '',
+    document.getElementById('new-url').value || '',
+  ].join(' ').toLowerCase();
   const suggestedSeason = state.seasons.find(label => combined.includes(label.toLowerCase()));
-  const seasonSel = document.getElementById('new-season');
-  const suggestionEl = document.getElementById('new-season-suggested');
+  const seasonSel     = document.getElementById('new-season');
+  const suggestionEl  = document.getElementById('new-season-suggested');
   const suggestionText = document.getElementById('new-season-suggestion-text');
   if (suggestedSeason) {
     seasonSel.value = suggestedSeason;
