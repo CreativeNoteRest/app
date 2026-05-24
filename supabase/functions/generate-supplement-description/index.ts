@@ -149,32 +149,22 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return err("Method not allowed", 405);
 
   // ── Auth check ─────────────────────────────────────────────────────────────
-  const authHeader = req.headers.get("authorization") || "";
-  const apiKey = req.headers.get("apikey") || "";
+  // auth.getUser() not viable — ES256 incompatibility (WDN-045, D-102).
+  // Ownership validation via teacher_id in POST body against service role client.
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  const callerToken = authHeader.replace("Bearer ", "").trim() || apiKey;
-  const sbAnon = createClient(supabaseUrl, callerToken);
-  const { data: { user }, error: userErr } = await sbAnon.auth.getUser();
-  if (userErr || !user) return err("Unauthorized", 401);
-
   const sbAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const { data: teacher, error: teacherErr } = await sbAdmin
-    .from("teachers")
-    .select("is_admin")
-    .eq("auth_user_id", user.id)
-    .single();
-  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
 
   // ── Parse body ─────────────────────────────────────────────────────────────
   let body: {
+    auth_user_id?: string;
+    pdf_only?: boolean;    // return PDF-derived description only, no page content
     // Mode A — generate
     url?: string;
     pdf_url?: string;
     context?: string;
     cookie?: string;
-    page_text?: string;  // optional — scrape-supplement already extracted this
+    page_text?: string;
     // Mode B — re-summarise
     current_description?: string;
   };
@@ -185,7 +175,16 @@ Deno.serve(async (req: Request) => {
     return err("Invalid JSON body");
   }
 
-  const { url, pdf_url, context, cookie, page_text, current_description } = body;
+  const { auth_user_id, url, pdf_url, context, cookie, page_text, current_description, pdf_only } = body;
+
+  // ── Ownership validation ────────────────────────────────────────────────────
+  if (!auth_user_id) return err("Unauthorized", 401);
+  const { data: teacher, error: teacherErr } = await sbAdmin
+    .from("teachers")
+    .select("is_admin")
+    .eq("auth_user_id", auth_user_id)
+    .single();
+  if (teacherErr || !teacher?.is_admin) return err("Admin access required", 403);
 
   // ── Mode B: Re-summarise ───────────────────────────────────────────────────
   if (current_description && !url && !pdf_url) {
@@ -208,6 +207,32 @@ Deno.serve(async (req: Request) => {
   // Assemble content from: page_text (already extracted) + PDF + SME context
 
   const parts: string[] = [];
+
+  // pdf_only mode: skip page content, return PDF-derived description only.
+  // Used by rescrapePdf when an existing description is present — caller
+  // shows accept/reject rather than overwriting automatically.
+  if (pdf_only && pdf_url) {
+    try {
+      const pdfHeaders: Record<string, string> = { "User-Agent": "Mozilla/5.0 (compatible; CreativeNote/1.0)" };
+      if (cookie && (pdf_url.includes("wunderkeys.com") || pdf_url.includes("teachpianotoday.com"))) {
+        pdfHeaders["Cookie"] = cookie.includes("=") ? cookie : `wp-postpass_cn=${cookie}`;
+      }
+      const pdfRes = await fetch(pdf_url, { headers: pdfHeaders, redirect: "follow" });
+      if (pdfRes.ok) {
+        const buffer = new Uint8Array(await pdfRes.arrayBuffer());
+        const pdfText = extractPdfText(buffer);
+        if (pdfText) parts.push(`PDF content:\n${pdfText}`);
+      }
+    } catch { /* non-fatal */ }
+    if (!parts.length) return err("Could not extract text from PDF.");
+    const pdfPrompt = ["Write a search-optimised description for the following piano teaching supplement.", ...parts].join("\n\n");
+    try {
+      const description = await callGemini(pdfPrompt);
+      return ok({ description });
+    } catch (e) {
+      return err(`Gemini error: ${(e as Error).message}`, 502);
+    }
+  }
 
   // 1. Page text — use what scrape-supplement already extracted if available,
   //    otherwise fetch the page now (e.g. called standalone without prior scrape)

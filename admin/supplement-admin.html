@@ -994,7 +994,7 @@ function populateNewFields(data) {
   document.getElementById('new-title').value       = data.title        || '';
   document.getElementById('new-thumb-url').value   = data.thumbnail_url || '';
   document.getElementById('new-pdf-url').value     = data.pdf_url       || '';
-  document.getElementById('new-source').value      = data.source        || siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys';
+  document.getElementById('new-source').value      = data.source || (siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys');
   document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
   updateThumbPreview('new');
 }
@@ -1059,26 +1059,29 @@ window.rescrapePdf = async function(prefix) {
   setDescButtons(prefix, true);
 
   try {
-    const res = await fetch(`${EF_BASE}/scrape-pdf-text`, {
-      method: 'POST',
-      headers: EF_HEADERS,
-      body: JSON.stringify({ pdf_url: pdfUrl, cookie, auth_user_id: state.authUserId })
-    });
-    const json = await res.json();
-    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'PDF scrape failed.'); return; }
-
     const existing = document.getElementById(`${prefix}-description`).value.trim();
+
     if (!existing) {
-      // No existing description — auto-populate and summarise
-      document.getElementById(`${prefix}-context`).value += (document.getElementById(`${prefix}-context`).value ? '\n\n' : '') + json.text;
+      // No existing description — generate directly using pdf_url
+      // generate-supplement-description handles PDF fetch internally
       await generateDescription(prefix);
     } else {
-      // Existing description — store draft and show accept/reject
-      state.pdfDraft[prefix] = json.text;
+      // Existing description — fetch PDF text via generate EF with a special flag,
+      // show accept/reject banner with the new draft
+      const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+        method: 'POST',
+        headers: EF_HEADERS,
+        body: JSON.stringify({ pdf_url: pdfUrl, cookie, auth_user_id: state.authUserId, pdf_only: true })
+      });
+      const raw = await res.text();
+      let json;
+      try { json = JSON.parse(raw); } catch { showMsg(msgEl, 'error', `Parse error: ${raw.slice(0,100)}`); return; }
+      if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'PDF scrape failed.'); return; }
+      state.pdfDraft[prefix] = json.description || '';
       document.getElementById(`${prefix}-pdf-draft-banner`).classList.remove('hidden');
     }
   } catch(e) {
-    showMsg(msgEl, 'error', 'Network error during PDF scrape.');
+    showMsg(msgEl, 'error', `PDF scrape error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
     setDescButtons(prefix, false);
