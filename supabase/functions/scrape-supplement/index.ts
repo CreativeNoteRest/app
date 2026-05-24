@@ -162,6 +162,37 @@ function detectIsFree(url: string, html: string): boolean | null {
   return null; // unknown — NULL in DB
 }
 
+// ── Main content extraction ───────────────────────────────────────────────────
+// Extracts the main body content from WordPress HTML, excluding nav, header,
+// footer, and sidebar. Tries common WordPress content containers in priority
+// order. Falls back to full HTML if none found — better noisy than empty.
+function extractMainContent(html: string): string {
+  // Remove footer, nav, header, sidebar before anything else
+  let cleaned = html
+    .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+    .replace(/<header[\s\S]*?<\/header>/gi, " ")
+    .replace(/(<aside[\s\S]*?<\/aside>)/gi, " ")
+    .replace(/(<div[^>]+class=["'][^"']*(?:sidebar|widget|site-footer|footer-widget|nav-menu)[^"']*["'][^>]*>[\s\S]*?<\/div>)/gi, " ");
+
+  // Try to isolate the main content block — WordPress priority order
+  const contentPatterns = [
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    /<div[^>]+class=["'][^"']*entry-content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]+class=["'][^"']*post-content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]+class=["'][^"']*page-content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    /<main[^>]*>([\s\S]*?)<\/main>/i,
+  ];
+
+  for (const pattern of contentPatterns) {
+    const m = cleaned.match(pattern);
+    if (m && m[1] && m[1].length > 200) return m[1];
+  }
+
+  // Fallback — return the footer-stripped HTML rather than nothing
+  return cleaned;
+}
+
 // ── Strip HTML tags for plain text ───────────────────────────────────────────
 function stripTags(html: string): string {
   return html
@@ -247,9 +278,9 @@ Deno.serve(async (req: Request) => {
   const pdf_url = extractPdfUrl(html, url);
   const is_free = detectIsFree(url, html);
 
-  // Extract readable page text for use by generate-supplement-description
+  // Extract readable page text — main content only, footer/nav excluded
   // Limit to ~4000 chars to keep Gemini prompt manageable
-  const page_text = stripTags(html).slice(0, 4000);
+  const page_text = stripTags(extractMainContent(html)).slice(0, 4000);
 
   return ok({
     title,
