@@ -950,7 +950,18 @@ window.scrapeUrl = async function() {
       headers: EF_HEADERS,
       body: JSON.stringify({ url, cookie, series_id: SERIES_ID, auth_user_id: state.authUserId })
     });
-    const json = await res.json();
+
+    // Read as text first so we can diagnose parse failures
+    const raw = await res.text();
+    console.log('[scrape-supplement] status:', res.status, 'body:', raw);
+
+    let json;
+    try { json = JSON.parse(raw); }
+    catch(parseErr) {
+      statusEl.classList.add('hidden');
+      showMsg(msgEl, 'error', `Response parse error (status ${res.status}): ${raw.slice(0, 200)}`);
+      return;
+    }
 
     if (json.error === 'cookie_expired') {
       statusEl.classList.add('hidden');
@@ -972,7 +983,8 @@ window.scrapeUrl = async function() {
 
   } catch(e) {
     statusEl.classList.add('hidden');
-    showMsg(msgEl, 'error', 'Network error. Please try again.');
+    showMsg(msgEl, 'error', `Error: ${e.message}`);
+    console.error('[scrape-supplement] catch:', e);
   } finally {
     document.getElementById('btn-scrape').disabled = false;
   }
