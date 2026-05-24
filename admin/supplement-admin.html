@@ -376,6 +376,7 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <input class="form-inp" id="new-pdf-url" type="url" placeholder="https://…/file.pdf" style="flex:1;margin:0;" oninput="updatePdfLink()" />
             <a id="btn-open-pdf" href="#" target="_blank" rel="noopener" class="btn-secondary hidden" style="height:46px;display:inline-flex;align-items:center;padding:0 14px;text-decoration:none;flex-shrink:0;">📄 Open PDF</a>
+            <button class="btn-secondary" id="btn-refetch-pdf-url" onclick="refetchPdfUrl()" title="Re-fetch source page to recover PDF URL" style="height:46px;flex-shrink:0;">↺ Find PDF URL</button>
           </div>
         </div>
         <div>
@@ -1384,13 +1385,55 @@ window.toggleDictation = function(targetId) {
   recognition.start();
 };
 
+// ── Re-fetch PDF URL from source page ────────────────────────────────────────
+window.refetchPdfUrl = async function() {
+  const url = document.getElementById('new-url').value.trim();
+  if (!url) { return; }
+
+  const site   = siteFromUrl(url);
+  const cookie = site ? state.cookies[site] : '';
+  const btn    = document.getElementById('btn-refetch-pdf-url');
+  const msgEl  = document.getElementById('fields-msg');
+
+  btn.disabled = true;
+  btn.textContent = 'Fetching…';
+  msgEl.classList.add('hidden');
+
+  try {
+    const res = await fetch(`${EF_BASE}/scrape-supplement`, {
+      method: 'POST',
+      headers: EF_HEADERS,
+      body: JSON.stringify({ url, cookie, series_id: SERIES_ID, auth_user_id: state.authUserId })
+    });
+    const json = await res.json();
+
+    if (!res.ok || json.error) {
+      showMsg(msgEl, 'error', json.error === 'cookie_expired'
+        ? `Cookie expired — update the ${SITE_CONFIG[site]?.label || site} cookie and try again.`
+        : (json.error || 'Failed to fetch page.'));
+      return;
+    }
+
+    if (json.pdf_url) {
+      document.getElementById('new-pdf-url').value = json.pdf_url;
+      updatePdfLink();
+      showMsg(msgEl, 'success', 'PDF URL found — save the record to persist it.');
+    } else {
+      showMsg(msgEl, 'warn', 'No PDF URL found on this page.');
+    }
+  } catch(e) {
+    showMsg(msgEl, 'error', `Network error: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↺ Find PDF URL';
+  }
+};
+
 // ── PDF link helper ───────────────────────────────────────────────────────────
 window.updatePdfLink = function() {
   const val = document.getElementById('new-pdf-url').value.trim();
-  // Fields card button
   const btn = document.getElementById('btn-open-pdf');
   if (btn) { if (val) { btn.href = val; btn.classList.remove('hidden'); } else { btn.href = '#'; btn.classList.add('hidden'); } }
-  // Description section button
   const btn2 = document.getElementById('btn-open-pdf-desc');
   if (btn2) { if (val) { btn2.href = val; btn2.classList.remove('hidden'); } else { btn2.href = '#'; btn2.classList.add('hidden'); } }
 };
