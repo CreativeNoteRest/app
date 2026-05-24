@@ -374,18 +374,17 @@
           </select>
         </div>
       </div>
-      <div class="form-row-3">
+      <div class="form-row-grid">
         <div>
-          <label class="form-lbl" for="new-season">Season <span>optional</span></label>
-          <input class="form-inp" id="new-season" type="text" placeholder="e.g. Christmas" />
+          <label class="form-lbl" for="new-season">Season <span>— suggested from page content</span></label>
+          <select class="form-sel" id="new-season">
+            <option value="">— no seasonal theme —</option>
+          </select>
         </div>
-        <div>
-          <label class="form-lbl" for="new-season-start">Season start <span>MM-DD</span></label>
-          <input class="form-inp" id="new-season-start" type="text" placeholder="11-15" maxlength="5" />
-        </div>
-        <div>
-          <label class="form-lbl" for="new-season-end">Season end <span>MM-DD</span></label>
-          <input class="form-inp" id="new-season-end" type="text" placeholder="01-05" maxlength="5" />
+        <div id="new-season-suggested" class="hidden" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+          <span style="font-size:0.78rem;color:var(--info);background:var(--info-light);border:1px solid var(--info-border);border-radius:7px;padding:5px 10px;line-height:1.4;">
+            💡 <span id="new-season-suggestion-text"></span>
+          </span>
         </div>
       </div>
       <div class="form-row mt8">
@@ -396,51 +395,9 @@
       </div>
     </div>
 
-    <!-- Step 3: Description -->
-    <div id="desc-card" class="card hidden">
-      <div class="card-tag">Step 3</div>
-      <div class="card-title">Search description</div>
-
-      <div class="form-row">
-        <label class="form-lbl" for="new-context">Additional context <span>— optional. Dictate or type notes from lead-up pages, blog posts, or your own curriculum knowledge. This supplements the auto-scraped content.</span></label>
-        <div style="position:relative;">
-          <textarea class="form-ta" id="new-context" rows="3"></textarea>
-          <button class="btn-mic" id="mic-new-context" onclick="toggleDictation('new-context')" title="Dictate (click to start/stop)">🎤</button>
-        </div>
-      </div>
-
-      <div class="desc-toolbar">
-        <button class="btn-sm-info" id="btn-new-generate" onclick="generateDescription('new')">✨ Generate description</button>
-        <button class="btn-sm-info" id="btn-new-rescrape-pdf" onclick="rescrapePdf('new')">📄 Scrape PDF</button>
-        <button class="btn-sm-info" id="btn-new-resummarise" onclick="resummarise('new')" style="display:none;">🔄 Re-summarise</button>
-      </div>
-
-      <div id="new-desc-generating" class="scrape-status hidden">
-        <span class="spinner spinner-dark"></span> <span>Generating description…</span>
-      </div>
-
-      <!-- PDF scrape draft (shown when description exists and new PDF scraped) -->
-      <div id="new-pdf-draft-banner" class="desc-draft-banner hidden">
-        <span>New PDF content scraped. Accept to merge into description, or reject to keep existing.</span>
-        <div class="desc-draft-actions">
-          <button class="btn-sm-success" onclick="acceptPdfDraft('new')">Accept</button>
-          <button class="btn-sm-danger" onclick="rejectPdfDraft('new')">Reject</button>
-        </div>
-      </div>
-
-      <div class="form-row mt8">
-        <label class="form-lbl" for="new-description">Description <span>— editable. AI will optimise for searchability.</span></label>
-        <div style="position:relative;">
-          <textarea class="form-ta" id="new-description" rows="5"></textarea>
-          <button class="btn-mic" id="mic-new-description" onclick="toggleDictation('new-description')" title="Dictate (click to start/stop)">🎤</button>
-        </div>
-      </div>
-      <div id="new-desc-msg" class="hidden"></div>
-    </div>
-
-    <!-- Step 4: Piece association -->
+    <!-- Step 3: Piece association -->
     <div id="piece-card" class="card hidden">
-      <div class="card-tag">Step 4</div>
+      <div class="card-tag">Step 3</div>
       <div class="card-title">Piece association <span style="font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:400;color:var(--text-light);">— optional but strongly preferred</span></div>
 
       <p style="font-size:0.85rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Select the earliest piece in the curriculum where this supplement becomes appropriate. If you select book + unit only, the supplement will be anchored to the first piece in that unit.</p>
@@ -562,19 +519,11 @@
             </select>
           </div>
         </div>
-        <div class="form-row-3">
-          <div>
-            <label class="form-lbl" for="edit-season">Season</label>
-            <input class="form-inp" id="edit-season" type="text" placeholder="e.g. Christmas" />
-          </div>
-          <div>
-            <label class="form-lbl" for="edit-season-start">Season start <span>MM-DD</span></label>
-            <input class="form-inp" id="edit-season-start" type="text" maxlength="5" />
-          </div>
-          <div>
-            <label class="form-lbl" for="edit-season-end">Season end <span>MM-DD</span></label>
-            <input class="form-inp" id="edit-season-end" type="text" maxlength="5" />
-          </div>
+        <div class="form-row">
+          <label class="form-lbl" for="edit-season">Season</label>
+          <select class="form-sel" id="edit-season">
+            <option value="">— no seasonal theme —</option>
+          </select>
         </div>
         <div class="form-row mt8">
           <label class="check-row">
@@ -590,41 +539,52 @@
         </div>
       </div>
 
-      <!-- Description card (edit mode) -->
+      <!-- Description card (edit mode) — two-box model -->
       <div class="card">
         <div class="card-tag">Description</div>
         <div class="card-title">Search description</div>
+        <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Build the description from two sources, then combine. The final description is what gets saved.</p>
 
+        <!-- Box 1: Scraped content -->
         <div class="form-row">
-          <label class="form-lbl" for="edit-context">Additional context <span>— optional notes to fold into re-summarisation</span></label>
+          <label class="form-lbl" for="edit-scraped-content">Scraped content <span>— from PDF and page. Edit or prune before combining.</span></label>
           <div style="position:relative;">
-            <textarea class="form-ta" id="edit-context" rows="2" placeholder="Any additional context for this supplement…"></textarea>
-            <button class="btn-mic" id="mic-edit-context" onclick="toggleDictation('edit-context')" title="Dictate (click to start/stop)">🎤</button>
+            <textarea class="form-ta" id="edit-scraped-content" rows="4" placeholder="Click 'Scrape PDF' below to populate, or paste content manually."></textarea>
+            <button class="btn-mic" id="mic-edit-scraped" onclick="toggleDictation('edit-scraped-content')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
 
+        <!-- Scrape PDF button -->
         <div class="desc-toolbar">
-          <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="rescrapePdf('edit')">📄 Scrape PDF again</button>
-          <button class="btn-sm-info" id="btn-edit-resummarise" onclick="resummarise('edit')">🔄 Re-summarise</button>
+          <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape PDF</button>
         </div>
-
         <div id="edit-desc-generating" class="scrape-status hidden">
-          <span class="spinner spinner-dark"></span> <span>Generating description…</span>
+          <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
         </div>
 
-        <!-- PDF draft accept/reject (edit mode) -->
-        <div id="edit-pdf-draft-banner" class="desc-draft-banner hidden">
-          <span>New PDF content scraped. Accept to merge into description, or reject to keep existing.</span>
-          <div class="desc-draft-actions">
-            <button class="btn-sm-success" onclick="acceptPdfDraft('edit')">Accept</button>
-            <button class="btn-sm-danger" onclick="rejectPdfDraft('edit')">Reject</button>
+        <div class="sec-divider"></div>
+
+        <!-- Box 2: SME notes -->
+        <div class="form-row">
+          <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
+          <div style="position:relative;">
+            <textarea class="form-ta" id="edit-sme-notes" rows="3" placeholder="e.g. Targets students who rush dotted rhythms. Step-counting drill format. Use after Unit 3 introduction."></textarea>
+            <button class="btn-mic" id="mic-edit-sme" onclick="toggleDictation('edit-sme-notes')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
 
+        <!-- Combine button -->
+        <div class="desc-toolbar">
+          <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
+        </div>
+
+        <div class="sec-divider"></div>
+
+        <!-- Box 3: Final description -->
         <div class="form-row mt8">
-          <label class="form-lbl" for="edit-description">Description</label>
+          <label class="form-lbl" for="edit-description">Final description <span>— editable. This is saved to the database.</span></label>
           <div style="position:relative;">
-            <textarea class="form-ta" id="edit-description" rows="5" placeholder="No description yet. Use 'Scrape PDF' or type/dictate here."></textarea>
+            <textarea class="form-ta" id="edit-description" rows="4" placeholder="Click 'Combine description' to generate, or type directly."></textarea>
             <button class="btn-mic" id="mic-edit-description" onclick="toggleDictation('edit-description')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
@@ -705,10 +665,10 @@ const state = {
   passwords: { wk: '', tpt: '' },      // loaded from Config table on login
   activeCookieSite: null,     // 'wk' | 'tpt'
   scrapeData: null,           // result from scrape-supplement EF
-  pdfDraft: { new: null, edit: null }, // pending PDF text awaiting accept/reject
   allSupplements: [],         // full list for edit mode
   editingSupplementId: null,  // UUID of supplement being edited
   books: [],                  // [{book_id, title, sort_order}]
+  seasons: [],                // [season_label, ...] loaded from season_windows
 };
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -736,6 +696,7 @@ async function showApp(email) {
   await loadConfig();
   refreshCookieBars();
   loadBooks();
+  loadSeasons();
 }
 
 function showLoginError(msg) {
@@ -879,6 +840,24 @@ window.setMode = function(mode) {
   if (mode === 'edit' && state.allSupplements.length === 0) loadSupplements();
 };
 
+// ── Seasons (dynamic from DB) ─────────────────────────────────────────────────
+async function loadSeasons() {
+  const { data, error } = await sb.from('season_windows').select('season_label').eq('series_id', SERIES_ID).order('season_label');
+  if (error || !data) return;
+  state.seasons = data.map(r => r.season_label);
+  for (const prefix of ['new', 'edit']) {
+    const sel = document.getElementById(`${prefix}-season`);
+    // Clear all options except the first (— no seasonal theme —)
+    while (sel.options.length > 1) sel.remove(1);
+    state.seasons.forEach(label => {
+      const o = document.createElement('option');
+      o.value = label;
+      o.textContent = label;
+      sel.appendChild(o);
+    });
+  }
+}
+
 // ── Books cascade ─────────────────────────────────────────────────────────────
 async function loadBooks() {
   const { data, error } = await sb.from('books').select('book_id, display_name, sequence_number').eq('series_id', SERIES_ID).eq('is_active', true).order('sequence_number');
@@ -990,7 +969,7 @@ window.scrapeUrl = async function() {
     state.scrapeData = json;
     populateNewFields(json);
     statusEl.classList.add('hidden');
-    ['fields-card','desc-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
     document.getElementById('fields-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch(e) {
@@ -1009,6 +988,25 @@ function populateNewFields(data) {
   document.getElementById('new-source').value      = data.source || (siteFromUrl(document.getElementById('new-url').value) === 'tpt' ? 'teachpianotoday' : 'wunderkeys');
   document.getElementById('new-is-free').value     = data.is_free === true ? 'true' : data.is_free === false ? 'false' : '';
   updateThumbPreview('new');
+
+  // Season detection — client-side keyword match against loaded season labels
+  const pageText = (data.page_text || '').toLowerCase();
+  const title    = (data.title || '').toLowerCase();
+  const combined = pageText + ' ' + title;
+  const suggestedSeason = state.seasons.find(label => combined.includes(label.toLowerCase()));
+  const seasonSel = document.getElementById('new-season');
+  const suggestionEl = document.getElementById('new-season-suggested');
+  const suggestionText = document.getElementById('new-season-suggestion-text');
+  if (suggestedSeason) {
+    seasonSel.value = suggestedSeason;
+    suggestionText.textContent = `Detected from page content — confirm or change`;
+    suggestionEl.style.display = 'flex';
+    suggestionEl.classList.remove('hidden');
+  } else {
+    seasonSel.value = '';
+    suggestionEl.style.display = 'none';
+    suggestionEl.classList.add('hidden');
+  }
 }
 
 function updateThumbPreview(prefix) {
@@ -1023,133 +1021,95 @@ function updateThumbPreview(prefix) {
 window.updateThumbPreview = updateThumbPreview;
 document.getElementById('new-thumb-url').addEventListener('input', () => updateThumbPreview('new'));
 
-// ── Description generation ────────────────────────────────────────────────────
-window.generateDescription = async function(prefix) {
-  const url      = prefix === 'new' ? document.getElementById('new-url').value.trim()
-                                    : document.getElementById('edit-source-url').value.trim();
-  const pdfUrl   = document.getElementById(`${prefix}-pdf-url`).value.trim();
-  const context  = document.getElementById(`${prefix}-context`).value.trim();
-  const site     = siteFromUrl(url);
-  const cookie   = site ? state.cookies[site] : '';
-  const genEl    = document.getElementById(`${prefix}-desc-generating`);
-  const msgEl    = document.getElementById(`${prefix}-desc-msg`);
+// ── EDIT: Scrape PDF into Box 1 ───────────────────────────────────────────────
+window.scrapeIntoBox = async function() {
+  const pdfUrl = document.getElementById('edit-pdf-url').value.trim();
+  const url    = document.getElementById('edit-source-url').value.trim();
+  if (!pdfUrl) { showMsg(document.getElementById('edit-desc-msg'), 'warn', 'No PDF URL set for this supplement.'); return; }
 
-  genEl.classList.remove('hidden');
-  msgEl.classList.add('hidden');
-  setDescButtons(prefix, true);
-
-  try {
-    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
-      method: 'POST',
-      headers: EF_HEADERS,
-      body: JSON.stringify({ url, pdf_url: pdfUrl, context, cookie, page_text: prefix === 'new' ? (state.scrapeData?.page_text || '') : '', auth_user_id: state.authUserId })
-    });
-    const json = await res.json();
-    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Generation failed.'); return; }
-    document.getElementById(`${prefix}-description`).value = json.description || '';
-    document.getElementById(`btn-${prefix}-resummarise`).style.display = 'inline-flex';
-  } catch(e) {
-    showMsg(msgEl, 'error', 'Network error during generation.');
-  } finally {
-    genEl.classList.add('hidden');
-    setDescButtons(prefix, false);
-  }
-};
-
-window.rescrapePdf = async function(prefix) {
-  const pdfUrl = document.getElementById(`${prefix}-pdf-url`).value.trim();
-  if (!pdfUrl) { showMsg(document.getElementById(`${prefix}-desc-msg`), 'warn', 'No PDF URL set. Enter a PDF URL first.'); return; }
-
-  const url    = prefix === 'new' ? document.getElementById('new-url').value.trim() : document.getElementById('edit-source-url').value.trim();
   const site   = siteFromUrl(pdfUrl) || siteFromUrl(url);
   const cookie = site ? state.cookies[site] : '';
-  const genEl  = document.getElementById(`${prefix}-desc-generating`);
-  const msgEl  = document.getElementById(`${prefix}-desc-msg`);
+  const genEl  = document.getElementById('edit-desc-generating');
+  const genTxt = document.getElementById('edit-desc-generating-text');
+  const msgEl  = document.getElementById('edit-desc-msg');
 
+  genTxt.textContent = 'Scraping PDF…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
-  setDescButtons(prefix, true);
-
-  try {
-    const existing = document.getElementById(`${prefix}-description`).value.trim();
-
-    if (!existing) {
-      // No existing description — generate directly using pdf_url
-      // generate-supplement-description handles PDF fetch internally
-      await generateDescription(prefix);
-    } else {
-      // Existing description — fetch PDF text via generate EF with a special flag,
-      // show accept/reject banner with the new draft
-      const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
-        method: 'POST',
-        headers: EF_HEADERS,
-        body: JSON.stringify({ pdf_url: pdfUrl, cookie, auth_user_id: state.authUserId, pdf_only: true })
-      });
-      const raw = await res.text();
-      let json;
-      try { json = JSON.parse(raw); } catch { showMsg(msgEl, 'error', `Parse error: ${raw.slice(0,100)}`); return; }
-      if (!res.ok || json.error) {
-        const msg = json.error === 'Could not extract text from PDF.'
-          ? 'Could not extract text from this PDF — it may be image-based or compressed. Try Generate description instead, which can use the page text.'
-          : (json.error || 'PDF scrape failed.');
-        showMsg(msgEl, 'error', msg); return;
-      }
-      state.pdfDraft[prefix] = json.description || '';
-      document.getElementById(`${prefix}-pdf-draft-banner`).classList.remove('hidden');
-    }
-  } catch(e) {
-    showMsg(msgEl, 'error', `PDF scrape error: ${e.message}`);
-  } finally {
-    genEl.classList.add('hidden');
-    setDescButtons(prefix, false);
-  }
-};
-
-window.acceptPdfDraft = function(prefix) {
-  const draft = state.pdfDraft[prefix];
-  if (!draft) return;
-  const ctx = document.getElementById(`${prefix}-context`);
-  ctx.value += (ctx.value ? '\n\n' : '') + draft;
-  state.pdfDraft[prefix] = null;
-  document.getElementById(`${prefix}-pdf-draft-banner`).classList.add('hidden');
-  generateDescription(prefix);
-};
-
-window.rejectPdfDraft = function(prefix) {
-  state.pdfDraft[prefix] = null;
-  document.getElementById(`${prefix}-pdf-draft-banner`).classList.add('hidden');
-};
-
-window.resummarise = async function(prefix) {
-  const desc    = document.getElementById(`${prefix}-description`).value.trim();
-  const context = document.getElementById(`${prefix}-context`).value.trim();
-  if (!desc && !context) { showMsg(document.getElementById(`${prefix}-desc-msg`), 'warn', 'Nothing to summarise — add a description or context first.'); return; }
-  const genEl = document.getElementById(`${prefix}-desc-generating`);
-  const msgEl = document.getElementById(`${prefix}-desc-msg`);
-  genEl.classList.remove('hidden');
-  msgEl.classList.add('hidden');
-  setDescButtons(prefix, true);
+  document.getElementById('btn-edit-rescrape-pdf').disabled = true;
+  document.getElementById('btn-edit-combine').disabled = true;
 
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ current_description: desc, context, auth_user_id: state.authUserId })
+      body: JSON.stringify({ pdf_url: pdfUrl, url, cookie, page_text: '', auth_user_id: state.authUserId })
     });
     const json = await res.json();
-    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Re-summarise failed.'); return; }
-    document.getElementById(`${prefix}-description`).value = json.description || '';
+    if (!res.ok || json.error) {
+      const msg = json.error === 'Could not extract text from PDF.'
+        ? 'Could not extract text from this PDF — it may be image-based or compressed.'
+        : (json.error || 'Scrape failed.');
+      showMsg(msgEl, 'error', msg); return;
+    }
+    document.getElementById('edit-scraped-content').value = json.description || '';
+    showMsg(msgEl, 'info', 'PDF scraped — review and edit the content above, then click Combine.');
   } catch(e) {
-    showMsg(msgEl, 'error', 'Network error.');
+    showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
-    setDescButtons(prefix, false);
+    document.getElementById('btn-edit-rescrape-pdf').disabled = false;
+    document.getElementById('btn-edit-combine').disabled = false;
+  }
+};
+
+// ── EDIT: Combine description from two boxes ──────────────────────────────────
+window.combineDescription = async function() {
+  const scraped = document.getElementById('edit-scraped-content').value.trim();
+  const sme     = document.getElementById('edit-sme-notes').value.trim();
+  if (!scraped && !sme) {
+    showMsg(document.getElementById('edit-desc-msg'), 'warn', 'Add content to at least one box before combining.');
+    return;
+  }
+
+  const genEl  = document.getElementById('edit-desc-generating');
+  const genTxt = document.getElementById('edit-desc-generating-text');
+  const msgEl  = document.getElementById('edit-desc-msg');
+
+  genTxt.textContent = 'Generating description…';
+  genEl.classList.remove('hidden');
+  msgEl.classList.add('hidden');
+  document.getElementById('btn-edit-rescrape-pdf').disabled = true;
+  document.getElementById('btn-edit-combine').disabled = true;
+
+  // Build a combined context string for Mode B re-summarise
+  // We send both boxes as current_description so Gemini gets full context
+  const combined = [
+    scraped ? `Scraped content:\n${scraped}` : '',
+    sme     ? `Curriculum notes from music educator:\n${sme}` : '',
+  ].filter(Boolean).join('\n\n');
+
+  try {
+    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+      method: 'POST',
+      headers: EF_HEADERS,
+      body: JSON.stringify({ current_description: combined, auth_user_id: state.authUserId })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Combine failed.'); return; }
+    document.getElementById('edit-description').value = json.description || '';
+    showMsg(msgEl, 'info', 'Description generated — review and edit, then save.');
+  } catch(e) {
+    showMsg(msgEl, 'error', `Network error: ${e.message}`);
+  } finally {
+    genEl.classList.add('hidden');
+    document.getElementById('btn-edit-rescrape-pdf').disabled = false;
+    document.getElementById('btn-edit-combine').disabled = false;
   }
 };
 
 function setDescButtons(prefix, disabled) {
-  ['btn-new-generate','btn-new-rescrape-pdf','btn-new-resummarise',
-   'btn-edit-rescrape-pdf','btn-edit-resummarise'].forEach(id => {
+  ['btn-edit-rescrape-pdf','btn-edit-combine'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = disabled;
   });
@@ -1184,22 +1144,18 @@ window.saveNewSupplement = async function() {
     source:            document.getElementById('new-source').value,
     is_free:           document.getElementById('new-is-free').value === '' ? null : document.getElementById('new-is-free').value === 'true',
     thumbnail_url:     document.getElementById('new-thumb-url').value.trim() || null,
-    pdf_url:           null, // expendable per schema — not written in current build
+    pdf_url:           document.getElementById('new-pdf-url').value.trim() || null,
     match_context:     document.getElementById('new-match-context').value || null,
-    season:            document.getElementById('new-season').value.trim() || null,
-    season_start_mmdd: document.getElementById('new-season-start').value.trim() || null,
-    season_end_mmdd:   document.getElementById('new-season-end').value.trim() || null,
+    season:            document.getElementById('new-season').value || null,
     is_multi_lesson:   document.getElementById('new-is-multi').checked,
-    search_description:document.getElementById('new-description').value.trim() || null,
+    search_description:null,
     is_active:         true,
   };
 
   try {
-    // Upsert on source_url + series_id
     const { data: suppData, error: suppErr } = await sb.from('supplements').upsert(supplement, { onConflict: 'source_url,series_id', ignoreDuplicates: false }).select('supplement_id').single();
     if (suppErr) { showMsg(msgEl, 'error', suppErr.message); return; }
 
-    // Write eligibility map if piece resolved
     if (resolvedPieceId && bookId) {
       await sb.from('supplement_eligibility_map').upsert({
         supplement_id:  suppData.supplement_id,
@@ -1209,8 +1165,14 @@ window.saveNewSupplement = async function() {
       }, { onConflict: 'supplement_id,book_id' });
     }
 
-    showMsg(msgEl, 'success', `Supplement saved${resolvedPieceId ? ' with piece association' : ' — no piece association set (flagged for manual mapping)'}.`);
-    setTimeout(resetNewForm, 2000);
+    showMsg(msgEl, 'success', 'Saved — opening edit mode for description…');
+    // Reload supplements list then transition to edit mode for this record
+    await loadSupplements();
+    setTimeout(() => {
+      resetNewForm();
+      setMode('edit');
+      openEditForm(suppData.supplement_id);
+    }, 1000);
   } catch(e) {
     showMsg(msgEl, 'error', 'Unexpected error. Please try again.');
   } finally {
@@ -1219,17 +1181,17 @@ window.saveNewSupplement = async function() {
 };
 
 window.resetNewForm = function() {
-  ['new-url','new-title','new-thumb-url','new-pdf-url','new-season','new-season-start','new-season-end','new-context','new-description'].forEach(id => { document.getElementById(id).value = ''; });
-  ['new-source','new-is-free','new-match-context','new-book','new-unit','new-piece'].forEach(id => { document.getElementById(id).selectedIndex = 0; });
+  ['new-url','new-title','new-thumb-url','new-pdf-url'].forEach(id => { document.getElementById(id).value = ''; });
+  ['new-source','new-is-free','new-match-context','new-season','new-book','new-unit','new-piece'].forEach(id => { document.getElementById(id).selectedIndex = 0; });
   document.getElementById('new-is-multi').checked = false;
   document.getElementById('new-unit').disabled = true;
   document.getElementById('new-piece').disabled = true;
   document.getElementById('new-thumb-preview').textContent = '🖼';
-  ['fields-card','desc-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
-  ['scrape-msg','save-msg','new-desc-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
-  document.getElementById('new-pdf-draft-banner').classList.add('hidden');
-  document.getElementById('btn-new-resummarise').style.display = 'none';
-  state.scrapeData = null; state.pdfDraft.new = null;
+  const suggEl = document.getElementById('new-season-suggested');
+  if (suggEl) { suggEl.style.display = 'none'; suggEl.classList.add('hidden'); }
+  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['scrape-msg','save-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  state.scrapeData = null;
 };
 
 // ── EDIT MODE: Load supplements ───────────────────────────────────────────────
@@ -1292,12 +1254,12 @@ window.openEditForm = async function(id) {
   document.getElementById('edit-pdf-url').value      = data.pdf_url || '';
   document.getElementById('edit-match-context').value= data.match_context || '';
   document.getElementById('edit-season').value       = data.season || '';
-  document.getElementById('edit-season-start').value = data.season_start_mmdd || '';
-  document.getElementById('edit-season-end').value   = data.season_end_mmdd || '';
   document.getElementById('edit-is-multi').checked   = !!data.is_multi_lesson;
   document.getElementById('edit-is-active').checked  = !!data.is_active;
-  document.getElementById('edit-description').value  = data.search_description || '';
-  document.getElementById('edit-context').value      = '';
+  // Two-box description model: existing description goes into Box 1 (scraped content)
+  document.getElementById('edit-scraped-content').value = data.search_description || '';
+  document.getElementById('edit-sme-notes').value       = '';
+  document.getElementById('edit-description').value     = data.search_description || '';
   updateThumbPreview('edit');
 
   // Load existing eligibility map entry if any
@@ -1312,8 +1274,6 @@ window.openEditForm = async function(id) {
     }
   }
 
-  state.pdfDraft.edit = null;
-  document.getElementById('edit-pdf-draft-banner').classList.add('hidden');
   document.getElementById('edit-desc-msg').classList.add('hidden');
   document.getElementById('edit-save-msg').classList.add('hidden');
   document.getElementById('edit-form-wrap').classList.remove('hidden');
@@ -1351,9 +1311,7 @@ window.saveEditSupplement = async function() {
     is_free:           document.getElementById('edit-is-free').value === '' ? null : document.getElementById('edit-is-free').value === 'true',
     thumbnail_url:     document.getElementById('edit-thumb-url').value.trim() || null,
     match_context:     document.getElementById('edit-match-context').value || null,
-    season:            document.getElementById('edit-season').value.trim() || null,
-    season_start_mmdd: document.getElementById('edit-season-start').value.trim() || null,
-    season_end_mmdd:   document.getElementById('edit-season-end').value.trim() || null,
+    season:            document.getElementById('edit-season').value || null,
     is_multi_lesson:   document.getElementById('edit-is-multi').checked,
     is_active:         document.getElementById('edit-is-active').checked,
     search_description:document.getElementById('edit-description').value.trim() || null,
