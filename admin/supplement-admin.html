@@ -869,13 +869,13 @@ window.setMode = function(mode) {
 
 // ── Books cascade ─────────────────────────────────────────────────────────────
 async function loadBooks() {
-  const { data, error } = await sb.from('books').select('book_id, title, sort_order').eq('series_id', SERIES_ID).eq('is_active', true).order('sort_order');
+  const { data, error } = await sb.from('books').select('book_id, display_name, sequence_number').eq('series_id', SERIES_ID).eq('is_active', true).order('sequence_number');
   if (error || !data) return;
   state.books = data;
   for (const prefix of ['new', 'edit']) {
     const sel = document.getElementById(`${prefix}-book`);
     sel.innerHTML = '<option value="">— select book —</option>';
-    data.forEach(b => { const o = document.createElement('option'); o.value = b.book_id; o.textContent = b.title; sel.appendChild(o); });
+    data.forEach(b => { const o = document.createElement('option'); o.value = b.book_id; o.textContent = b.display_name; sel.appendChild(o); });
   }
 }
 
