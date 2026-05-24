@@ -79,7 +79,19 @@
     .card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
     .card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); margin-bottom: 18px; }
 
-    /* ── Cookie status bar ── */
+    /* ── Cookie indicator buttons (inline with mode toggle) ── */
+    .btn-cookie-indicator { height: 40px; padding: 0 16px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .btn-cookie-indicator:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-cookie-indicator.cookie-ok  { background: var(--success-light); color: var(--success); border-color: var(--success-border); }
+    .btn-cookie-indicator.cookie-err { background: var(--danger-light);  color: var(--danger);  border-color: var(--danger-border); }
+
+    /* ── Mic button ── */
+    .btn-mic { position: absolute; bottom: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--card); color: var(--text-mid); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s, color 0.15s; padding: 0; }
+    .btn-mic:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-mic.recording { background: var(--danger); border-color: var(--danger); color: #fff; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.65; } }
+
+    /* ── Cookie status bar (kept for JS compat but hidden — bars no longer rendered) ── */
     .cookie-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.82rem; flex-wrap: wrap; }
     .cookie-bar.ok   { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
     .cookie-bar.warn { background: var(--warn-light);    border: 1px solid var(--warn-border);    color: #92400E; }
@@ -245,28 +257,16 @@
   <h1 class="page-title">Supplement <em>admin</em></h1>
   <p class="page-subtitle">Add new supplements or edit existing records. AI-assisted description generation from page and PDF content.</p>
 
-  <!-- Mode toggle -->
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="mode-new-btn" onclick="setMode('new')">➕ New supplement</button>
-    <button class="mode-btn" id="mode-edit-btn" onclick="setMode('edit')">✏️ Edit existing</button>
-  </div>
-
-  <!-- ════════════════════════════════════════════
-       COOKIE STATUS BARS
-       ════════════════════════════════════════════ -->
-  <div id="cookie-bar-wk" class="cookie-bar warn">
-    <div class="cookie-bar-left">
-      <div class="cookie-dot warn"></div>
-      <span><strong>WunderKeys cookie:</strong> Not set — scraping WK pages will fail</span>
+  <!-- Mode toggle + cookie buttons in one row -->
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px;">
+    <div class="mode-toggle" style="margin-bottom:0;">
+      <button class="mode-btn active" id="mode-new-btn" onclick="setMode('new')">➕ New supplement</button>
+      <button class="mode-btn" id="mode-edit-btn" onclick="setMode('edit')">✏️ Edit existing</button>
     </div>
-    <button class="btn-secondary" style="height:32px;padding:0 12px;font-size:0.78rem;" onclick="showCookieHelp('wk')">🔑 Set cookie</button>
-  </div>
-  <div id="cookie-bar-tpt" class="cookie-bar warn">
-    <div class="cookie-bar-left">
-      <div class="cookie-dot warn"></div>
-      <span><strong>TeachPianoToday cookie:</strong> Not set — scraping TPT pages will fail</span>
+    <div style="display:flex;gap:8px;margin-left:auto;">
+      <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp('wk')" title="WunderKeys cookie: Not set — scraping WK pages will fail">🔑 WK cookie</button>
+      <button class="btn-cookie-indicator" id="cookie-btn-tpt" onclick="showCookieHelp('tpt')" title="TeachPianoToday cookie: Not set — scraping TPT pages will fail">🔑 TPT cookie</button>
     </div>
-    <button class="btn-secondary" style="height:32px;padding:0 12px;font-size:0.78rem;" onclick="showCookieHelp('tpt')">🔑 Set cookie</button>
   </div>
 
   <!-- Cookie help panel (shared, shown for wk or tpt) -->
@@ -403,7 +403,10 @@
 
       <div class="form-row">
         <label class="form-lbl" for="new-context">Additional context <span>— optional. Dictate or type notes from lead-up pages, blog posts, or your own curriculum knowledge. This supplements the auto-scraped content.</span></label>
-        <textarea class="form-ta" id="new-context" rows="3" placeholder="e.g. This printable accompanies the lesson on dotted rhythms in Unit 3. The blog post notes it works especially well for students who rush…"></textarea>
+        <div style="position:relative;">
+          <textarea class="form-ta" id="new-context" rows="3"></textarea>
+          <button class="btn-mic" id="mic-new-context" onclick="toggleDictation('new-context')" title="Dictate (click to start/stop)">🎤</button>
+        </div>
       </div>
 
       <div class="desc-toolbar">
@@ -427,7 +430,10 @@
 
       <div class="form-row mt8">
         <label class="form-lbl" for="new-description">Description <span>— editable. AI will optimise for searchability.</span></label>
-        <textarea class="form-ta" id="new-description" rows="5" placeholder="Description will appear here after generation. You can also type or dictate directly."></textarea>
+        <div style="position:relative;">
+          <textarea class="form-ta" id="new-description" rows="5"></textarea>
+          <button class="btn-mic" id="mic-new-description" onclick="toggleDictation('new-description')" title="Dictate (click to start/stop)">🎤</button>
+        </div>
       </div>
       <div id="new-desc-msg" class="hidden"></div>
     </div>
@@ -591,7 +597,10 @@
 
         <div class="form-row">
           <label class="form-lbl" for="edit-context">Additional context <span>— optional notes to fold into re-summarisation</span></label>
-          <textarea class="form-ta" id="edit-context" rows="2" placeholder="Any additional context for this supplement…"></textarea>
+          <div style="position:relative;">
+            <textarea class="form-ta" id="edit-context" rows="2" placeholder="Any additional context for this supplement…"></textarea>
+            <button class="btn-mic" id="mic-edit-context" onclick="toggleDictation('edit-context')" title="Dictate (click to start/stop)">🎤</button>
+          </div>
         </div>
 
         <div class="desc-toolbar">
@@ -614,7 +623,10 @@
 
         <div class="form-row mt8">
           <label class="form-lbl" for="edit-description">Description</label>
-          <textarea class="form-ta" id="edit-description" rows="5" placeholder="No description yet. Use 'Scrape PDF' or type/dictate here."></textarea>
+          <div style="position:relative;">
+            <textarea class="form-ta" id="edit-description" rows="5" placeholder="No description yet. Use 'Scrape PDF' or type/dictate here."></textarea>
+            <button class="btn-mic" id="mic-edit-description" onclick="toggleDictation('edit-description')" title="Dictate (click to start/stop)">🎤</button>
+          </div>
         </div>
         <div id="edit-desc-msg" class="hidden"></div>
       </div>
@@ -748,6 +760,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Sign in';
 });
 document.getElementById('inp-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-login').click(); });
+document.getElementById('new-url').addEventListener('keydown', e => { if (e.key === 'Enter') scrapeUrl(); });
 document.getElementById('btn-signout').addEventListener('click', async () => {
   await sb.auth.signOut();
   elApp.classList.add('hidden'); elLogin.classList.remove('hidden'); elHeaderR.classList.add('hidden');
@@ -785,19 +798,18 @@ async function loadConfig() {
 
 // ── Cookie management ─────────────────────────────────────────────────────────
 function refreshCookieBars() {
+  const siteLabels = { wk: 'WunderKeys', tpt: 'TeachPianoToday' };
   for (const site of ['wk', 'tpt']) {
-    const bar = document.getElementById(`cookie-bar-${site}`);
-    const dot = bar.querySelector('.cookie-dot');
-    const txt = bar.querySelector('span');
-    const label = SITE_CONFIG[site].label;
+    const btn   = document.getElementById(`cookie-btn-${site}`);
+    const label = siteLabels[site];
     if (state.cookies[site]) {
-      bar.className = 'cookie-bar ok';
-      dot.className = 'cookie-dot ok';
-      txt.innerHTML = `<strong>${label} cookie:</strong> Set ✓ — scraping ready`;
+      btn.className = 'btn-cookie-indicator cookie-ok';
+      btn.title = `${label} cookie: Set ✓ — scraping ready`;
+      btn.textContent = `✓ ${site.toUpperCase()} cookie`;
     } else {
-      bar.className = 'cookie-bar warn';
-      dot.className = 'cookie-dot warn';
-      txt.innerHTML = `<strong>${label} cookie:</strong> Not set — scraping ${label} pages will fail`;
+      btn.className = 'btn-cookie-indicator cookie-err';
+      btn.title = `${label} cookie: Not set — scraping ${label} pages will fail`;
+      btn.textContent = `🔑 ${site.toUpperCase()} cookie`;
     }
   }
 }
@@ -1379,6 +1391,63 @@ function showMsg(el, type, msg) {
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Speech recognition (dictation) ───────────────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let activeRecognition = null;
+let activeMicTargetId = null;
+
+window.toggleDictation = function(targetId) {
+  // Stop any running recognition first
+  if (activeRecognition) {
+    activeRecognition.stop();
+    if (activeMicTargetId === targetId) {
+      // Was already recording this field — just stop
+      return;
+    }
+  }
+
+  if (!SpeechRecognition) {
+    alert('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+    return;
+  }
+
+  const micBtn = document.getElementById(`mic-${targetId}`);
+  const textarea = document.getElementById(targetId);
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.continuous = true;
+
+  recognition.onstart = () => {
+    activeRecognition = recognition;
+    activeMicTargetId = targetId;
+    micBtn.classList.add('recording');
+    micBtn.title = 'Recording — click to stop';
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .slice(e.resultIndex)
+      .map(r => r[0].transcript)
+      .join('');
+    const sep = textarea.value && !textarea.value.endsWith(' ') && !textarea.value.endsWith('\n') ? ' ' : '';
+    textarea.value += sep + transcript;
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted') console.warn('[dictation] error:', e.error);
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove('recording');
+    micBtn.title = 'Dictate (click to start/stop)';
+    if (activeRecognition === recognition) { activeRecognition = null; activeMicTargetId = null; }
+  };
+
+  recognition.start();
+};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 checkSession();
