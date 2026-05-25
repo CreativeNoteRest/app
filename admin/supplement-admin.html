@@ -463,45 +463,32 @@
       <div id="new-cascade-hint" class="cascade-hint hidden"></div>
     </div>
 
-    <!-- Save -->
-    <div id="save-card" class="card hidden">
-      <div id="save-msg" class="hidden"></div>
-      <div class="action-bar">
-        <button class="btn-primary" id="btn-save-new" onclick="saveSupplement()">Save supplement</button>
-        <button class="btn-secondary" onclick="resetForm()">Start over</button>
-      </div>
-    </div>
-
     <!-- Description (shown after save / when editing existing) -->
     <div id="desc-section" class="hidden">
       <div class="card">
         <div class="card-tag">Description</div>
         <div class="card-title">Search description</div>
-        <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Build the description from two sources, then combine. The final description is what gets saved.</p>
+        <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Paste or type content about this supplement — from the landing page, the PDF, or your own notes. Edit as needed, then generate.</p>
 
         <div class="desc-split">
-          <!-- Left column: page content + SME notes stacked -->
+          <!-- Left column: single source box -->
           <div class="desc-split-left">
             <div class="form-row">
-              <label class="form-lbl" for="edit-scraped-content">Page content <span>— from landing page. Edit or prune before combining.</span></label>
-              <textarea class="form-ta" id="edit-scraped-content" rows="6" placeholder=""></textarea>
+              <label class="form-lbl" for="edit-scraped-content">Source material <span>— paste page content, PDF text, or your own notes. Everything in this box is used.</span></label>
+              <div style="position:relative;">
+                <textarea class="form-ta" id="edit-scraped-content" rows="14" placeholder=""></textarea>
+                <button class="btn-mic" id="mic-edit-scraped" onclick="toggleDictation('edit-scraped-content')" title="Dictate (click to start/stop)">🎤</button>
+              </div>
             </div>
             <div id="edit-desc-generating" class="scrape-status hidden">
               <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
             </div>
-            <div class="form-row mt8">
-              <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
-              <div style="position:relative;">
-                <textarea class="form-ta" id="edit-sme-notes" rows="8" placeholder=""></textarea>
-                <button class="btn-mic" id="mic-edit-sme" onclick="toggleDictation('edit-sme-notes')" title="Dictate (click to start/stop)">🎤</button>
-              </div>
-            </div>
           </div>
 
-          <!-- Right column: PDF preview + Open PDF button -->
+          <!-- Right column: PDF preview -->
           <div class="desc-split-right">
             <div class="form-row">
-              <label class="form-lbl">PDF preview <span>— read and dictate or copy into SME notes.</span></label>
+              <label class="form-lbl">PDF preview <span>— read and copy into source material.</span></label>
               <div class="pdf-preview-panel" id="pdf-preview-panel">
                 <div class="pdf-preview-empty" id="pdf-preview-empty">No PDF URL set.</div>
                 <iframe id="pdf-preview-iframe" src="" style="display:none;" title="PDF preview"></iframe>
@@ -513,26 +500,25 @@
           </div>
         </div>
 
-        <div class="sec-divider"></div>
-
-        <!-- Action row: Combine + Save + Start over -->
-        <div class="action-bar" style="margin-bottom:16px;">
-          <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
-          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
-          <button class="btn-secondary" onclick="resetForm()">Start over</button>
+        <!-- Action row: Generate + save msg inline -->
+        <div class="action-bar" style="margin-bottom:0;margin-top:16px;">
+          <button class="btn-sm-info" id="btn-edit-combine" onclick="generateDescription()">✨ Generate description</button>
+          <div id="edit-save-msg" class="hidden" style="flex:1;margin:0;"></div>
         </div>
-        <div id="edit-save-msg" class="hidden"></div>
+        <div id="edit-desc-msg" class="hidden" style="margin-top:10px;"></div>
 
-        <div class="sec-divider"></div>
-
-        <div class="form-row mt8">
-          <label class="form-lbl" for="edit-description">Final description <span>— editable. This is saved to the database.</span></label>
+        <div class="form-row mt16">
+          <label class="form-lbl" for="edit-description">Generated description <span>— editable. This is what gets saved to the database.</span></label>
           <div style="position:relative;">
             <textarea class="form-ta" id="edit-description" rows="4" placeholder=""></textarea>
             <button class="btn-mic" id="mic-edit-description" onclick="toggleDictation('edit-description')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
-        <div id="edit-desc-msg" class="hidden"></div>
+
+        <div class="action-bar" style="margin-top:16px;">
+          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
+          <button class="btn-secondary" onclick="resetForm()">Start over</button>
+        </div>
       </div>
     </div>
 
@@ -895,7 +881,7 @@ window.scrapeUrl = async function() {
 
     populateNewFields(json);
     statusEl.classList.add('hidden');
-    ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
     document.getElementById('fields-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch(e) {
@@ -1059,7 +1045,7 @@ window.scrapeIntoBox = async function() {
       updatePdfLink();
     }
     if (text) {
-      showMsg(msgEl, 'info', 'Page scraped — review and edit above, then click Combine.');
+      showMsg(msgEl, 'info', 'Page scraped — review and edit above, then click Generate.');
     } else {
       showMsg(msgEl, 'warn', 'No text found on this page.');
     }
@@ -1072,12 +1058,11 @@ window.scrapeIntoBox = async function() {
   }
 };
 
-// ── EDIT: Combine description from two boxes ──────────────────────────────────
-window.combineDescription = async function() {
+// ── Generate description from source material box ────────────────────────────
+window.generateDescription = async function() {
   const scraped = document.getElementById('edit-scraped-content').value.trim();
-  const sme     = document.getElementById('edit-sme-notes').value.trim();
-  if (!scraped && !sme) {
-    showMsg(document.getElementById('edit-desc-msg'), 'warn', 'Add content to at least one box before combining.');
+  if (!scraped) {
+    showMsg(document.getElementById('edit-desc-msg'), 'warn', 'Add content to the source material box before generating.');
     return;
   }
 
@@ -1091,25 +1076,16 @@ window.combineDescription = async function() {
   const _rsp1 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp1) _rsp1.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
-  // Route to Mode A — synthesise from raw parts so both boxes are treated
-  // as equal source material. Mode B (current_description) condensed and
-  // dropped SME-only details. Sending page_text + context separately gives
-  // Gemini the full picture with no editorial pre-filtering.
-
+  // Mode A — send source material as page_text for synthesis (not condensation).
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({
-        page_text:    scraped || undefined,
-        context:      sme     || undefined,
-        auth_user_id: state.authUserId,
-      })
+      body: JSON.stringify({ page_text: scraped, auth_user_id: state.authUserId })
     });
     const json = await res.json();
-    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Combine failed.'); return; }
+    if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Generate failed.'); return; }
     document.getElementById('edit-description').value = json.description || '';
-    showMsg(msgEl, 'info', 'Description generated — review and edit, then save.');
   } catch(e) {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
@@ -1129,9 +1105,9 @@ function setDescButtons(prefix, disabled) {
 // ── Unified Save ──────────────────────────────────────────────────────────────
 window.saveSupplement = async function() {
   const isEditing = !!state.editingSupplementId;
-  const msgEl = document.getElementById(isEditing ? 'edit-save-msg' : 'save-msg');
+  const msgEl = document.getElementById('edit-save-msg');
   msgEl.classList.add('hidden');
-  const btn = document.getElementById(isEditing ? 'btn-save-edit' : 'btn-save-new');
+  const btn = document.getElementById('btn-save-edit');
   btn.disabled = true; btn.textContent = 'Saving…';
 
   const url   = document.getElementById('new-url').value.trim();
@@ -1195,7 +1171,6 @@ window.saveSupplement = async function() {
     if (!isEditing) {
       // First save: show description section, switch button to Save changes
       document.getElementById('desc-section').classList.remove('hidden');
-      document.getElementById('btn-save-new').textContent = 'Save changes';
       document.getElementById('new-is-active-row').style.display = '';
       document.getElementById('new-is-active').checked = true;
       document.getElementById('desc-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1222,14 +1197,14 @@ window.resetForm = function() {
   if (suggEl) { suggEl.style.display = 'none'; suggEl.classList.add('hidden'); }
   const hintsEl = document.getElementById('new-assoc-hints');
   if (hintsEl) hintsEl.classList.add('hidden');
-  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('desc-section').classList.add('hidden');
-  ['scrape-msg','save-msg','edit-save-msg','edit-desc-msg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-  ['edit-scraped-content','edit-sme-notes','edit-description'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['scrape-msg','edit-save-msg','edit-desc-msg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+  ['edit-scraped-content','edit-description'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('fields-card-tag').textContent  = 'Step 2';
   document.getElementById('fields-card-title').textContent = 'Supplement details';
   document.getElementById('piece-card-tag').textContent   = 'Step 3';
-  document.getElementById('btn-save-new').textContent = 'Save supplement';
+
   state.scrapeData = null;
   state.editingSupplementId = null;
 };
@@ -1325,16 +1300,14 @@ window.openEditForm = async function(id) {
 
   // Description
   document.getElementById('edit-scraped-content').value = data.search_description || '';
-  document.getElementById('edit-sme-notes').value       = '';
   document.getElementById('edit-description').value     = data.search_description || '';
 
   // Show all cards + description section
   document.getElementById('fields-card-tag').textContent  = 'Details';
   document.getElementById('fields-card-title').textContent = data.title;
   document.getElementById('piece-card-tag').textContent   = 'Piece association';
-  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
   document.getElementById('desc-section').classList.remove('hidden');
-  document.getElementById('btn-save-new').textContent = 'Save changes';
 
   // Update save msg refs
   document.getElementById('edit-desc-msg').classList.add('hidden');
