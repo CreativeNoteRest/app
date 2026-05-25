@@ -1032,7 +1032,7 @@ window.scrapeIntoBox = async function() {
   genTxt.textContent = 'Scraping page…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
-  document.getElementById('btn-edit-rescrape-pdf')?.disabled = true;
+  const _rsp1 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp1) _rsp1.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
   try {
@@ -1067,7 +1067,7 @@ window.scrapeIntoBox = async function() {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
-    document.getElementById('btn-edit-rescrape-pdf')?.disabled = false;
+    const _rsp2 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp2) _rsp2.disabled = false;
     document.getElementById('btn-edit-combine').disabled = false;
   }
 };
@@ -1088,7 +1088,7 @@ window.combineDescription = async function() {
   genTxt.textContent = 'Generating description…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
-  document.getElementById('btn-edit-rescrape-pdf')?.disabled = true;
+  const _rsp1 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp1) _rsp1.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
   // Build a combined context string for Mode B re-summarise
@@ -1112,7 +1112,7 @@ window.combineDescription = async function() {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
-    document.getElementById('btn-edit-rescrape-pdf')?.disabled = false;
+    const _rsp2 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp2) _rsp2.disabled = false;
     document.getElementById('btn-edit-combine').disabled = false;
   }
 };
