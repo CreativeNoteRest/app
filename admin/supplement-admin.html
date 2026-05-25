@@ -463,6 +463,15 @@
       <div id="new-cascade-hint" class="cascade-hint hidden"></div>
     </div>
 
+    <!-- Save -->
+    <div id="save-card" class="card hidden">
+      <div id="save-msg" class="hidden"></div>
+      <div class="action-bar">
+        <button class="btn-primary" id="btn-save-new" onclick="saveSupplement()">Save supplement</button>
+        <button class="btn-secondary" onclick="resetForm()">Start over</button>
+      </div>
+    </div>
+
     <!-- Description (shown after save / when editing existing) -->
     <div id="desc-section" class="hidden">
       <div class="card">
@@ -504,25 +513,26 @@
           </div>
         </div>
 
-        <!-- Action row: Combine only, with save msg inline -->
-        <div class="action-bar" style="margin-bottom:0;margin-top:16px;">
-          <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
-          <div id="edit-save-msg" class="hidden" style="flex:1;margin:0;"></div>
-        </div>
-        <div id="edit-desc-msg" class="hidden" style="margin-top:10px;"></div>
+        <div class="sec-divider"></div>
 
-        <div class="form-row mt16">
+        <!-- Action row: Combine + Save + Start over -->
+        <div class="action-bar" style="margin-bottom:16px;">
+          <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
+          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
+          <button class="btn-secondary" onclick="resetForm()">Start over</button>
+        </div>
+        <div id="edit-save-msg" class="hidden"></div>
+
+        <div class="sec-divider"></div>
+
+        <div class="form-row mt8">
           <label class="form-lbl" for="edit-description">Final description <span>— editable. This is saved to the database.</span></label>
           <div style="position:relative;">
             <textarea class="form-ta" id="edit-description" rows="4" placeholder=""></textarea>
             <button class="btn-mic" id="mic-edit-description" onclick="toggleDictation('edit-description')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
-
-        <div class="action-bar" style="margin-top:16px;">
-          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
-          <button class="btn-secondary" onclick="resetForm()">Start over</button>
-        </div>
+        <div id="edit-desc-msg" class="hidden"></div>
       </div>
     </div>
 
@@ -885,7 +895,7 @@ window.scrapeUrl = async function() {
 
     populateNewFields(json);
     statusEl.classList.add('hidden');
-    ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+    ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
     document.getElementById('fields-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch(e) {
@@ -1081,23 +1091,25 @@ window.combineDescription = async function() {
   const _rsp1 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp1) _rsp1.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
-  // Build a combined context string for Mode B re-summarise
-  // We send both boxes as current_description so Gemini gets full context
-  const combined = [
-    scraped ? `Scraped content:\n${scraped}` : '',
-    sme     ? `Curriculum notes from music educator:\n${sme}` : '',
-  ].filter(Boolean).join('\n\n');
+  // Route to Mode A — synthesise from raw parts so both boxes are treated
+  // as equal source material. Mode B (current_description) condensed and
+  // dropped SME-only details. Sending page_text + context separately gives
+  // Gemini the full picture with no editorial pre-filtering.
 
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ current_description: combined, auth_user_id: state.authUserId })
+      body: JSON.stringify({
+        page_text:    scraped || undefined,
+        context:      sme     || undefined,
+        auth_user_id: state.authUserId,
+      })
     });
     const json = await res.json();
     if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Combine failed.'); return; }
     document.getElementById('edit-description').value = json.description || '';
-    // description populated — no status message needed
+    showMsg(msgEl, 'info', 'Description generated — review and edit, then save.');
   } catch(e) {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
@@ -1117,9 +1129,9 @@ function setDescButtons(prefix, disabled) {
 // ── Unified Save ──────────────────────────────────────────────────────────────
 window.saveSupplement = async function() {
   const isEditing = !!state.editingSupplementId;
-  const msgEl = document.getElementById('edit-save-msg');
+  const msgEl = document.getElementById(isEditing ? 'edit-save-msg' : 'save-msg');
   msgEl.classList.add('hidden');
-  const btn = document.getElementById('btn-save-edit');
+  const btn = document.getElementById(isEditing ? 'btn-save-edit' : 'btn-save-new');
   btn.disabled = true; btn.textContent = 'Saving…';
 
   const url   = document.getElementById('new-url').value.trim();
@@ -1183,6 +1195,7 @@ window.saveSupplement = async function() {
     if (!isEditing) {
       // First save: show description section, switch button to Save changes
       document.getElementById('desc-section').classList.remove('hidden');
+      document.getElementById('btn-save-new').textContent = 'Save changes';
       document.getElementById('new-is-active-row').style.display = '';
       document.getElementById('new-is-active').checked = true;
       document.getElementById('desc-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1209,14 +1222,14 @@ window.resetForm = function() {
   if (suggEl) { suggEl.style.display = 'none'; suggEl.classList.add('hidden'); }
   const hintsEl = document.getElementById('new-assoc-hints');
   if (hintsEl) hintsEl.classList.add('hidden');
-  ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('desc-section').classList.add('hidden');
-  ['scrape-msg','edit-save-msg','edit-desc-msg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+  ['scrape-msg','save-msg','edit-save-msg','edit-desc-msg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
   ['edit-scraped-content','edit-sme-notes','edit-description'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('fields-card-tag').textContent  = 'Step 2';
   document.getElementById('fields-card-title').textContent = 'Supplement details';
   document.getElementById('piece-card-tag').textContent   = 'Step 3';
-
+  document.getElementById('btn-save-new').textContent = 'Save supplement';
   state.scrapeData = null;
   state.editingSupplementId = null;
 };
@@ -1319,8 +1332,9 @@ window.openEditForm = async function(id) {
   document.getElementById('fields-card-tag').textContent  = 'Details';
   document.getElementById('fields-card-title').textContent = data.title;
   document.getElementById('piece-card-tag').textContent   = 'Piece association';
-  ['fields-card','piece-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  ['fields-card','piece-card','save-card'].forEach(id => document.getElementById(id).classList.remove('hidden'));
   document.getElementById('desc-section').classList.remove('hidden');
+  document.getElementById('btn-save-new').textContent = 'Save changes';
 
   // Update save msg refs
   document.getElementById('edit-desc-msg').classList.add('hidden');
