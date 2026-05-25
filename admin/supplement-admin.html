@@ -1028,14 +1028,14 @@ window.scrapeIntoBox = async function() {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ pdf_url: pdfUrl, url, cookie, pdf_only: true, auth_user_id: state.authUserId })
+      body: JSON.stringify({ pdf_url: pdfUrl, cookie, pdf_only: true, auth_user_id: state.authUserId })
     });
     const json = await res.json();
     if (!res.ok || json.error) {
       const msg = json.error === 'Could not extract text from PDF.'
-        ? 'Could not extract text from this PDF — it may be image-based or compressed.'
+        ? 'This PDF has no text layer (image-based or scanned). Paste or dictate content into the box manually, then click Combine.'
         : (json.error || 'Scrape failed.');
-      showMsg(msgEl, 'error', msg); return;
+      showMsg(msgEl, 'warn', msg); return;
     }
     document.getElementById('edit-scraped-content').value = json.description || '';
     showMsg(msgEl, 'info', 'PDF scraped — review and edit the content above, then click Combine.');
@@ -1287,7 +1287,7 @@ window.openEditForm = async function(id) {
         document.getElementById('new-pdf-url').value = json.pdf_url;
         updatePdfLink();
       }
-    }).catch(() => {}); // silent — no error shown to user
+    }).catch(() => {}); // silent — no error surfaced to user
   }
 
   // Description
