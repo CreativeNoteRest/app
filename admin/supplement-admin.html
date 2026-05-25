@@ -147,6 +147,12 @@
 
     /* ── Description panel ── */
     .desc-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .desc-split { display: flex; gap: 16px; align-items: flex-start; }
+    .desc-split-left { flex: 1; min-width: 0; }
+    .desc-split-right { flex: 1; min-width: 0; }
+    .pdf-preview-panel { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+    .pdf-preview-panel iframe { display: block; width: 100%; height: 320px; border: none; }
+    .pdf-preview-empty { height: 320px; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.85rem; text-align: center; padding: 16px; }
     .desc-draft-banner { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--info); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .desc-draft-actions { display: flex; gap: 8px; }
 
@@ -473,19 +479,34 @@
         <div class="card-title">Search description</div>
         <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Build the description from two sources, then combine. The final description is what gets saved.</p>
 
-        <div class="form-row">
-          <label class="form-lbl" for="edit-scraped-content">Scraped content <span>— from PDF and page. Edit or prune before combining.</span></label>
-          <div>
-            <textarea class="form-ta" id="edit-scraped-content" rows="4" placeholder="Click 'Scrape PDF' below to populate, or paste content manually."></textarea>
+        <div class="desc-split">
+          <!-- Left: scraped content box + toolbar -->
+          <div class="desc-split-left">
+            <div class="form-row">
+              <label class="form-lbl" for="edit-scraped-content">Page content <span>— from landing page. Edit or prune before combining.</span></label>
+              <div>
+                <textarea class="form-ta" id="edit-scraped-content" rows="6" placeholder="Click 'Scrape page' below to populate, or paste content manually."></textarea>
+              </div>
+            </div>
+            <div class="desc-toolbar">
+              <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape page</button>
+              <a id="btn-open-pdf-desc" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;">🔗 Open PDF</a>
+            </div>
+            <div id="edit-desc-generating" class="scrape-status hidden">
+              <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
+            </div>
           </div>
-        </div>
 
-        <div class="desc-toolbar">
-          <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape PDF</button>
-          <a id="btn-open-pdf-desc" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;">🔗 Open PDF</a>
-        </div>
-        <div id="edit-desc-generating" class="scrape-status hidden">
-          <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
+          <!-- Right: PDF preview panel -->
+          <div class="desc-split-right">
+            <div class="form-row">
+              <label class="form-lbl">PDF preview <span>— read and dictate or copy into SME notes below.</span></label>
+              <div class="pdf-preview-panel" id="pdf-preview-panel">
+                <div class="pdf-preview-empty" id="pdf-preview-empty">No PDF URL set — open a record with a PDF to preview it here.</div>
+                <iframe id="pdf-preview-iframe" src="" style="display:none;" title="PDF preview"></iframe>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="sec-divider"></div>
@@ -1006,39 +1027,49 @@ function updateThumbPreview(prefix) {
 window.updateThumbPreview = updateThumbPreview;
 document.getElementById('new-thumb-url').addEventListener('input', () => updateThumbPreview('new'));
 
-// ── EDIT: Scrape PDF into Box 1 ───────────────────────────────────────────────
+// ── EDIT: Scrape landing page into Box 1 ─────────────────────────────────────
 window.scrapeIntoBox = async function() {
-  const pdfUrl = document.getElementById('new-pdf-url').value.trim();
-  const url    = document.getElementById('new-url').value.trim();
-  if (!pdfUrl) { showMsg(document.getElementById('edit-desc-msg'), 'warn', 'No PDF URL set for this supplement.'); return; }
+  const url   = document.getElementById('new-url').value.trim();
+  if (!url) { showMsg(document.getElementById('edit-desc-msg'), 'warn', 'No source URL set for this supplement.'); return; }
 
-  const site   = siteFromUrl(pdfUrl) || siteFromUrl(url);
+  const site   = siteFromUrl(url);
   const cookie = site ? state.cookies[site] : '';
   const genEl  = document.getElementById('edit-desc-generating');
   const genTxt = document.getElementById('edit-desc-generating-text');
   const msgEl  = document.getElementById('edit-desc-msg');
 
-  genTxt.textContent = 'Scraping PDF…';
+  genTxt.textContent = 'Scraping page…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
   document.getElementById('btn-edit-rescrape-pdf').disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
   try {
-    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+    const res  = await fetch(`${EF_BASE}/scrape-supplement`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ pdf_url: pdfUrl, cookie, pdf_only: true, auth_user_id: state.authUserId })
+      body: JSON.stringify({ url, cookie, series_id: SERIES_ID, auth_user_id: state.authUserId })
     });
     const json = await res.json();
     if (!res.ok || json.error) {
-      const msg = json.error === 'Could not extract text from PDF.'
-        ? 'This PDF has no text layer (image-based or scanned). Paste or dictate content into the box manually, then click Combine.'
+      const msg = json.error === 'cookie_expired'
+        ? `Cookie expired — update the ${SITE_CONFIG[site]?.label || site} cookie and try again.`
         : (json.error || 'Scrape failed.');
       showMsg(msgEl, 'warn', msg); return;
     }
-    document.getElementById('edit-scraped-content').value = json.description || '';
-    showMsg(msgEl, 'info', 'PDF scraped — review and edit the content above, then click Combine.');
+    const text = (json.page_text || '').trim();
+    document.getElementById('edit-scraped-content').value = text;
+    // Also update PDF URL + preview if scrape returned one and field is currently empty
+    const pdfField = document.getElementById('new-pdf-url');
+    if (json.pdf_url && !pdfField.value.trim()) {
+      pdfField.value = json.pdf_url;
+      updatePdfLink();
+    }
+    if (text) {
+      showMsg(msgEl, 'info', 'Page scraped — review and edit above, then click Combine.');
+    } else {
+      showMsg(msgEl, 'warn', 'No text found on this page.');
+    }
   } catch(e) {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
@@ -1287,6 +1318,11 @@ window.openEditForm = async function(id) {
         document.getElementById('new-pdf-url').value = json.pdf_url;
         updatePdfLink();
       }
+      // Populate Box 1 with page text if not already set
+      const box = document.getElementById('edit-scraped-content');
+      if (json.page_text && !box.value.trim()) {
+        box.value = json.page_text.trim();
+      }
     }).catch(() => {}); // silent — no error surfaced to user
   }
 
@@ -1403,10 +1439,26 @@ window.toggleDictation = function(targetId) {
 // ── PDF link helper ───────────────────────────────────────────────────────────
 window.updatePdfLink = function() {
   const val = document.getElementById('new-pdf-url').value.trim();
+  // Fields card Open PDF button
   const btn = document.getElementById('btn-open-pdf');
   if (btn) { if (val) { btn.href = val; btn.classList.remove('hidden'); } else { btn.href = '#'; btn.classList.add('hidden'); } }
+  // Desc toolbar Open PDF button
   const btn2 = document.getElementById('btn-open-pdf-desc');
   if (btn2) { if (val) { btn2.href = val; btn2.classList.remove('hidden'); } else { btn2.href = '#'; btn2.classList.add('hidden'); } }
+  // PDF preview iframe
+  const iframe  = document.getElementById('pdf-preview-iframe');
+  const empty   = document.getElementById('pdf-preview-empty');
+  if (iframe && empty) {
+    if (val) {
+      iframe.src = val;
+      iframe.style.display = 'block';
+      empty.style.display  = 'none';
+    } else {
+      iframe.src = '';
+      iframe.style.display = 'none';
+      empty.style.display  = 'flex';
+    }
+  }
 };
 
 // ── Init ──────────────────────────────────────────────────────────────────────
