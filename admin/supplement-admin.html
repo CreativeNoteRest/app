@@ -150,9 +150,9 @@
     .desc-split { display: flex; gap: 16px; align-items: flex-start; }
     .desc-split-left { flex: 1; min-width: 0; }
     .desc-split-right { flex: 1; min-width: 0; }
-    .pdf-preview-panel { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
-    .pdf-preview-panel iframe { display: block; width: 100%; height: 320px; border: none; }
-    .pdf-preview-empty { height: 320px; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.85rem; text-align: center; padding: 16px; }
+    .pdf-preview-panel { border: 1.5px solid var(--border); border-radius: 0; overflow: hidden; background: var(--surface); }
+    .pdf-preview-panel iframe { display: block; width: 100%; height: 420px; border: none; }
+    .pdf-preview-empty { height: 420px; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.85rem; text-align: center; padding: 16px; }
     .desc-draft-banner { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--info); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .desc-draft-actions { display: flex; gap: 8px; }
 
@@ -480,30 +480,34 @@
         <p style="font-size:0.82rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;">Build the description from two sources, then combine. The final description is what gets saved.</p>
 
         <div class="desc-split">
-          <!-- Left: scraped content box + toolbar -->
+          <!-- Left column: page content + SME notes stacked -->
           <div class="desc-split-left">
             <div class="form-row">
               <label class="form-lbl" for="edit-scraped-content">Page content <span>— from landing page. Edit or prune before combining.</span></label>
-              <div>
-                <textarea class="form-ta" id="edit-scraped-content" rows="6" placeholder="Click 'Scrape page' below to populate, or paste content manually."></textarea>
-              </div>
-            </div>
-            <div class="desc-toolbar">
-              <button class="btn-sm-info" id="btn-edit-rescrape-pdf" onclick="scrapeIntoBox()">📄 Scrape page</button>
-              <a id="btn-open-pdf-desc" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;">🔗 Open PDF</a>
+              <textarea class="form-ta" id="edit-scraped-content" rows="6" placeholder=""></textarea>
             </div>
             <div id="edit-desc-generating" class="scrape-status hidden">
               <span class="spinner spinner-dark"></span> <span id="edit-desc-generating-text">Scraping…</span>
             </div>
+            <div class="form-row mt8">
+              <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
+              <div style="position:relative;">
+                <textarea class="form-ta" id="edit-sme-notes" rows="4" placeholder=""></textarea>
+                <button class="btn-mic" id="mic-edit-sme" onclick="toggleDictation('edit-sme-notes')" title="Dictate (click to start/stop)">🎤</button>
+              </div>
+            </div>
           </div>
 
-          <!-- Right: PDF preview panel -->
+          <!-- Right column: PDF preview + Open PDF button -->
           <div class="desc-split-right">
             <div class="form-row">
-              <label class="form-lbl">PDF preview <span>— read and dictate or copy into SME notes below.</span></label>
+              <label class="form-lbl">PDF preview <span>— read and dictate or copy into SME notes.</span></label>
               <div class="pdf-preview-panel" id="pdf-preview-panel">
-                <div class="pdf-preview-empty" id="pdf-preview-empty">No PDF URL set — open a record with a PDF to preview it here.</div>
+                <div class="pdf-preview-empty" id="pdf-preview-empty">No PDF URL set.</div>
                 <iframe id="pdf-preview-iframe" src="" style="display:none;" title="PDF preview"></iframe>
+              </div>
+              <div style="margin-top:8px;">
+                <a id="btn-open-pdf-desc" href="#" target="_blank" rel="noopener" class="btn-sm-info hidden" style="text-decoration:none;">🔗 Open PDF</a>
               </div>
             </div>
           </div>
@@ -511,37 +515,24 @@
 
         <div class="sec-divider"></div>
 
-        <div class="form-row">
-          <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
-          <div style="position:relative;">
-            <textarea class="form-ta" id="edit-sme-notes" rows="3" placeholder="e.g. Targets students who rush dotted rhythms. Step-counting drill format. Use after Unit 3 introduction."></textarea>
-            <button class="btn-mic" id="mic-edit-sme" onclick="toggleDictation('edit-sme-notes')" title="Dictate (click to start/stop)">🎤</button>
-          </div>
-        </div>
-
-        <div class="desc-toolbar">
+        <!-- Action row: Combine + Save + Start over -->
+        <div class="action-bar" style="margin-bottom:16px;">
           <button class="btn-sm-info" id="btn-edit-combine" onclick="combineDescription()">✨ Combine description</button>
+          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
+          <button class="btn-secondary" onclick="resetForm()">Start over</button>
         </div>
+        <div id="edit-save-msg" class="hidden"></div>
 
         <div class="sec-divider"></div>
 
         <div class="form-row mt8">
           <label class="form-lbl" for="edit-description">Final description <span>— editable. This is saved to the database.</span></label>
           <div style="position:relative;">
-            <textarea class="form-ta" id="edit-description" rows="4" placeholder="Click 'Combine description' to generate, or type directly."></textarea>
+            <textarea class="form-ta" id="edit-description" rows="4" placeholder=""></textarea>
             <button class="btn-mic" id="mic-edit-description" onclick="toggleDictation('edit-description')" title="Dictate (click to start/stop)">🎤</button>
           </div>
         </div>
         <div id="edit-desc-msg" class="hidden"></div>
-      </div>
-
-      <!-- Save description + all changes -->
-      <div class="card">
-        <div id="edit-save-msg" class="hidden"></div>
-        <div class="action-bar">
-          <button class="btn-primary" id="btn-save-edit" onclick="saveSupplement()">Save changes</button>
-          <button class="btn-secondary" onclick="resetForm()">Start over</button>
-        </div>
       </div>
     </div>
 
@@ -1041,7 +1032,7 @@ window.scrapeIntoBox = async function() {
   genTxt.textContent = 'Scraping page…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
-  document.getElementById('btn-edit-rescrape-pdf').disabled = true;
+  document.getElementById('btn-edit-rescrape-pdf')?.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
   try {
@@ -1076,7 +1067,7 @@ window.scrapeIntoBox = async function() {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
-    document.getElementById('btn-edit-rescrape-pdf').disabled = false;
+    document.getElementById('btn-edit-rescrape-pdf')?.disabled = false;
     document.getElementById('btn-edit-combine').disabled = false;
   }
 };
@@ -1097,7 +1088,7 @@ window.combineDescription = async function() {
   genTxt.textContent = 'Generating description…';
   genEl.classList.remove('hidden');
   msgEl.classList.add('hidden');
-  document.getElementById('btn-edit-rescrape-pdf').disabled = true;
+  document.getElementById('btn-edit-rescrape-pdf')?.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
   // Build a combined context string for Mode B re-summarise
@@ -1121,7 +1112,7 @@ window.combineDescription = async function() {
     showMsg(msgEl, 'error', `Network error: ${e.message}`);
   } finally {
     genEl.classList.add('hidden');
-    document.getElementById('btn-edit-rescrape-pdf').disabled = false;
+    document.getElementById('btn-edit-rescrape-pdf')?.disabled = false;
     document.getElementById('btn-edit-combine').disabled = false;
   }
 };
