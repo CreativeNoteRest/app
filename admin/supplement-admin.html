@@ -492,7 +492,7 @@
             <div class="form-row mt8">
               <label class="form-lbl" for="edit-sme-notes">SME notes <span>— curriculum context, skill intent, what student problem this solves. Dictate or type.</span></label>
               <div style="position:relative;">
-                <textarea class="form-ta" id="edit-sme-notes" rows="4" placeholder=""></textarea>
+                <textarea class="form-ta" id="edit-sme-notes" rows="8" placeholder=""></textarea>
                 <button class="btn-mic" id="mic-edit-sme" onclick="toggleDictation('edit-sme-notes')" title="Dictate (click to start/stop)">🎤</button>
               </div>
             </div>
@@ -1153,7 +1153,6 @@ window.saveSupplement = async function() {
     source:             document.getElementById('new-source').value,
     is_free:            document.getElementById('new-is-free').value === '' ? null : document.getElementById('new-is-free').value === 'true',
     thumbnail_url:      document.getElementById('new-thumb-url').value.trim() || null,
-    pdf_url:            document.getElementById('new-pdf-url').value.trim() || null,
     match_context:      document.getElementById('new-match-context').value || null,
     season:             document.getElementById('new-season').value || null,
     is_multi_lesson:    document.getElementById('new-is-multi').checked,
