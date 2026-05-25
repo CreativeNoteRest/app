@@ -1057,7 +1057,9 @@ window.scrapeIntoBox = async function() {
         : (json.error || 'Scrape failed.');
       showMsg(msgEl, 'warn', msg); return;
     }
-    const text = (json.page_text || '').trim();
+    const title = (json.title || '').trim();
+    const body  = (json.page_text || '').trim();
+    const text  = [title, body].filter(Boolean).join('\n\n');
     document.getElementById('edit-scraped-content').value = text;
     // Also update PDF URL + preview if scrape returned one and field is currently empty
     const pdfField = document.getElementById('new-pdf-url');
@@ -1318,10 +1320,13 @@ window.openEditForm = async function(id) {
         document.getElementById('new-pdf-url').value = json.pdf_url;
         updatePdfLink();
       }
-      // Populate Box 1 with page text if not already set
+      // Populate Box 1 with title + page text if not already set
       const box = document.getElementById('edit-scraped-content');
-      if (json.page_text && !box.value.trim()) {
-        box.value = json.page_text.trim();
+      if (!box.value.trim()) {
+        const title = (json.title || '').trim();
+        const body  = (json.page_text || '').trim();
+        const text  = [title, body].filter(Boolean).join('\n\n');
+        if (text) box.value = text;
       }
     }).catch(() => {}); // silent — no error surfaced to user
   }
@@ -1450,7 +1455,7 @@ window.updatePdfLink = function() {
   const empty   = document.getElementById('pdf-preview-empty');
   if (iframe && empty) {
     if (val) {
-      iframe.src = val;
+      iframe.src = val + '#toolbar=0';
       iframe.style.display = 'block';
       empty.style.display  = 'none';
     } else {
