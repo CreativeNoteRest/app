@@ -4,9 +4,14 @@
 // Two call modes:
 //
 // Mode A — Generate (new or first-time):
-//   { url, pdf_url, context, cookie }
-//   Fetches the PDF if pdf_url provided, combines with page_text (if supplied)
-//   and SME context, calls Gemini, returns { description }.
+//   { url, pdf_url, context, cookie, page_text, curriculum_hint, pdf_vision_override }
+//   Combines all available signals — curriculum_hint, page_text, PDF page 1 (via
+//   Gemini vision for image-based PDFs) — into a single Gemini call.
+//   PDF vision: attempted when pdf_url present and buffer <= PDF_BULK_SIZE_LIMIT.
+//   If buffer > limit in bulk mode (pdf_vision_override absent/false), PDF is
+//   skipped and response includes pdf_skipped: true so the UI can flag the row.
+//   If pdf_vision_override: true, limit is raised to PDF_OVERRIDE_SIZE_LIMIT.
+//   Returns { description, pdf_skipped? }.
 //
 // Mode B — Re-summarise (existing description):
 //   { current_description, context }
@@ -39,11 +44,26 @@ function err(message: string, status = 400) {
   });
 }
 
-// ── Gemini call ───────────────────────────────────────────────────────────────
+// ── PDF size limits ───────────────────────────────────────────────────────────
+// Bulk runs skip PDFs larger than PDF_BULK_SIZE_LIMIT and return pdf_skipped:true.
+// Single-row manual calls with pdf_vision_override:true allow up to PDF_OVERRIDE_SIZE_LIMIT.
+const PDF_BULK_SIZE_LIMIT     = 2 * 1024 * 1024;  // 2 MB
+const PDF_OVERRIDE_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB
+
+// ── Gemini system instruction (shared) ───────────────────────────────────────
+const SYSTEM_INSTRUCTION = `You are a specialist in music education resource description.
+Your task is to write concise, search-optimised descriptions of piano teaching supplements.
+Descriptions are used internally to help match supplements to the right lessons.
+Write in plain English. No markdown. No bullet points. 2-4 sentences maximum.
+Focus on: what skill or concept the supplement targets, what format it is (worksheet, game, printable, workbook), and what type of student or lesson it suits.
+Do not invent information not present in the source material.
+Return only the description text — no preamble, no labels, no quotes.`;
+
+// ── Gemini: text-only call ────────────────────────────────────────────────────
+// Used for Mode B (re-summarise) and any Mode A path that has no PDF vision input.
 // Matches the pattern used in session-close: gemini-2.5-flash-lite,
-// thinkingBudget: 0 (description generation does not benefit from thinking),
-// system_instruction required on all calls.
-async function callGemini(prompt: string): Promise<string> {
+// thinkingBudget: 0, system_instruction required.
+async function callGeminiText(prompt: string): Promise<string> {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
 
@@ -51,18 +71,56 @@ async function callGemini(prompt: string): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const body = {
-    system_instruction: {
-      parts: [{
-        text: `You are a specialist in music education resource description.
-Your task is to write concise, search-optimised descriptions of piano teaching supplements.
-Descriptions are used internally to help match supplements to the right lessons.
-Write in plain English. No markdown. No bullet points. 2-4 sentences maximum.
-Focus on: what skill or concept the supplement targets, what format it is (worksheet, game, printable, workbook), and what type of student or lesson it suits.
-Do not invent information not present in the source material.
-Return only the description text — no preamble, no labels, no quotes.`
-      }]
-    },
+    system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 300,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  const text = data?.candidates?.[0]?.content?.parts
+    ?.filter((p: { text?: string }) => p.text)
+    ?.map((p: { text: string }) => p.text)
+    ?.join("") ?? "";
+
+  if (!text) throw new Error("Gemini returned empty response");
+  return text.trim();
+}
+
+// ── Gemini: multimodal call ───────────────────────────────────────────────────
+// Used when PDF vision is included. Accepts a mixed parts array:
+//   { text: string }  — text content (prompt text, page content, hints)
+//   { inline_data: { mime_type: string, data: string } }  — base64 PDF bytes
+// All parts are sent as a single user message so Gemini treats them as one request.
+// The prompt instructs Gemini to read only page 1 of the PDF.
+type GeminiPart =
+  | { text: string }
+  | { inline_data: { mime_type: string; data: string } };
+
+async function callGeminiMultimodal(parts: GeminiPart[]): Promise<string> {
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  const model = "gemini-2.5-flash-lite";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const body = {
+    system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+    contents: [{ role: "user", parts }],
     generationConfig: {
       temperature: 0.3,
       maxOutputTokens: 300,
@@ -158,13 +216,15 @@ Deno.serve(async (req: Request) => {
   // ── Parse body ─────────────────────────────────────────────────────────────
   let body: {
     auth_user_id?: string;
-    pdf_only?: boolean;    // return PDF-derived description only, no page content
+    pdf_only?: boolean;          // return PDF-derived description only (supplement-admin legacy path)
+    pdf_vision_override?: boolean; // single-row manual override: raises PDF size limit to 10 MB
     // Mode A — generate
     url?: string;
     pdf_url?: string;
     context?: string;
     cookie?: string;
     page_text?: string;
+    curriculum_hint?: string;    // parsed title signal — included as a description input
     // Mode B — re-summarise
     current_description?: string;
   };
@@ -175,7 +235,7 @@ Deno.serve(async (req: Request) => {
     return err("Invalid JSON body");
   }
 
-  const { auth_user_id, url, pdf_url, context, cookie, page_text, current_description, pdf_only } = body;
+  const { auth_user_id, url, pdf_url, context, cookie, page_text, curriculum_hint, current_description, pdf_only, pdf_vision_override } = body;
 
   // ── Ownership validation ────────────────────────────────────────────────────
   if (!auth_user_id) return err("Unauthorized", 401);
@@ -196,7 +256,7 @@ Deno.serve(async (req: Request) => {
     ].filter(Boolean).join("\n\n");
 
     try {
-      const description = await callGemini(prompt);
+      const description = await callGeminiText(prompt);
       return ok({ description });
     } catch (e) {
       return err(`Gemini error: ${(e as Error).message}`, 502);
@@ -204,13 +264,24 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── Mode A: Generate ───────────────────────────────────────────────────────
-  // Assemble content from: page_text (already extracted) + PDF + SME context
+  // Assemble all available signals into a single Gemini call.
+  // Signal priority (highest to lowest specificity):
+  //   1. curriculum_hint  — parsed title signal (e.g. "Level 1B Spring Solo")
+  //   2. page_text        — scraped HTML text (thin for WK pages but has item name)
+  //   3. PDF page 1       — via Gemini vision (image-based) or text extraction
+  //   4. SME context      — optional human notes
 
+  const textParts: string[] = [];     // assembled into text prompt segment
+  let pdfVisionPart: GeminiPart | null = null; // set when PDF vision path is used
+  let pdfSkipped = false;             // returned to browser when PDF oversized in bulk
+
+  // Alias for the legacy pdf_only path which still uses the old parts[] variable
   const parts: string[] = [];
 
-  // pdf_only mode: skip page content, return PDF-derived description only.
-  // Used by rescrapePdf when an existing description is present — caller
-  // shows accept/reject rather than overwriting automatically.
+  // pdf_only mode: legacy path used by supplement-admin rescrapePdf.
+  // Uses text extraction only (not vision) — caller shows accept/reject UI.
+  // Not updated to use vision as it is a single-field manual action in a
+  // separate tool and vision adds latency that would feel slow in that flow.
   if (pdf_only && pdf_url) {
     try {
       const pdfHeaders: Record<string, string> = { "User-Agent": "Mozilla/5.0 (compatible; CreativeNote/1.0)" };
@@ -227,17 +298,22 @@ Deno.serve(async (req: Request) => {
     if (!parts.length) return err("Could not extract text from PDF.");
     const pdfPrompt = ["Write a search-optimised description for the following piano teaching supplement.", ...parts].join("\n\n");
     try {
-      const description = await callGemini(pdfPrompt);
+      const description = await callGeminiText(pdfPrompt);
       return ok({ description });
     } catch (e) {
       return err(`Gemini error: ${(e as Error).message}`, 502);
     }
   }
 
-  // 1. Page text — use what scrape-supplement already extracted if available,
+  // 1. Curriculum hint — most specific signal, listed first
+  if (curriculum_hint?.trim()) {
+    textParts.push(`Supplement title/level: ${curriculum_hint.trim()}`);
+  }
+
+  // 2. Page text — use what scrape-supplement already extracted if available,
   //    otherwise fetch the page now (e.g. called standalone without prior scrape)
   if (page_text) {
-    parts.push(`Page content:\n${page_text}`);
+    textParts.push(`Page content:\n${page_text}`);
   } else if (url) {
     try {
       const fetchHeaders: Record<string, string> = {
@@ -255,20 +331,23 @@ Deno.serve(async (req: Request) => {
           .replace(/\s{2,}/g, " ")
           .trim()
           .slice(0, 3000);
-        if (text) parts.push(`Page content:\n${text}`);
+        if (text) textParts.push(`Page content:\n${text}`);
       }
     } catch {
       // Non-fatal — continue with whatever other content we have
     }
   }
 
-  // 2. PDF text
+  // 3. PDF — fetch, check size, then branch:
+  //    a) Text extraction succeeds (text-layer PDF)         → add to textParts
+  //    b) Text extraction empty + within size limit         → vision path
+  //    c) Text extraction empty + oversized + no override   → skip, set pdfSkipped
+  //    d) Text extraction empty + oversized + override      → vision path (raised limit)
   if (pdf_url) {
     try {
       const pdfHeaders: Record<string, string> = {
         "User-Agent": "Mozilla/5.0 (compatible; CreativeNote/1.0)",
       };
-      // Apply cookie only if PDF is on a gated domain
       if (cookie && (
         pdf_url.includes("wunderkeys.com") ||
         pdf_url.includes("teachpianotoday.com")
@@ -279,32 +358,81 @@ Deno.serve(async (req: Request) => {
       const pdfRes = await fetch(pdf_url, { headers: pdfHeaders, redirect: "follow" });
       if (pdfRes.ok) {
         const buffer = new Uint8Array(await pdfRes.arrayBuffer());
+
+        // Try text extraction first — free, works for any text-layer PDF
         const pdfText = extractPdfText(buffer);
-        if (pdfText) parts.push(`PDF content:\n${pdfText}`);
+
+        if (pdfText) {
+          // Text extraction succeeded — use it, no vision needed
+          textParts.push(`PDF content:\n${pdfText}`);
+        } else {
+          // Image-based PDF — decide whether to use vision
+          const sizeLimit = pdf_vision_override ? PDF_OVERRIDE_SIZE_LIMIT : PDF_BULK_SIZE_LIMIT;
+
+          if (buffer.length <= sizeLimit) {
+            // Within limit — base64 encode and queue for vision call
+            let binary = "";
+            const chunkSize = 8192;
+            for (let i = 0; i < buffer.length; i += chunkSize) {
+              binary += String.fromCharCode(...buffer.subarray(i, i + chunkSize));
+            }
+            const base64 = btoa(binary);
+            pdfVisionPart = {
+              inline_data: { mime_type: "application/pdf", data: base64 },
+            };
+          } else {
+            // Oversized — skip PDF, flag for UI
+            pdfSkipped = true;
+          }
+        }
       }
     } catch {
-      // Non-fatal — PDF extraction failure should not block description generation
+      // Non-fatal — PDF fetch or processing failure should not block description
     }
   }
 
-  // 3. SME context
+  // 4. SME context
   if (context?.trim()) {
-    parts.push(`Curriculum notes from music educator:\n${context.trim()}`);
+    textParts.push(`Curriculum notes from music educator:\n${context.trim()}`);
   }
 
-  if (!parts.length) {
+  if (!textParts.length && !pdfVisionPart) {
     return err("No content available to generate a description. Provide a URL, PDF URL, or context.");
   }
 
-  const prompt = [
-    "Write a search-optimised description for the following piano teaching supplement.",
-    "Use only information present in the source material below.",
-    ...parts,
-  ].join("\n\n");
-
+  // ── Assemble and call Gemini ──────────────────────────────────────────────
   try {
-    const description = await callGemini(prompt);
-    return ok({ description });
+    let description: string;
+
+    if (pdfVisionPart) {
+      // Multimodal call: text prompt + PDF as inline_data.
+      // Gemini reads the full PDF but the prompt directs it to use page 1
+      // for description content and ignore bookstore/advertising pages.
+      const promptText = [
+        "Write a search-optimised description for the following piano teaching supplement.",
+        "The PDF attached contains the supplement. Use only the content from page 1 (the cover/description page).",
+        "Ignore page 2 onward — those pages contain sheet music, bookstore listings, and advertising.",
+        "Use only information present in the source material below and in page 1 of the PDF.",
+        ...textParts,
+      ].join("\n\n");
+
+      const geminiParts: GeminiPart[] = [
+        { text: promptText },
+        pdfVisionPart,
+      ];
+      description = await callGeminiMultimodal(geminiParts);
+    } else {
+      // Text-only call
+      const prompt = [
+        "Write a search-optimised description for the following piano teaching supplement.",
+        "Use only information present in the source material below.",
+        ...textParts,
+      ].join("\n\n");
+      description = await callGeminiText(prompt);
+    }
+
+    // Return description plus optional pdf_skipped flag
+    return ok({ description, ...(pdfSkipped ? { pdf_skipped: true } : {}) });
   } catch (e) {
     return err(`Gemini error: ${(e as Error).message}`, 502);
   }
