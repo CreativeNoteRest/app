@@ -272,18 +272,31 @@
   <div class="card">
     <div class="card-title">Bulk actions</div>
 
+    <!-- Overwrite selector — shared by both bulk operations -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-light);">If already processed</span>
+      <select id="overwrite-mode" style="height:32px;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.83rem;color:var(--text);background:var(--card);outline:none;">
+        <option value="skip" selected>Skip — keep existing data</option>
+        <option value="overwrite">Overwrite — regenerate</option>
+      </select>
+      <span style="font-size:0.75rem;color:var(--text-light);">Applies to both scrape and describe bulk runs.</span>
+    </div>
+
     <div class="bulk-section">
       <div class="bulk-section-label">Scrape</div>
       <div class="bulk-section-body">
-        <button class="btn-primary" id="btn-bulk-scrape" onclick="bulkScrape()">Scrape all discovered</button>
-        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free for each <em>discovered</em> row. Parses curriculum hint from the title. Runs sequentially — safe to leave running.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-primary" id="btn-bulk-scrape" onclick="bulkScrape()">Scrape all discovered</button>
+          <button class="btn-secondary hidden" id="btn-cancel-scrape" onclick="requestCancel()">⏹ Stop after this row</button>
+        </div>
+        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free for each row. Parses curriculum hint from the title. Runs sequentially — safe to leave running.</div>
         <div id="scrape-progress" class="hidden">
           <div class="progress-wrap">
             <div class="progress-label" id="scrape-progress-label">Scraping…</div>
             <div class="progress-bar-track"><div class="progress-bar-fill" id="scrape-progress-fill" style="width:0%"></div></div>
           </div>
           <div id="scrape-failures" class="failure-log hidden">
-            <div class="failure-log-title">Failures — rows remain at discovered for retry</div>
+            <div class="failure-log-title">Failures — rows remain at previous status for retry</div>
             <div id="scrape-failure-list"></div>
           </div>
         </div>
@@ -293,8 +306,11 @@
     <div class="bulk-section">
       <div class="bulk-section-label">Describe</div>
       <div class="bulk-section-body">
-        <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions for all scraped</button>
-        <div class="bulk-hint">Calls Gemini with the scraped page text to write a 2–4 sentence search description. Only processes rows at <em>scraped</em> status. Scrape must run first.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions for all scraped</button>
+          <button class="btn-secondary hidden" id="btn-cancel-describe" onclick="requestCancel()">⏹ Stop after this row</button>
+        </div>
+        <div class="bulk-hint">Calls Gemini with the scraped page text and PDF page 1 to write a 2–4 sentence search description. Scrape must run first.</div>
         <div id="describe-progress" class="hidden">
           <div class="progress-wrap">
             <div class="progress-label" id="describe-progress-label">Generating…</div>
@@ -354,12 +370,13 @@ const EF_HEADERS    = { 'Content-Type': 'application/json', 'apikey': SUPABASE_A
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const state = {
-  authUserId:    '',
-  cookieWk:      '',
-  passwordWk:    '',
-  allRows:       [],
-  filteredRows:  [],
-  bulkRunning:   false,
+  authUserId:      '',
+  cookieWk:        '',
+  passwordWk:      '',
+  allRows:         [],
+  filteredRows:    [],
+  bulkRunning:     false,
+  cancelRequested: false,
 };
 
 // ── Curriculum hint parser ────────────────────────────────────────────────────
@@ -612,7 +629,7 @@ function rowHtml(r) {
   <div class="inline-fields">
     <div class="inline-field" style="min-width:200px;max-width:280px;">
       <label for="hint-${id}">Curriculum hint</label>
-      <input id="hint-${id}" type="text" value="${hintVal}" placeholder="e.g. Primer 1 Unit 3" />
+      <input id="hint-${id}" type="text" value="${hintVal}" />
     </div>
     <div class="inline-field" style="flex:2;min-width:220px;">
       <label for="desc-${id}">Search description</label>
@@ -720,62 +737,92 @@ async function describeRow(row, visionOverride = false) {
 // ── Bulk scrape ───────────────────────────────────────────────────────────────
 window.bulkScrape = async function() {
   if (state.bulkRunning) return;
-  const targets = state.allRows.filter(r => r.status === 'discovered');
-  if (!targets.length) { alert('No discovered rows to scrape.'); return; }
+  const overwrite = document.getElementById('overwrite-mode').value === 'overwrite';
+  // Skip mode: only discovered. Overwrite mode: discovered + scraped + described.
+  const targets = state.allRows.filter(r =>
+    overwrite ? (r.status === 'discovered' || r.status === 'scraped' || r.status === 'described')
+              : r.status === 'discovered'
+  );
+  if (!targets.length) { alert(overwrite ? 'No rows to scrape.' : 'No discovered rows to scrape.'); return; }
   if (!state.cookieWk) { alert('WK cookie is not set. Click the cookie button in the header.'); return; }
-  state.bulkRunning = true; setBulkDisabled(true);
+  state.bulkRunning = true; state.cancelRequested = false; setBulkDisabled(true);
   const pEl = document.getElementById('scrape-progress');
   const lEl = document.getElementById('scrape-progress-label');
   const fEl = document.getElementById('scrape-progress-fill');
   const failEl = document.getElementById('scrape-failures');
   const failListEl = document.getElementById('scrape-failure-list');
   pEl.classList.remove('hidden'); failEl.classList.add('hidden'); failListEl.innerHTML = '';
-  const total = targets.length; const failures = [];
+  const total = targets.length; const failures = []; let processed = 0;
   for (let i = 0; i < total; i++) {
+    if (state.cancelRequested) {
+      lEl.textContent = `Stopped at ${i} of ${total} — ${failures.length} failures.`;
+      break;
+    }
     const row = targets[i];
     lEl.textContent = `Scraping ${i + 1} of ${total} — ${row.title || row.source_url}`;
     fEl.style.width = `${Math.round((i / total) * 100)}%`;
     const result = await scrapeRow(row);
+    processed++;
     if (!result.ok) failures.push({ url: row.source_url, error: result.error });
     else rerenderRow(row.staging_id);
   }
-  fEl.style.width = '100%';
-  lEl.textContent = `Done — ${total - failures.length} of ${total} scraped successfully.`;
+  if (!state.cancelRequested) {
+    fEl.style.width = '100%';
+    lEl.textContent = `Done — ${processed - failures.length} of ${processed} scraped successfully.`;
+  }
   if (failures.length) {
     failListEl.innerHTML = failures.map(f => `<div class="failure-entry"><strong>${escHtml(f.url.replace(/^https?:\/\//,'').slice(0,50))}</strong> — ${escHtml(f.error)}</div>`).join('');
     failEl.classList.remove('hidden');
   }
-  state.bulkRunning = false; setBulkDisabled(false); renderStats(); applyFilters();
+  state.bulkRunning = false; state.cancelRequested = false;
+  document.getElementById('btn-cancel-scrape').textContent   = '⏹ Stop after this row';
+  document.getElementById('btn-cancel-describe').textContent = '⏹ Stop after this row';
+  setBulkDisabled(false); renderStats(); applyFilters();
 };
 
 // ── Bulk describe ─────────────────────────────────────────────────────────────
 window.bulkDescribe = async function() {
   if (state.bulkRunning) return;
-  const targets = state.allRows.filter(r => r.status === 'scraped');
-  if (!targets.length) { alert('No scraped rows waiting for descriptions.'); return; }
-  state.bulkRunning = true; setBulkDisabled(true);
+  const overwrite = document.getElementById('overwrite-mode').value === 'overwrite';
+  // Skip mode: only scraped (no description yet). Overwrite: scraped + described.
+  const targets = state.allRows.filter(r =>
+    overwrite ? (r.status === 'scraped' || r.status === 'described')
+              : (r.status === 'scraped' && !r.search_description)
+  );
+  if (!targets.length) { alert(overwrite ? 'No rows to generate descriptions for.' : 'No scraped rows without a description.'); return; }
+  state.bulkRunning = true; state.cancelRequested = false; setBulkDisabled(true);
   const pEl = document.getElementById('describe-progress');
   const lEl = document.getElementById('describe-progress-label');
   const fEl = document.getElementById('describe-progress-fill');
   const failEl = document.getElementById('describe-failures');
   const failListEl = document.getElementById('describe-failure-list');
   pEl.classList.remove('hidden'); failEl.classList.add('hidden'); failListEl.innerHTML = '';
-  const total = targets.length; const failures = [];
+  const total = targets.length; const failures = []; let processed = 0;
   for (let i = 0; i < total; i++) {
+    if (state.cancelRequested) {
+      lEl.textContent = `Stopped at ${i} of ${total} — ${failures.length} failures.`;
+      break;
+    }
     const row = targets[i];
     lEl.textContent = `Generating ${i + 1} of ${total} — ${row.title || row.source_url}`;
     fEl.style.width = `${Math.round((i / total) * 100)}%`;
     const result = await describeRow(row);
+    processed++;
     if (!result.ok) failures.push({ url: row.source_url, title: row.title, error: result.error });
     else rerenderRow(row.staging_id);
   }
-  fEl.style.width = '100%';
-  lEl.textContent = `Done — ${total - failures.length} of ${total} described successfully.`;
+  if (!state.cancelRequested) {
+    fEl.style.width = '100%';
+    lEl.textContent = `Done — ${processed - failures.length} of ${processed} described successfully.`;
+  }
   if (failures.length) {
     failListEl.innerHTML = failures.map(f => `<div class="failure-entry"><strong>${escHtml((f.title || f.url).slice(0,50))}</strong> — ${escHtml(f.error)}</div>`).join('');
     failEl.classList.remove('hidden');
   }
-  state.bulkRunning = false; setBulkDisabled(false); renderStats(); applyFilters();
+  state.bulkRunning = false; state.cancelRequested = false;
+  document.getElementById('btn-cancel-scrape').textContent   = '⏹ Stop after this row';
+  document.getElementById('btn-cancel-describe').textContent = '⏹ Stop after this row';
+  setBulkDisabled(false); renderStats(); applyFilters();
 };
 
 // ── Workbook toggle ───────────────────────────────────────────────────────────
@@ -830,7 +877,16 @@ function setRowStatus(id, type, msg) {
 function setBulkDisabled(d) {
   document.getElementById('btn-bulk-scrape').disabled   = d;
   document.getElementById('btn-bulk-describe').disabled = d;
+  // Show/hide cancel buttons
+  document.getElementById('btn-cancel-scrape').classList.toggle('hidden', !d);
+  document.getElementById('btn-cancel-describe').classList.toggle('hidden', !d);
 }
+
+window.requestCancel = function() {
+  state.cancelRequested = true;
+  document.getElementById('btn-cancel-scrape').textContent   = '⏹ Stopping…';
+  document.getElementById('btn-cancel-describe').textContent = '⏹ Stopping…';
+};
 
 function showMsgEl(el, type, msg) {
   const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
