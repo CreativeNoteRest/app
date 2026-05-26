@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supplement Ingestion — Creative Note</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --success-border: #BBF7D0;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --info:           #2563EB;
+      --info-light:     #EFF6FF;
+      --info-border:    #BFDBFE;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--brand); }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-email { font-size: 0.78rem; color: var(--text-light); }
+    .btn-back { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-decoration: none; margin-right: 4px; transition: color 0.15s; }
+    .btn-back:hover { color: var(--brand); }
+    .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+    .btn-cookie-indicator { height: 36px; padding: 0 14px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .btn-cookie-indicator:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-cookie-indicator.cookie-ok  { background: var(--success-light); color: var(--success); border-color: var(--success-border); }
+    .btn-cookie-indicator.cookie-err { background: var(--danger-light);  color: var(--danger);  border-color: var(--danger-border); }
+
+    /* ── Login ── */
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+    .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .field-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .field-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; margin-bottom: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .btn-login { width: 100%; height: 48px; margin-top: 8px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s; }
+    .btn-login:hover { opacity: 0.88; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
+
+    /* ── Layout ── */
+    .main { max-width: 1100px; margin: 0 auto; padding: 36px 24px 80px; }
+    .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 32px; line-height: 1.5; }
+
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 14px; }
+
+    /* ── Buttons ── */
+    .btn-primary { height: 40px; padding: 0 22px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 0.95rem; cursor: pointer; box-shadow: 0 3px 10px rgba(226,107,10,0.22); transition: opacity 0.15s; white-space: nowrap; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    .btn-secondary { height: 36px; padding: 0 16px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.83rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm { height: 30px; padding: 0 11px; border-radius: 7px; font-size: 0.73rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; border: 1px solid; display: inline-flex; align-items: center; }
+    .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm-info    { background: var(--info-light);    color: var(--info);    border-color: var(--info-border); }
+    .btn-sm-info:hover    { background: #DBEAFE; }
+    .btn-sm-success { background: var(--success-light); color: var(--success); border-color: var(--success-border); }
+    .btn-sm-success:hover { background: #DCFCE7; }
+    .btn-sm-danger  { background: var(--danger-light);  color: var(--danger);  border-color: var(--danger-border); }
+    .btn-sm-danger:hover  { background: #FEE2E2; }
+    .btn-sm-neutral { background: var(--surface); color: var(--text-light); border-color: var(--border); }
+    .btn-sm-neutral:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-sm-warn    { background: var(--warn-light); color: #92400E; border-color: var(--warn-border); }
+    .btn-sm-warn:hover { background: #FEF3C7; }
+
+    /* ── Stats grid ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+    .stat-tile { text-align: center; padding: 12px 8px; background: var(--surface); border-radius: 9px; border: 1px solid var(--border); }
+    .stat-num { font-size: 1.6rem; font-weight: 700; font-family: 'DM Serif Display', serif; }
+    .stat-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-light); margin-top: 2px; }
+
+    /* ── Bulk action section ── */
+    .bulk-section { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; padding: 14px 0; }
+    .bulk-section + .bulk-section { border-top: 1px solid var(--border); }
+    .bulk-section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); width: 64px; flex-shrink: 0; padding-top: 10px; }
+    .bulk-section-body { flex: 1; }
+    .bulk-hint { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; line-height: 1.5; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 10px; }
+    .progress-label { font-size: 0.78rem; color: var(--text-mid); margin-bottom: 5px; }
+    .progress-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--brand); border-radius: 3px; transition: width 0.25s; }
+    .failure-log { margin-top: 8px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; padding: 10px 12px; font-size: 0.74rem; color: var(--danger); max-height: 140px; overflow-y: auto; }
+    .failure-log-title { font-weight: 700; margin-bottom: 5px; }
+    .failure-entry { margin-bottom: 4px; line-height: 1.45; border-bottom: 1px solid rgba(220,38,38,0.15); padding-bottom: 3px; }
+    .failure-entry:last-child { border-bottom: none; margin-bottom: 0; }
+
+    /* ── Filter bar ── */
+    .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .filter-bar select, .filter-bar input[type=text] { height: 34px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; }
+    .filter-bar select:focus, .filter-bar input[type=text]:focus { border-color: var(--brand); }
+    .filter-bar input[type=text] { min-width: 180px; flex: 1; }
+    .filter-count { font-size: 0.75rem; color: var(--text-light); margin-left: auto; white-space: nowrap; }
+
+    /* ── Staging list ── */
+    .staging-list { display: flex; flex-direction: column; gap: 8px; }
+    .staging-row { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; transition: border-color 0.15s; }
+    .staging-row:hover { border-color: #CBBFB5; }
+    .staging-row.is-workbook { border-left: 3px solid var(--warn); }
+    .row-top { display: flex; align-items: flex-start; gap: 12px; }
+    .row-thumb { width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-light); overflow: hidden; }
+    .row-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .row-body { flex: 1; min-width: 0; }
+    .row-title { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-title a { color: inherit; text-decoration: none; }
+    .row-title a:hover { color: var(--brand); text-decoration: underline; }
+    .row-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+    .row-actions { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+    .row-status { font-size: 0.73rem; padding: 3px 0; }
+    .desc-preview { margin-top: 6px; font-size: 0.77rem; color: var(--text-mid); line-height: 1.5; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; }
+
+    /* ── Badges ── */
+    .badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; white-space: nowrap; border: 1px solid; }
+    .badge-discovered { background: var(--surface);       color: var(--text-light); border-color: var(--border); }
+    .badge-scraped    { background: var(--info-light);    color: var(--info);       border-color: var(--info-border); }
+    .badge-described  { background: var(--success-light); color: var(--success);    border-color: var(--success-border); }
+    .badge-promoted   { background: #F3E8FF;              color: #7C3AED;           border-color: #DDD6FE; }
+    .badge-workbook   { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
+    .badge-toolkit    { background: var(--brand-light);   color: var(--brand);      border-color: #F9C4A0; }
+    .badge-piano      { background: var(--info-light);    color: var(--info);       border-color: var(--info-border); }
+    .badge-free       { background: var(--success-light); color: var(--success);    border-color: var(--success-border); }
+    .badge-paid       { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
+
+    /* ── Inline edit ── */
+    .inline-fields { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .inline-field { display: flex; flex-direction: column; gap: 3px; }
+    .inline-field label { font-size: 0.63rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); }
+    .inline-field input, .inline-field textarea { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+    .inline-field input:focus, .inline-field textarea:focus { border-color: var(--brand); background: #fff; }
+    .inline-field textarea { resize: vertical; min-height: 52px; line-height: 1.5; }
+    .inline-save-btn { height: 30px; padding: 0 14px; background: var(--brand); color: #fff; border: none; border-radius: 7px; font-size: 0.77rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; flex-shrink: 0; align-self: flex-end; }
+    .inline-save-btn:hover { opacity: 0.85; }
+    .inline-msg { font-size: 0.7rem; align-self: flex-end; }
+
+    /* ── Messages ── */
+    .msg { padding: 11px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.55; margin-bottom: 12px; }
+    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .msg-info    { background: var(--info-light);    border: 1px solid var(--info-border);    color: var(--info); }
+
+    /* ── Cookie help ── */
+    .cookie-help { background: var(--info-light); border: 1px solid var(--info-border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .cookie-help-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--info); margin-bottom: 14px; }
+    .cookie-steps { list-style: none; padding: 0; margin: 0 0 14px; counter-reset: steps; }
+    .cookie-steps li { counter-increment: steps; display: flex; gap: 10px; margin-bottom: 9px; font-size: 0.84rem; line-height: 1.55; color: var(--text-mid); }
+    .cookie-steps li::before { content: counter(steps); min-width: 22px; height: 22px; border-radius: 50%; background: var(--info); color: #fff; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .cookie-steps code { background: rgba(37,99,235,0.1); color: var(--info); padding: 1px 6px; border-radius: 4px; font-size: 0.8rem; font-family: monospace; }
+    .cookie-pw-box { background: var(--card); border: 1px solid var(--info-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+    .cookie-pw-label { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--info); margin-bottom: 3px; }
+    .cookie-pw-value { font-family: monospace; font-size: 1rem; color: var(--text); }
+    .cookie-paste-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .cookie-paste-input { flex: 1; min-width: 200px; height: 42px; padding: 0 12px; border: 1.5px solid var(--info-border); border-radius: 9px; font-family: monospace; font-size: 0.85rem; color: var(--text); background: var(--card); outline: none; }
+    .cookie-paste-input:focus { border-color: var(--info); }
+    .cookie-open-btn { height: 42px; padding: 0 16px; background: var(--card); color: var(--info); border: 1.5px solid var(--info-border); border-radius: 9px; font-size: 0.83rem; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.15s; }
+    .cookie-open-btn:hover { background: var(--info-light); }
+
+    /* ── Utility ── */
+    .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }
+    .spinner-dark { border-color: var(--border); border-top-color: var(--brand); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-line { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--text-mid); padding: 6px 0; }
+    .sec-divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-light); font-size: 0.88rem; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <a class="btn-back" href="/admin/index.html">← Admin</a>
+    <span class="header-dot"></span>
+    <span class="header-title">Creative Note</span>
+    <span class="header-dot"></span>
+    <span class="header-sub">Supplement Ingestion</span>
+  </div>
+  <div class="header-right hidden" id="header-right">
+    <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp()" title="WK cookie — required for scraping">🔑 WK cookie</button>
+    <span class="header-email" id="header-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign out</button>
+  </div>
+</header>
+
+<!-- ── Login ── -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin sign in</div>
+    <div class="login-sub">Creative Note supplement ingestion. Access restricted to approved administrators.</div>
+    <label class="field-label" for="inp-email">Email</label>
+    <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
+    <label class="field-label" for="inp-password">Password</label>
+    <input class="field-input" id="inp-password" type="password" autocomplete="current-password" placeholder="Password" style="margin-bottom:0" />
+    <div id="login-error" class="login-error hidden"></div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="view-app" class="hidden">
+<main class="main">
+
+  <div class="page-label">Administration</div>
+  <h1 class="page-title">Supplement <em>ingestion</em></h1>
+  <p class="page-subtitle">Phase 2 enrichment — scrape details, parse curriculum hints, and generate search descriptions for staged supplements.</p>
+
+  <!-- Cookie help -->
+  <div id="cookie-help-panel" class="cookie-help hidden">
+    <div class="cookie-help-title">Set WunderKeys cookie</div>
+    <div class="cookie-pw-box">
+      <div class="cookie-pw-label">Members password</div>
+      <div class="cookie-pw-value" id="cookie-pw-value">—</div>
+    </div>
+    <ol class="cookie-steps">
+      <li>Click the button below to open the WK members page in a new tab and enter the password above.</li>
+      <li>Once logged in, press <code>F12</code> to open Developer Tools.</li>
+      <li>Click the <code>Application</code> tab (Chrome/Edge) or <code>Storage</code> tab (Firefox).</li>
+      <li>Expand <code>Cookies</code> in the left panel and click the site domain.</li>
+      <li>Find the row named <code>wp-postpass_…</code> and copy the entire <strong>Value</strong> column.</li>
+      <li>Paste it into the field below and click <strong>Save cookie</strong>.</li>
+    </ol>
+    <div class="cookie-paste-row" style="margin-bottom:10px;">
+      <a href="https://wunderkeys.com/members/" target="_blank" class="cookie-open-btn">🌐 Open WK members page</a>
+      <input class="cookie-paste-input" id="cookie-paste-input" type="text" placeholder="Paste wp-postpass_… value here" />
+      <button class="btn-sm btn-sm-success" style="height:42px;padding:0 16px;font-size:0.83rem;" onclick="saveCookie()">Save cookie</button>
+      <button class="btn-secondary" style="height:42px;" onclick="hideCookieHelp()">Cancel</button>
+    </div>
+    <div id="cookie-save-msg" class="hidden"></div>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="card">
+    <div class="card-title">Staging summary</div>
+    <div id="stats-loading" class="status-line"><span class="spinner spinner-dark"></span> Loading…</div>
+    <div id="stats-grid" class="stats-grid hidden"></div>
+  </div>
+
+  <!-- ── Bulk actions ── -->
+  <div class="card">
+    <div class="card-title">Bulk actions</div>
+
+    <div class="bulk-section">
+      <div class="bulk-section-label">Scrape</div>
+      <div class="bulk-section-body">
+        <button class="btn-primary" id="btn-bulk-scrape" onclick="bulkScrape()">Scrape all discovered</button>
+        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free for each <em>discovered</em> row. Parses curriculum hint from the title. Runs sequentially — safe to leave running.</div>
+        <div id="scrape-progress" class="hidden">
+          <div class="progress-wrap">
+            <div class="progress-label" id="scrape-progress-label">Scraping…</div>
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="scrape-progress-fill" style="width:0%"></div></div>
+          </div>
+          <div id="scrape-failures" class="failure-log hidden">
+            <div class="failure-log-title">Failures — rows remain at discovered for retry</div>
+            <div id="scrape-failure-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bulk-section">
+      <div class="bulk-section-label">Describe</div>
+      <div class="bulk-section-body">
+        <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions for all scraped</button>
+        <div class="bulk-hint">Calls Gemini with the scraped page text to write a 2–4 sentence search description. Only processes rows at <em>scraped</em> status. Scrape must run first.</div>
+        <div id="describe-progress" class="hidden">
+          <div class="progress-wrap">
+            <div class="progress-label" id="describe-progress-label">Generating…</div>
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="describe-progress-fill" style="width:0%"></div></div>
+          </div>
+          <div id="describe-failures" class="failure-log hidden">
+            <div class="failure-log-title">Failures — rows remain at scraped for retry</div>
+            <div id="describe-failure-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter bar ── -->
+  <div class="card" style="padding:14px 20px;">
+    <div class="filter-bar">
+      <input type="text" id="filter-search" placeholder="Filter by title…" oninput="applyFilters()" />
+      <select id="filter-status" onchange="applyFilters()">
+        <option value="">All statuses</option>
+        <option value="discovered">Discovered</option>
+        <option value="scraped">Scraped</option>
+        <option value="described">Described</option>
+      </select>
+      <select id="filter-catalog" onchange="applyFilters()">
+        <option value="">All catalogs</option>
+        <option value="toolkit">Toolkit</option>
+        <option value="piano-books">Piano books</option>
+      </select>
+      <select id="filter-workbook" onchange="applyFilters()">
+        <option value="">All rows</option>
+        <option value="workbook">Workbooks only</option>
+        <option value="supplement">Supplements only</option>
+      </select>
+      <span class="filter-count" id="filter-count">—</span>
+    </div>
+  </div>
+
+  <!-- ── List ── -->
+  <div id="list-loading" class="status-line" style="padding:12px 4px;"><span class="spinner spinner-dark"></span> Loading staging rows…</div>
+  <div id="list-msg" class="hidden"></div>
+  <div id="staging-list" class="staging-list"></div>
+  <div id="list-empty" class="empty-state hidden">No rows match the current filters.</div>
+
+</main>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL  = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
+const SERIES_ID     = '96c05aaa-0329-4582-a35c-51423afc21dd';
+const EF_BASE       = `${SUPABASE_URL}/functions/v1`;
+const EF_HEADERS    = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON };
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const state = {
+  authUserId:    '',
+  cookieWk:      '',
+  passwordWk:    '',
+  allRows:       [],
+  filteredRows:  [],
+  bulkRunning:   false,
+};
+
+// ── Curriculum hint parser ────────────────────────────────────────────────────
+function parseCurriculumHint(title) {
+  if (!title) return null;
+  let m;
+  // "Primer N Unit N"
+  m = title.match(/Primer\s+(\d+)\s+Unit\s+(\d+)/i);
+  if (m) return `Primer ${m[1]} Unit ${m[2]}`;
+  // "Level NX" e.g. Level 1B, Level 2A
+  m = title.match(/Level\s+(\d+[A-Za-z]?)\b/i);
+  if (m) return `Level ${m[1].toUpperCase()}`;
+  // VU Library "Level X:" or "Level X " (single letter A-Y)
+  m = title.match(/Level\s+([A-Y])[\s:]/i);
+  if (m) return `VU Level ${m[1].toUpperCase()}`;
+  // "Intermediate Level N"
+  m = title.match(/Intermediate\s+Level\s+(\d+)/i);
+  if (m) return `Intermediate Level ${m[1]}`;
+  return null;
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+const elLogin   = document.getElementById('view-login');
+const elApp     = document.getElementById('view-app');
+const elHeaderR = document.getElementById('header-right');
+const elEmail   = document.getElementById('header-email');
+
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await showApp(session.user.email);
+}
+
+async function showApp(email) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showLoginError('Session not found.'); return; }
+  state.authUserId = session.user.id;
+  const { data, error } = await sb.from('teachers').select('is_admin').eq('auth_user_id', session.user.id).single();
+  if (error || !data?.is_admin) { await sb.auth.signOut(); showLoginError('This account does not have administrator access.'); return; }
+  elLogin.classList.add('hidden');
+  elApp.classList.remove('hidden');
+  elHeaderR.classList.remove('hidden');
+  elEmail.textContent = email;
+  await loadConfig();
+  refreshCookieBtn();
+  await loadStagingRows();
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('inp-email').value.trim();
+  const pw    = document.getElementById('inp-password').value;
+  if (!email || !pw) { showLoginError('Email and password are required.'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  document.getElementById('login-error').classList.add('hidden');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error || !data.session) {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    showLoginError(error?.message || 'Sign-in failed.');
+    return;
+  }
+  await showApp(data.user.email);
+  btn.disabled = false; btn.textContent = 'Sign in';
+});
+document.getElementById('inp-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-login').click(); });
+document.getElementById('btn-signout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  elApp.classList.add('hidden'); elLogin.classList.remove('hidden'); elHeaderR.classList.add('hidden');
+  document.getElementById('inp-password').value = '';
+});
+
+// ── Config ────────────────────────────────────────────────────────────────────
+async function loadConfig() {
+  const { data } = await sb.from('config').select('config_key, config_value')
+    .eq('series_id', SERIES_ID)
+    .in('config_key', ['supplement_cookie_wk', 'supplement_password_wk']);
+  if (!data) return;
+  for (const row of data) {
+    if (row.config_key === 'supplement_cookie_wk')   state.cookieWk   = row.config_value || '';
+    if (row.config_key === 'supplement_password_wk') state.passwordWk = row.config_value || '';
+  }
+}
+
+function refreshCookieBtn() {
+  const btn = document.getElementById('cookie-btn-wk');
+  if (state.cookieWk) {
+    btn.className = 'btn-cookie-indicator cookie-ok';
+    btn.title = 'WK cookie set ✓';
+    btn.textContent = '✓ WK cookie';
+  } else {
+    btn.className = 'btn-cookie-indicator cookie-err';
+    btn.title = 'WK cookie not set — scraping will fail';
+    btn.textContent = '🔑 WK cookie';
+  }
+}
+
+window.showCookieHelp = function() {
+  document.getElementById('cookie-pw-value').textContent = state.passwordWk || '(not set)';
+  document.getElementById('cookie-paste-input').value = '';
+  document.getElementById('cookie-save-msg').classList.add('hidden');
+  document.getElementById('cookie-help-panel').classList.remove('hidden');
+  document.getElementById('cookie-help-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+window.hideCookieHelp = function() {
+  document.getElementById('cookie-help-panel').classList.add('hidden');
+};
+window.saveCookie = async function() {
+  const val   = document.getElementById('cookie-paste-input').value.trim();
+  const msgEl = document.getElementById('cookie-save-msg');
+  if (!val) { showMsgEl(msgEl, 'error', 'Paste the cookie value first.'); return; }
+  showMsgEl(msgEl, 'info', 'Saving…');
+  const { error } = await sb.from('config').upsert(
+    { series_id: SERIES_ID, config_key: 'supplement_cookie_wk', config_value: val },
+    { onConflict: 'series_id,config_key' }
+  );
+  if (error) { showMsgEl(msgEl, 'error', `Save failed: ${error.message}`); return; }
+  state.cookieWk = val;
+  refreshCookieBtn();
+  showMsgEl(msgEl, 'success', 'Cookie saved ✓');
+};
+
+// ── Load staging rows ─────────────────────────────────────────────────────────
+async function loadStagingRows() {
+  document.getElementById('list-loading').classList.remove('hidden');
+  const { data, error } = await sb
+    .from('supplement_staging')
+    .select('staging_id, source_url, source, catalog, wk_categories, wk_level, catalog_section, title, thumbnail_url, pdf_url, is_free, curriculum_hint, search_description, status, is_workbook, scrape_attempted_at, created_at')
+    .eq('series_id', SERIES_ID)
+    .order('catalog', { ascending: true })
+    .order('catalog_section', { ascending: true, nullsFirst: false })
+    .order('title', { ascending: true });
+
+  document.getElementById('list-loading').classList.add('hidden');
+  document.getElementById('stats-loading').classList.add('hidden');
+
+  if (error) {
+    showMsgEl(document.getElementById('list-msg'), 'error', `Failed to load rows: ${error.message}`);
+    return;
+  }
+  state.allRows = data || [];
+  renderStats();
+  applyFilters();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const r = state.allRows;
+  const c = {
+    total:      r.length,
+    discovered: r.filter(x => x.status === 'discovered').length,
+    scraped:    r.filter(x => x.status === 'scraped').length,
+    described:  r.filter(x => x.status === 'described').length,
+    workbook:   r.filter(x => x.is_workbook).length,
+  };
+  function tile(label, count, color) {
+    return `<div class="stat-tile"><div class="stat-num" style="color:${color}">${count}</div><div class="stat-label">${label}</div></div>`;
+  }
+  const grid = document.getElementById('stats-grid');
+  grid.innerHTML =
+    tile('Discovered', c.discovered, 'var(--text-light)') +
+    tile('Scraped', c.scraped, 'var(--info)') +
+    tile('Described', c.described, 'var(--success)') +
+    tile('Workbooks', c.workbook, '#92400E') +
+    tile('Total', c.total, 'var(--brand)');
+  grid.classList.remove('hidden');
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+window.applyFilters = function() {
+  const q  = document.getElementById('filter-search').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  const ca = document.getElementById('filter-catalog').value;
+  const wb = document.getElementById('filter-workbook').value;
+  state.filteredRows = state.allRows.filter(r => {
+    if (q  && !(r.title || r.source_url || '').toLowerCase().includes(q)) return false;
+    if (st && r.status !== st)   return false;
+    if (ca && r.catalog !== ca)  return false;
+    if (wb === 'workbook'   && !r.is_workbook)  return false;
+    if (wb === 'supplement' &&  r.is_workbook)  return false;
+    return true;
+  });
+  document.getElementById('filter-count').textContent = `${state.filteredRows.length} of ${state.allRows.length}`;
+  renderList();
+};
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderList() {
+  const listEl  = document.getElementById('staging-list');
+  const emptyEl = document.getElementById('list-empty');
+  if (!state.filteredRows.length) { listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
+  emptyEl.classList.add('hidden');
+  listEl.innerHTML = state.filteredRows.map(rowHtml).join('');
+}
+
+function rowHtml(r) {
+  const id = r.staging_id;
+  const title = escHtml(r.title || '');
+  const urlShort = escHtml((r.source_url || '').replace(/^https?:\/\//,'').slice(0,60));
+  const displayTitle = title
+    ? `<a href="${escHtml(r.source_url)}" target="_blank" rel="noopener">${title}</a>`
+    : `<a href="${escHtml(r.source_url)}" target="_blank" rel="noopener" style="color:var(--text-light);font-style:italic;">${urlShort}</a>`;
+
+  const thumbHtml = r.thumbnail_url
+    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb">🖼</div>`;
+
+  const statusBadge  = `<span class="badge badge-${r.status}">${r.status}</span>`;
+  const catalogBadge = r.catalog === 'toolkit'
+    ? `<span class="badge badge-toolkit">Toolkit</span>`
+    : `<span class="badge badge-piano">Piano books</span>`;
+  const wbBadge  = r.is_workbook ? `<span class="badge badge-workbook">📚 Workbook</span>` : '';
+  const freeBadge = r.is_free === true  ? `<span class="badge badge-free">Free</span>`
+                  : r.is_free === false ? `<span class="badge badge-paid">Paid</span>` : '';
+  const levelText = r.wk_level ? `<span style="font-size:0.7rem;color:var(--text-light);">Level ${escHtml(r.wk_level)}</span>` : '';
+  const sectionText = r.catalog_section ? `<span style="font-size:0.7rem;color:var(--text-light);">${escHtml(r.catalog_section)}</span>` : '';
+  const catText = r.wk_categories?.length
+    ? `<span style="font-size:0.7rem;color:var(--text-light);">${r.wk_categories.map(escHtml).join(', ')}</span>` : '';
+
+  const descPreview = r.search_description
+    ? `<div class="desc-preview">${escHtml(r.search_description)}</div>` : '';
+
+  const dis = state.bulkRunning ? 'disabled' : '';
+  const scrapeBtn   = `<button class="btn-sm btn-sm-info" id="scrape-btn-${id}" onclick="singleScrape('${id}')" ${dis}>Scrape</button>`;
+  const describeBtn = (r.status === 'scraped' || r.status === 'described')
+    ? `<button class="btn-sm btn-sm-info" id="desc-btn-${id}" onclick="singleDescribe('${id}')" ${dis}>Gen desc</button>` : '';
+  const wbToggle = r.is_workbook
+    ? `<button class="btn-sm btn-sm-warn" onclick="toggleWorkbook('${id}',false)">Unmark workbook</button>`
+    : `<button class="btn-sm btn-sm-neutral" onclick="toggleWorkbook('${id}',true)">Mark workbook</button>`;
+
+  const hintVal = escHtml(r.curriculum_hint || '');
+  const descVal = escHtml(r.search_description || '');
+
+  return `
+<div class="staging-row${r.is_workbook ? ' is-workbook' : ''}" id="row-${id}">
+  <div class="row-top">
+    ${thumbHtml}
+    <div class="row-body">
+      <div class="row-title">${displayTitle}</div>
+      <div class="row-meta">${statusBadge}${catalogBadge}${wbBadge}${freeBadge}${levelText}${sectionText}${catText}</div>
+      <div id="row-status-${id}" class="row-status hidden"></div>
+      ${descPreview}
+    </div>
+    <div class="row-actions">${scrapeBtn}${describeBtn}${wbToggle}</div>
+  </div>
+  <div class="inline-fields">
+    <div class="inline-field" style="min-width:200px;max-width:280px;">
+      <label for="hint-${id}">Curriculum hint</label>
+      <input id="hint-${id}" type="text" value="${hintVal}" placeholder="e.g. Primer 1 Unit 3" />
+    </div>
+    <div class="inline-field" style="flex:2;min-width:220px;">
+      <label for="desc-${id}">Search description</label>
+      <textarea id="desc-${id}" rows="2">${descVal}</textarea>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end;">
+      <button class="inline-save-btn" onclick="saveInlineFields('${id}')">Save</button>
+      <span id="inline-msg-${id}" class="inline-msg hidden"></span>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── Single scrape ─────────────────────────────────────────────────────────────
+window.singleScrape = async function(id) {
+  const row = state.allRows.find(r => r.staging_id === id);
+  if (!row) return;
+  setRowStatus(id, 'info', '⏳ Scraping…');
+  const result = await scrapeRow(row);
+  if (result.ok) { setRowStatus(id, 'success', '✓ Scraped'); rerenderRow(id); renderStats(); }
+  else           { setRowStatus(id, 'error', `✗ ${result.error}`); }
+};
+
+// ── Single describe ───────────────────────────────────────────────────────────
+window.singleDescribe = async function(id) {
+  const row = state.allRows.find(r => r.staging_id === id);
+  if (!row) return;
+  setRowStatus(id, 'info', '⏳ Generating description…');
+  const result = await describeRow(row);
+  if (result.ok) { setRowStatus(id, 'success', '✓ Description generated'); rerenderRow(id); renderStats(); }
+  else           { setRowStatus(id, 'error', `✗ ${result.error}`); }
+};
+
+// ── Core scrape ───────────────────────────────────────────────────────────────
+async function scrapeRow(row) {
+  try {
+    const res = await fetch(`${EF_BASE}/scrape-supplement`, {
+      method: 'POST', headers: EF_HEADERS,
+      body: JSON.stringify({ url: row.source_url, cookie: state.cookieWk, auth_user_id: state.authUserId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.error === 'cookie_expired') return { ok: false, error: 'Cookie expired — refresh the WK cookie' };
+      return { ok: false, error: data.error || `HTTP ${res.status}` };
+    }
+    const hint = parseCurriculumHint(data.title) || row.curriculum_hint || null;
+    const { error: we } = await sb.from('supplement_staging').update({
+      title:              data.title || null,
+      thumbnail_url:      data.thumbnail_url || null,
+      pdf_url:            data.pdf_url || null,
+      is_free:            data.is_free,
+      raw_page_text:      data.page_text || null,
+      curriculum_hint:    hint,
+      status:             'scraped',
+      scrape_attempted_at: new Date().toISOString(),
+    }).eq('staging_id', row.staging_id);
+    if (we) return { ok: false, error: `DB write: ${we.message}` };
+    Object.assign(row, {
+      title: data.title || null, thumbnail_url: data.thumbnail_url || null,
+      pdf_url: data.pdf_url || null, is_free: data.is_free,
+      curriculum_hint: hint, status: 'scraped',
+    });
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// ── Core describe ─────────────────────────────────────────────────────────────
+async function describeRow(row) {
+  if (!row.raw_page_text && !row.pdf_url)
+    return { ok: false, error: 'No page text — scrape this row first' };
+  try {
+    const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+      method: 'POST', headers: EF_HEADERS,
+      body: JSON.stringify({
+        auth_user_id: state.authUserId,
+        page_text:    row.raw_page_text || '',
+        pdf_url:      row.pdf_url || null,
+        cookie:       state.cookieWk,
+        url:          row.source_url,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` };
+    if (!data.description) return { ok: false, error: 'Gemini returned empty description' };
+    const { error: we } = await sb.from('supplement_staging').update({
+      search_description: data.description,
+      status: 'described',
+    }).eq('staging_id', row.staging_id);
+    if (we) return { ok: false, error: `DB write: ${we.message}` };
+    row.search_description = data.description;
+    row.status = 'described';
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// ── Bulk scrape ───────────────────────────────────────────────────────────────
+window.bulkScrape = async function() {
+  if (state.bulkRunning) return;
+  const targets = state.allRows.filter(r => r.status === 'discovered');
+  if (!targets.length) { alert('No discovered rows to scrape.'); return; }
+  if (!state.cookieWk) { alert('WK cookie is not set. Click the cookie button in the header.'); return; }
+  state.bulkRunning = true; setBulkDisabled(true);
+  const pEl = document.getElementById('scrape-progress');
+  const lEl = document.getElementById('scrape-progress-label');
+  const fEl = document.getElementById('scrape-progress-fill');
+  const failEl = document.getElementById('scrape-failures');
+  const failListEl = document.getElementById('scrape-failure-list');
+  pEl.classList.remove('hidden'); failEl.classList.add('hidden'); failListEl.innerHTML = '';
+  const total = targets.length; const failures = [];
+  for (let i = 0; i < total; i++) {
+    const row = targets[i];
+    lEl.textContent = `Scraping ${i + 1} of ${total} — ${row.title || row.source_url}`;
+    fEl.style.width = `${Math.round((i / total) * 100)}%`;
+    const result = await scrapeRow(row);
+    if (!result.ok) failures.push({ url: row.source_url, error: result.error });
+    else rerenderRow(row.staging_id);
+  }
+  fEl.style.width = '100%';
+  lEl.textContent = `Done — ${total - failures.length} of ${total} scraped successfully.`;
+  if (failures.length) {
+    failListEl.innerHTML = failures.map(f => `<div class="failure-entry"><strong>${escHtml(f.url.replace(/^https?:\/\//,'').slice(0,50))}</strong> — ${escHtml(f.error)}</div>`).join('');
+    failEl.classList.remove('hidden');
+  }
+  state.bulkRunning = false; setBulkDisabled(false); renderStats(); applyFilters();
+};
+
+// ── Bulk describe ─────────────────────────────────────────────────────────────
+window.bulkDescribe = async function() {
+  if (state.bulkRunning) return;
+  const targets = state.allRows.filter(r => r.status === 'scraped');
+  if (!targets.length) { alert('No scraped rows waiting for descriptions.'); return; }
+  state.bulkRunning = true; setBulkDisabled(true);
+  const pEl = document.getElementById('describe-progress');
+  const lEl = document.getElementById('describe-progress-label');
+  const fEl = document.getElementById('describe-progress-fill');
+  const failEl = document.getElementById('describe-failures');
+  const failListEl = document.getElementById('describe-failure-list');
+  pEl.classList.remove('hidden'); failEl.classList.add('hidden'); failListEl.innerHTML = '';
+  const total = targets.length; const failures = [];
+  for (let i = 0; i < total; i++) {
+    const row = targets[i];
+    lEl.textContent = `Generating ${i + 1} of ${total} — ${row.title || row.source_url}`;
+    fEl.style.width = `${Math.round((i / total) * 100)}%`;
+    const result = await describeRow(row);
+    if (!result.ok) failures.push({ url: row.source_url, title: row.title, error: result.error });
+    else rerenderRow(row.staging_id);
+  }
+  fEl.style.width = '100%';
+  lEl.textContent = `Done — ${total - failures.length} of ${total} described successfully.`;
+  if (failures.length) {
+    failListEl.innerHTML = failures.map(f => `<div class="failure-entry"><strong>${escHtml((f.title || f.url).slice(0,50))}</strong> — ${escHtml(f.error)}</div>`).join('');
+    failEl.classList.remove('hidden');
+  }
+  state.bulkRunning = false; setBulkDisabled(false); renderStats(); applyFilters();
+};
+
+// ── Workbook toggle ───────────────────────────────────────────────────────────
+window.toggleWorkbook = async function(id, value) {
+  const { error } = await sb.from('supplement_staging')
+    .update({ is_workbook: value || null })
+    .eq('staging_id', id);
+  if (error) { alert(`Update failed: ${error.message}`); return; }
+  const row = state.allRows.find(r => r.staging_id === id);
+  if (row) row.is_workbook = value || null;
+  rerenderRow(id);
+  renderStats();
+};
+
+// ── Inline save ───────────────────────────────────────────────────────────────
+window.saveInlineFields = async function(id) {
+  const hint  = document.getElementById(`hint-${id}`)?.value.trim() || null;
+  const desc  = document.getElementById(`desc-${id}`)?.value.trim() || null;
+  const msgEl = document.getElementById(`inline-msg-${id}`);
+  const row   = state.allRows.find(r => r.staging_id === id);
+  // If a description is now set on a scraped row, advance status to described
+  const newStatus = (desc && row?.status === 'scraped') ? 'described' : row?.status;
+  showMsgEl(msgEl, 'info', 'Saving…');
+  const { error } = await sb.from('supplement_staging').update({
+    curriculum_hint:    hint,
+    search_description: desc,
+    status:             newStatus,
+  }).eq('staging_id', id);
+  if (error) { showMsgEl(msgEl, 'error', 'Save failed'); return; }
+  if (row) { row.curriculum_hint = hint; row.search_description = desc; row.status = newStatus; }
+  showMsgEl(msgEl, 'success', 'Saved ✓');
+  setTimeout(() => msgEl.classList.add('hidden'), 2200);
+  renderStats();
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function rerenderRow(id) {
+  const row   = state.allRows.find(r => r.staging_id === id);
+  const rowEl = document.getElementById(`row-${id}`);
+  if (row && rowEl) rowEl.outerHTML = rowHtml(row);
+}
+
+function setRowStatus(id, type, msg) {
+  const el = document.getElementById(`row-status-${id}`);
+  if (!el) return;
+  const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
+  el.style.color = c[type] || 'var(--text-mid)';
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function setBulkDisabled(d) {
+  document.getElementById('btn-bulk-scrape').disabled   = d;
+  document.getElementById('btn-bulk-describe').disabled = d;
+}
+
+function showMsgEl(el, type, msg) {
+  const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
+  el.style.color = c[type] || 'var(--text-mid)';
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+checkSession();
+</script>
+</body>
+</html>
