@@ -704,8 +704,8 @@ async function scrapeRow(row) {
 
 // ── Core describe ─────────────────────────────────────────────────────────────
 async function describeRow(row, visionOverride = false) {
-  if (!row.raw_page_text && !row.pdf_url)
-    return { ok: false, error: 'No page text — scrape this row first' };
+  if (!row.raw_page_text && !row.pdf_url && !row.source_url)
+    return { ok: false, error: 'No content available — row has no URL' };
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST', headers: EF_HEADERS,
