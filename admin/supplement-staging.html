@@ -102,12 +102,21 @@
     .stat-num { font-size: 1.6rem; font-weight: 700; font-family: 'DM Serif Display', serif; }
     .stat-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-light); margin-top: 2px; }
 
-    /* ── Bulk action section ── */
-    .bulk-section { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; padding: 14px 0; }
-    .bulk-section + .bulk-section { border-top: 1px solid var(--border); }
-    .bulk-section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); width: 64px; flex-shrink: 0; padding-top: 10px; }
-    .bulk-section-body { flex: 1; }
-    .bulk-hint { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; line-height: 1.5; }
+    /* ── Bulk action grid (horizontal, numbered) ── */
+    .bulk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .bulk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .bulk-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .bulk-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bulk-card-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-mid); }
+    .bulk-hint { font-size: 0.75rem; color: var(--text-light); line-height: 1.5; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+    .tab-btn { padding: 8px 18px; font-size: 0.82rem; font-weight: 600; color: var(--text-light); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     /* ── Progress ── */
     .progress-wrap { margin-top: 10px; }
@@ -209,6 +218,7 @@
     <span class="header-sub">Supplement Ingestion</span>
   </div>
   <div class="header-right hidden" id="header-right">
+    <button class="btn-secondary" onclick="showDiscoveryInstructions()" style="font-size:0.75rem;">📋 Before you start</button>
     <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp()" title="WK cookie — required for scraping">🔑 WK cookie</button>
     <span class="header-email" id="header-email"></span>
     <button class="btn-signout" id="btn-signout">Sign out</button>
@@ -243,6 +253,34 @@
     <div id="stats-grid" class="stats-grid hidden" style="flex:1;min-width:360px;"></div>
   </div>
 
+  <!-- Discovery instructions modal -->
+  <div id="discovery-modal-backdrop" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--card);border-radius:var(--radius);padding:28px 32px;max-width:620px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:6px;">Before you start — Discovery</div>
+      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:18px;line-height:1.5;">Run these commands from <code style="background:var(--surface);padding:1px 6px;border-radius:4px;font-size:0.8rem;">C:\users\sdensham\cn_ingestion\</code> in PowerShell <strong>before</strong> using this page. Refresh the page after both runs complete.</div>
+
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 1 — Toolkit catalog</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>python discover_supplements.py --catalog toolkit --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
+        <button onclick="copyCmd(this,'python discover_supplements.py --catalog toolkit --series-id 96c05aaa-0329-4582-a35c-51423afc21dd')" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:16px;">Requires WK_POSTPASS in .env. Check the WK cookie button in the header — refresh if expired.</div>
+
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 2 — Piano books catalog</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>python discover_supplements.py --catalog piano-books --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
+        <button onclick="copyCmd(this,'python discover_supplements.py --catalog piano-books --series-id 96c05aaa-0329-4582-a35c-51423afc21dd')" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:20px;">No cookie required for piano books.</div>
+
+      <div style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#92400E;margin-bottom:20px;">
+        <strong>Incremental runs:</strong> Discovery is safe to re-run at any time — it only inserts URLs not already in staging or production. Run monthly or after WK content announcements.
+      </div>
+
+      <button onclick="hideDiscoveryInstructions()" style="height:36px;padding:0 20px;background:var(--brand);color:#fff;border:none;border-radius:9px;font-size:0.85rem;font-weight:600;cursor:pointer;">Got it</button>
+    </div>
+  </div>
+
   <!-- Cookie help -->
   <div id="cookie-help-panel" class="cookie-help hidden">
     <div class="cookie-help-title">Set WunderKeys cookie</div>
@@ -267,10 +305,19 @@
     <div id="cookie-save-msg" class="hidden"></div>
   </div>
 
+  <!-- ── Tab bar ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-enrich" onclick="switchTab('enrich')">Phase 2 — Enrich</button>
+    <button class="tab-btn" id="tab-btn-promote" onclick="switchTab('promote')">Phase 3 — Promote</button>
+  </div>
+
+  <!-- ── Enrich tab ── -->
+  <div class="tab-panel active" id="tab-enrich">
+
   <!-- ── Bulk actions ── -->
   <div class="card">
 
-    <!-- Overwrite selector — shared by both bulk operations -->
+    <!-- Overwrite selector -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
       <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-light);">If already processed</span>
       <select id="overwrite-mode" style="height:32px;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.83rem;color:var(--text);background:var(--card);outline:none;">
@@ -280,14 +327,20 @@
       <span style="font-size:0.75rem;color:var(--text-light);">Applies to all three bulk operations.</span>
     </div>
 
-    <div class="bulk-section">
-      <div class="bulk-section-label">Scrape</div>
-      <div class="bulk-section-body">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <!-- Horizontal bulk grid -->
+    <div class="bulk-grid">
+
+      <!-- 1 — Scrape -->
+      <div class="bulk-card">
+        <div class="bulk-card-header">
+          <div class="bulk-step-num">1</div>
+          <div class="bulk-card-title">Scrape</div>
+        </div>
+        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free. Parses curriculum hint from title. Runs sequentially — safe to leave running.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
           <button class="btn-primary" id="btn-bulk-scrape" onclick="bulkScrape()">Scrape all discovered</button>
           <button class="btn-secondary hidden" id="btn-cancel-scrape" onclick="requestCancel()">⏹ Stop after this row</button>
         </div>
-        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free for each row. Parses curriculum hint from the title. Runs sequentially — safe to leave running.</div>
         <div id="scrape-progress" class="hidden">
           <div class="progress-wrap">
             <div class="progress-label" id="scrape-progress-label">Scraping…</div>
@@ -299,16 +352,18 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="bulk-section">
-      <div class="bulk-section-label">Describe</div>
-      <div class="bulk-section-body">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions for all scraped</button>
+      <!-- 2 — Describe -->
+      <div class="bulk-card">
+        <div class="bulk-card-header">
+          <div class="bulk-step-num">2</div>
+          <div class="bulk-card-title">Describe</div>
+        </div>
+        <div class="bulk-hint">Calls Gemini with scraped page text and PDF page 1 to write a 2–4 sentence search description. Scrape must run first.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+          <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions</button>
           <button class="btn-secondary hidden" id="btn-cancel-describe" onclick="requestCancel()">⏹ Stop after this row</button>
         </div>
-        <div class="bulk-hint">Calls Gemini with the scraped page text and PDF page 1 to write a 2–4 sentence search description. Scrape must run first.</div>
         <div id="describe-progress" class="hidden">
           <div class="progress-wrap">
             <div class="progress-label" id="describe-progress-label">Generating…</div>
@@ -320,16 +375,18 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="bulk-section">
-      <div class="bulk-section-label">Hint</div>
-      <div class="bulk-section-body">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <!-- 3 — Hint -->
+      <div class="bulk-card">
+        <div class="bulk-card-header">
+          <div class="bulk-step-num">3</div>
+          <div class="bulk-card-title">Hint</div>
+        </div>
+        <div class="bulk-hint">Asks Gemini to identify the curriculum level from title and description. Fast and cheap — no page fetch. Runs after describe.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
           <button class="btn-primary" id="btn-bulk-hint" onclick="bulkExtractHints()">Extract curriculum hints</button>
           <button class="btn-secondary hidden" id="btn-cancel-hint" onclick="requestCancel()">⏹ Stop after this row</button>
         </div>
-        <div class="bulk-hint">Asks Gemini to identify the curriculum level from each row's title and description. Runs after describe. Fast and cheap — title + description only, no page fetch.</div>
         <div id="hint-progress" class="hidden">
           <div class="progress-wrap">
             <div class="progress-label" id="hint-progress-label">Extracting…</div>
@@ -341,8 +398,9 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+
+    </div><!-- /bulk-grid -->
+  </div><!-- /card -->
 
   <!-- ── Filter bar ── -->
   <div class="card" style="padding:14px 20px;">
@@ -373,6 +431,21 @@
   <div id="list-msg" class="hidden"></div>
   <div id="staging-list" class="staging-list"></div>
   <div id="list-empty" class="empty-state hidden">No rows match the current filters.</div>
+
+  </div><!-- /tab-enrich -->
+
+  <!-- ── Promote tab (stub) ── -->
+  <div class="tab-panel" id="tab-promote">
+    <div class="card" style="text-align:center;padding:48px 32px;">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:10px;">Phase 3 — Promote to Production</div>
+      <div style="font-size:0.85rem;color:var(--text-mid);line-height:1.6;max-width:480px;margin:0 auto 20px;">
+        Review enriched rows, set <code style="background:var(--surface);padding:1px 5px;border-radius:4px;">match_context</code>, confirm <code style="background:var(--surface);padding:1px 5px;border-radius:4px;">is_free</code>, and promote approved rows to the live supplements table.
+      </div>
+      <div style="display:inline-block;background:var(--warn-light);border:1px solid var(--warn-border);border-radius:8px;padding:10px 18px;font-size:0.82rem;color:#92400E;">
+        🚧 Coming soon — complete Phase 2 enrichment before proceeding.
+      </div>
+    </div>
+  </div><!-- /tab-promote -->
 
 </main>
 </div>
@@ -1009,6 +1082,34 @@ function showMsgEl(el, type, msg) {
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+window.switchTab = function(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-btn-${name}`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+};
+
+// ── Discovery instructions modal ──────────────────────────────────────────────
+window.showDiscoveryInstructions = function() {
+  document.getElementById('discovery-modal-backdrop').classList.remove('hidden');
+  document.getElementById('discovery-modal-backdrop').style.display = 'flex';
+};
+window.hideDiscoveryInstructions = function() {
+  document.getElementById('discovery-modal-backdrop').classList.add('hidden');
+};
+window.copyCmd = function(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  });
+};
+// Close modal on backdrop click
+document.getElementById('discovery-modal-backdrop').addEventListener('click', function(e) {
+  if (e.target === this) hideDiscoveryInstructions();
+});
 
 checkSession();
 </script>
