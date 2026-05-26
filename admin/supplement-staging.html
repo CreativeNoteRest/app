@@ -1142,7 +1142,7 @@ async function loadPromoteRows() {
 
   const { data, error } = await sb
     .from('supplement_staging')
-    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, match_context, season, season_start_mmdd, season_end_mmdd, is_multi_lesson, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
+    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, match_context, is_multi_lesson, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
     .eq('series_id', SERIES_ID)
     .in('status', ['described', 'promoted'])
     .order('catalog', { ascending: true })
