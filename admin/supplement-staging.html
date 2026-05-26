@@ -577,6 +577,7 @@ function rowHtml(r) {
   const wbBadge  = r.is_workbook ? `<span class="badge badge-workbook">📚 Workbook</span>` : '';
   const freeBadge = r.is_free === true  ? `<span class="badge badge-free">Free</span>`
                   : r.is_free === false ? `<span class="badge badge-paid">Paid</span>` : '';
+  const pdfSkippedBadge = r.pdf_skipped ? `<span class="badge" style="background:var(--warn-light);color:#92400E;border-color:var(--warn-border);">⚠️ PDF skipped — review</span>` : '';
   const levelText = r.wk_level ? `<span style="font-size:0.7rem;color:var(--text-light);">Level ${escHtml(r.wk_level)}</span>` : '';
   const sectionText = r.catalog_section ? `<span style="font-size:0.7rem;color:var(--text-light);">${escHtml(r.catalog_section)}</span>` : '';
   const catText = r.wk_categories?.length
@@ -602,7 +603,7 @@ function rowHtml(r) {
     ${thumbHtml}
     <div class="row-body">
       <div class="row-title">${displayTitle}</div>
-      <div class="row-meta">${statusBadge}${catalogBadge}${wbBadge}${freeBadge}${levelText}${sectionText}${catText}</div>
+      <div class="row-meta">${statusBadge}${catalogBadge}${wbBadge}${freeBadge}${pdfSkippedBadge}${levelText}${sectionText}${catText}</div>
       <div id="row-status-${id}" class="row-status hidden"></div>
       ${descPreview}
     </div>
@@ -640,9 +641,15 @@ window.singleDescribe = async function(id) {
   const row = state.allRows.find(r => r.staging_id === id);
   if (!row) return;
   setRowStatus(id, 'info', '⏳ Generating description…');
-  const result = await describeRow(row);
-  if (result.ok) { setRowStatus(id, 'success', '✓ Description generated'); rerenderRow(id); renderStats(); }
-  else           { setRowStatus(id, 'error', `✗ ${result.error}`); }
+  const result = await describeRow(row, true); // visionOverride: true for manual single-row calls
+  if (result.ok) {
+    const msg = result.pdf_skipped ? '✓ Generated (PDF too large — description from page text only)' : '✓ Description generated';
+    setRowStatus(id, result.pdf_skipped ? 'warn' : 'success', msg);
+    rerenderRow(id);
+    renderStats();
+  } else {
+    setRowStatus(id, 'error', `✗ ${result.error}`);
+  }
 };
 
 // ── Core scrape ───────────────────────────────────────────────────────────────
@@ -679,18 +686,20 @@ async function scrapeRow(row) {
 }
 
 // ── Core describe ─────────────────────────────────────────────────────────────
-async function describeRow(row) {
+async function describeRow(row, visionOverride = false) {
   if (!row.raw_page_text && !row.pdf_url)
     return { ok: false, error: 'No page text — scrape this row first' };
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST', headers: EF_HEADERS,
       body: JSON.stringify({
-        auth_user_id: state.authUserId,
-        page_text:    row.raw_page_text || '',
-        pdf_url:      row.pdf_url || null,
-        cookie:       state.cookieWk,
-        url:          row.source_url,
+        auth_user_id:        state.authUserId,
+        page_text:           row.raw_page_text || '',
+        pdf_url:             row.pdf_url || null,
+        cookie:              state.cookieWk,
+        url:                 row.source_url,
+        curriculum_hint:     row.curriculum_hint || null,
+        pdf_vision_override: visionOverride,
       }),
     });
     const data = await res.json();
@@ -703,7 +712,8 @@ async function describeRow(row) {
     if (we) return { ok: false, error: `DB write: ${we.message}` };
     row.search_description = data.description;
     row.status = 'described';
-    return { ok: true };
+    row.pdf_skipped = data.pdf_skipped || false;
+    return { ok: true, pdf_skipped: data.pdf_skipped || false };
   } catch (e) { return { ok: false, error: e.message }; }
 }
 
@@ -811,7 +821,7 @@ function rerenderRow(id) {
 function setRowStatus(id, type, msg) {
   const el = document.getElementById(`row-status-${id}`);
   if (!el) return;
-  const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
+  const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)', warn: '#92400E' };
   el.style.color = c[type] || 'var(--text-mid)';
   el.textContent = msg;
   el.classList.remove('hidden');
