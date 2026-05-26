@@ -50,7 +50,36 @@ function err(message: string, status = 400) {
 const PDF_BULK_SIZE_LIMIT     = 2 * 1024 * 1024;  // 2 MB
 const PDF_OVERRIDE_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB
 
-// ── Gemini system instruction (shared) ───────────────────────────────────────
+// ── Gemini fetch with retry ───────────────────────────────────────────────────
+// Shared by callGeminiText and callGeminiMultimodal.
+// Retries up to 2 times on 503 (UNAVAILABLE) and 429 (rate limit) only.
+// All other error statuses throw immediately — retrying a 400 won't help.
+const GEMINI_MAX_RETRIES  = 2;
+const GEMINI_RETRY_DELAY  = 3000; // ms — multiplied by attempt number (3s, 6s)
+
+async function geminiRequest(url: string, body: unknown): Promise<unknown> {
+  let lastError = "";
+  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise(resolve => setTimeout(resolve, GEMINI_RETRY_DELAY * attempt));
+    }
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (response.ok) return response.json();
+    const errText = await response.text();
+    if (response.status === 503 || response.status === 429) {
+      lastError = `Gemini API error ${response.status}: ${errText}`;
+      continue;
+    }
+    throw new Error(`Gemini API error ${response.status}: ${errText}`);
+  }
+  throw new Error(`Gemini unavailable after ${GEMINI_MAX_RETRIES + 1} attempts: ${lastError}`);
+}
+
+
 const SYSTEM_INSTRUCTION = `You are a specialist in music education resource description.
 Your task is to write concise, search-optimised descriptions of piano teaching supplements.
 Descriptions are used internally to help match supplements to the right lessons.
@@ -80,18 +109,7 @@ async function callGeminiText(prompt: string): Promise<string> {
     },
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
+  const data = await geminiRequest(url, body) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = data?.candidates?.[0]?.content?.parts
     ?.filter((p: { text?: string }) => p.text)
     ?.map((p: { text: string }) => p.text)
@@ -128,18 +146,7 @@ async function callGeminiMultimodal(parts: GeminiPart[]): Promise<string> {
     },
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
+  const data = await geminiRequest(url, body) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = data?.candidates?.[0]?.content?.parts
     ?.filter((p: { text?: string }) => p.text)
     ?.map((p: { text: string }) => p.text)

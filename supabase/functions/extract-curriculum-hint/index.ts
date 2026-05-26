@@ -81,33 +81,52 @@ async function callGemini(title: string, description: string): Promise<string | 
     },
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  // Retry up to 2 times on transient overload (503 UNAVAILABLE, 429 rate limit).
+  // Non-retryable errors (400, 401, 403, etc.) throw immediately.
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY_MS = 3000; // 3 seconds between attempts
 
-  if (!response.ok) {
+  let lastError = "";
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const raw = data?.candidates?.[0]?.content?.parts
+        ?.filter((p: { text?: string }) => p.text)
+        ?.map((p: { text: string }) => p.text)
+        ?.join("") ?? "";
+
+      if (!raw) throw new Error("Gemini returned empty response");
+
+      const parsed = JSON.parse(raw.trim());
+      const hint = parsed?.curriculum_hint ?? null;
+      if (hint !== null && typeof hint !== "string") return null;
+      if (typeof hint === "string" && !hint.trim()) return null;
+      return hint;
+    }
+
     const errText = await response.text();
+
+    // Retry on overload/rate-limit only
+    if (response.status === 503 || response.status === 429) {
+      lastError = `Gemini API error ${response.status}: ${errText}`;
+      continue; // retry
+    }
+
+    // All other errors are non-retryable
     throw new Error(`Gemini API error ${response.status}: ${errText}`);
   }
 
-  const data = await response.json();
-  const raw = data?.candidates?.[0]?.content?.parts
-    ?.filter((p: { text?: string }) => p.text)
-    ?.map((p: { text: string }) => p.text)
-    ?.join("") ?? "";
-
-  if (!raw) throw new Error("Gemini returned empty response");
-
-  // Parse JSON response
-  const parsed = JSON.parse(raw.trim());
-  const hint = parsed?.curriculum_hint ?? null;
-
-  // Validate — must be a non-empty string or null
-  if (hint !== null && typeof hint !== "string") return null;
-  if (typeof hint === "string" && !hint.trim()) return null;
-  return hint;
+  throw new Error(`Gemini unavailable after ${MAX_RETRIES + 1} attempts: ${lastError}`);
 }
 
 Deno.serve(async (req: Request) => {
