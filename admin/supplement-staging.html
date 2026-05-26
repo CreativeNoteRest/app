@@ -411,6 +411,7 @@
         <option value="discovered">Discovered</option>
         <option value="scraped">Scraped</option>
         <option value="described">Described</option>
+        <option value="promoted">Promoted</option>
       </select>
       <select id="filter-catalog" onchange="applyFilters()">
         <option value="">All catalogs</option>
@@ -434,17 +435,50 @@
 
   </div><!-- /tab-enrich -->
 
-  <!-- ── Promote tab (stub) ── -->
+  <!-- ── Promote tab ── -->
   <div class="tab-panel" id="tab-promote">
-    <div class="card" style="text-align:center;padding:48px 32px;">
-      <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:10px;">Phase 3 — Promote to Production</div>
-      <div style="font-size:0.85rem;color:var(--text-mid);line-height:1.6;max-width:480px;margin:0 auto 20px;">
-        Review enriched rows, set <code style="background:var(--surface);padding:1px 5px;border-radius:4px;">match_context</code>, confirm <code style="background:var(--surface);padding:1px 5px;border-radius:4px;">is_free</code>, and promote approved rows to the live supplements table.
+
+    <!-- Pre-promotion checklist -->
+    <div class="card" style="background:var(--warn-light);border-color:var(--warn-border);">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:10px;">Before you promote — confirm both items</div>
+      <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;margin-bottom:8px;cursor:pointer;">
+        <input type="checkbox" id="check-workbooks" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
+        I have reviewed the piano-books rows and flagged all core curriculum workbooks as <strong>is_workbook</strong> using the Mark workbook button in the Enrich tab.
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;cursor:pointer;">
+        <input type="checkbox" id="check-snapshot" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
+        I have taken a pre-load snapshot (CSV export of the supplements table from the Supabase table editor).
+      </label>
+    </div>
+
+    <!-- Bulk promote action -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Bulk promote</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> rows. Upserts on (source_url, series_id) — never overwrites existing match_context, is_free, or season fields on production rows.</div>
+        </div>
+        <button class="btn-primary" id="btn-bulk-promote" onclick="bulkPromote()" disabled style="opacity:0.4;">Promote all described</button>
+        <button class="btn-secondary hidden" id="btn-cancel-promote" onclick="requestPromoteCancel()">⏹ Stop after this row</button>
       </div>
-      <div style="display:inline-block;background:var(--warn-light);border:1px solid var(--warn-border);border-radius:8px;padding:10px 18px;font-size:0.82rem;color:#92400E;">
-        🚧 Coming soon — complete Phase 2 enrichment before proceeding.
+      <div id="promote-progress" class="hidden">
+        <div class="progress-wrap">
+          <div class="progress-label" id="promote-progress-label">Promoting…</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="promote-progress-fill" style="width:0%"></div></div>
+        </div>
+        <div id="promote-failures" class="failure-log hidden">
+          <div class="failure-log-title">Failures — these rows were not promoted</div>
+          <div id="promote-failure-list"></div>
+        </div>
       </div>
     </div>
+
+    <!-- Promote list -->
+    <div id="promote-list-loading" class="status-line" style="padding:12px 4px;display:none;"><span class="spinner spinner-dark"></span> Loading rows…</div>
+    <div id="promote-list-msg" class="hidden"></div>
+    <div id="promote-list" class="staging-list"></div>
+    <div id="promote-list-empty" class="empty-state hidden">No described rows found. Complete Phase 2 enrichment first.</div>
+
   </div><!-- /tab-promote -->
 
 </main>
@@ -462,13 +496,17 @@ const EF_HEADERS    = { 'Content-Type': 'application/json', 'apikey': SUPABASE_A
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const state = {
-  authUserId:      '',
-  cookieWk:        '',
-  passwordWk:      '',
-  allRows:         [],
-  filteredRows:    [],
-  bulkRunning:     false,
-  cancelRequested: false,
+  authUserId:             '',
+  cookieWk:               '',
+  passwordWk:             '',
+  allRows:                [],
+  filteredRows:           [],
+  bulkRunning:            false,
+  cancelRequested:        false,
+  promoteRows:            [],
+  promoteLoaded:          false,
+  promoteRunning:         false,
+  promoteCancelRequested: false,
 };
 
 // ── Curriculum hint parser ────────────────────────────────────────────────────
@@ -625,6 +663,7 @@ function renderStats() {
     discovered: r.filter(x => x.status === 'discovered').length,
     scraped:    r.filter(x => x.status === 'scraped').length,
     described:  r.filter(x => x.status === 'described').length,
+    promoted:   r.filter(x => x.status === 'promoted').length,
     workbook:   r.filter(x => x.is_workbook).length,
   };
   function tile(label, count, color) {
@@ -635,6 +674,7 @@ function renderStats() {
     tile('Discovered', c.discovered, 'var(--text-light)') +
     tile('Scraped', c.scraped, 'var(--info)') +
     tile('Described', c.described, 'var(--success)') +
+    tile('Promoted', c.promoted, '#7C3AED') +
     tile('Workbooks', c.workbook, '#92400E') +
     tile('Total', c.total, 'var(--brand)');
   grid.classList.remove('hidden');
@@ -1089,7 +1129,323 @@ window.switchTab = function(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`tab-btn-${name}`).classList.add('active');
   document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'promote' && !state.promoteLoaded) loadPromoteRows();
 };
+
+// ── Promote tab ───────────────────────────────────────────────────────────────
+
+async function loadPromoteRows() {
+  const loadEl  = document.getElementById('promote-list-loading');
+  const msgEl   = document.getElementById('promote-list-msg');
+  loadEl.style.display = 'flex';
+  msgEl.classList.add('hidden');
+
+  const { data, error } = await sb
+    .from('supplement_staging')
+    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, match_context, season, season_start_mmdd, season_end_mmdd, is_multi_lesson, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
+    .eq('series_id', SERIES_ID)
+    .in('status', ['described', 'promoted'])
+    .order('catalog', { ascending: true })
+    .order('title',   { ascending: true });
+
+  loadEl.style.display = 'none';
+
+  if (error) {
+    showMsgEl(msgEl, 'error', `Failed to load rows: ${error.message}`);
+    return;
+  }
+
+  state.promoteRows  = data || [];
+  state.promoteLoaded = true;
+  renderPromoteList();
+}
+
+function renderPromoteList() {
+  const listEl  = document.getElementById('promote-list');
+  const emptyEl = document.getElementById('promote-list-empty');
+  const rows    = state.promoteRows;
+
+  if (!rows.length) {
+    listEl.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  listEl.innerHTML = rows.map(promoteRowHtml).join('');
+}
+
+function promoteRowHtml(r) {
+  const id        = r.staging_id;
+  const title     = escHtml(r.title || '');
+  const isPromoted = r.status === 'promoted';
+
+  const thumbHtml = r.thumbnail_url
+    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb">🖼</div>`;
+
+  const catalogBadge = r.catalog === 'toolkit'
+    ? `<span class="badge badge-toolkit">Toolkit</span>`
+    : `<span class="badge badge-piano">Piano books</span>`;
+  const freeBadge = r.is_free === true  ? `<span class="badge badge-free">Free</span>`
+                  : r.is_free === false ? `<span class="badge badge-paid">Paid</span>`
+                  : `<span class="badge" style="background:var(--surface);color:var(--text-light);border-color:var(--border);">is_free?</span>`;
+  const statusBadge = isPromoted
+    ? `<span class="badge badge-promoted">✓ Promoted</span>`
+    : `<span class="badge badge-described">Described</span>`;
+  const wbBadge = r.is_workbook ? `<span class="badge badge-workbook">📚 Workbook</span>` : '';
+
+  const descPreview = r.search_description
+    ? `<div class="desc-preview">${escHtml(r.search_description)}</div>` : '';
+  const hintLine = r.curriculum_hint
+    ? `<div style="font-size:0.73rem;color:var(--text-light);margin-top:3px;">📚 ${escHtml(r.curriculum_hint)}</div>` : '';
+
+  const mc  = r.match_context || '';
+  const dis = (state.promoteRunning || isPromoted) ? 'disabled' : '';
+  const promoteBtn = isPromoted
+    ? `<button class="btn-sm btn-sm-neutral" disabled>✓ Done</button>`
+    : `<button class="btn-sm btn-sm-success" id="promote-btn-${id}" onclick="singlePromote('${id}')" ${dis}>Promote</button>`;
+
+  // Season fields — show current value as small read-only text if set
+  const seasonDisplay = r.season
+    ? `<span style="font-size:0.72rem;color:var(--text-light);">🗓 ${escHtml(r.season)}</span>` : '';
+
+  return `
+<div class="staging-row${r.is_workbook ? ' is-workbook' : ''}${isPromoted ? ' promoted-row' : ''}" id="prow-${id}" style="${isPromoted ? 'opacity:0.6;' : ''}">
+  <div class="row-top">
+    ${thumbHtml}
+    <div class="row-body">
+      <div class="row-title"><a href="${escHtml(r.source_url)}" target="_blank" rel="noopener">${title || escHtml(r.source_url)}</a></div>
+      <div class="row-meta">${statusBadge}${catalogBadge}${freeBadge}${wbBadge}${seasonDisplay}</div>
+      ${hintLine}
+      <div id="prow-status-${id}" class="row-status hidden"></div>
+      ${descPreview}
+    </div>
+    <div class="row-actions">${promoteBtn}</div>
+  </div>
+  <div class="inline-fields" style="${isPromoted ? 'pointer-events:none;' : ''}">
+    <div class="inline-field" style="min-width:160px;">
+      <label for="pmc-${id}">Match context</label>
+      <select id="pmc-${id}" style="height:30px;padding:0 8px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--surface);">
+        <option value="lesson_skill"      ${mc==='lesson_skill'       ? 'selected':''}>Lesson skill</option>
+        <option value="practice_behaviour" ${mc==='practice_behaviour' ? 'selected':''}>Practice behaviour</option>
+        <option value="recital_event"      ${mc==='recital_event'      ? 'selected':''}>Recital / event</option>
+        <option value="studio_admin"       ${mc==='studio_admin'       ? 'selected':''}>Studio admin</option>
+      </select>
+    </div>
+    <div class="inline-field" style="min-width:100px;">
+      <label for="pfree-${id}">Is free</label>
+      <select id="pfree-${id}" style="height:30px;padding:0 8px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--surface);">
+        <option value=""      ${r.is_free===null||r.is_free===undefined ? 'selected':''}>Unknown</option>
+        <option value="true"  ${r.is_free===true  ? 'selected':''}>Free</option>
+        <option value="false" ${r.is_free===false ? 'selected':''}>Paid</option>
+      </select>
+    </div>
+    <div class="inline-field" style="min-width:120px;">
+      <label for="pseason-${id}">Season</label>
+      <input id="pseason-${id}" type="text" value="${escHtml(r.season||'')}" placeholder="e.g. Christmas" style="width:120px;" />
+    </div>
+    <div class="inline-field" style="min-width:80px;">
+      <label for="pstart-${id}">Start MM-DD</label>
+      <input id="pstart-${id}" type="text" value="${escHtml(r.season_start_mmdd||'')}" placeholder="12-01" style="width:80px;" />
+    </div>
+    <div class="inline-field" style="min-width:80px;">
+      <label for="pend-${id}">End MM-DD</label>
+      <input id="pend-${id}" type="text" value="${escHtml(r.season_end_mmdd||'')}" placeholder="01-06" style="width:80px;" />
+    </div>
+    <div class="inline-field">
+      <label style="white-space:nowrap;">Multi-lesson</label>
+      <input type="checkbox" id="pmulti-${id}" ${r.is_multi_lesson ? 'checked' : ''} style="margin-top:6px;accent-color:var(--brand);width:16px;height:16px;" />
+    </div>
+  </div>
+</div>`;
+}
+
+// ── Read editable fields from a promote row ───────────────────────────────────
+function readPromoteFields(id) {
+  return {
+    match_context:    document.getElementById(`pmc-${id}`)?.value    || 'lesson_skill',
+    is_free:          document.getElementById(`pfree-${id}`)?.value === 'true'  ? true
+                    : document.getElementById(`pfree-${id}`)?.value === 'false' ? false : null,
+    season:           document.getElementById(`pseason-${id}`)?.value.trim() || null,
+    season_start_mmdd: document.getElementById(`pstart-${id}`)?.value.trim() || null,
+    season_end_mmdd:  document.getElementById(`pend-${id}`)?.value.trim() || null,
+    is_multi_lesson:  document.getElementById(`pmulti-${id}`)?.checked || false,
+  };
+}
+
+// ── Core promote: read-then-write with COALESCE ───────────────────────────────
+async function promoteRow(stagingRow) {
+  const fields = readPromoteFields(stagingRow.staging_id);
+
+  // 1. Check for existing production row
+  const { data: existing } = await sb
+    .from('supplements')
+    .select('supplement_id, match_context, is_free, season, season_start_mmdd, season_end_mmdd, is_multi_lesson')
+    .eq('source_url', stagingRow.source_url)
+    .eq('series_id', SERIES_ID)
+    .maybeSingle();
+
+  // 2. COALESCE — never overwrite non-null production values
+  const record = {
+    series_id:          SERIES_ID,
+    title:              stagingRow.title,
+    source_url:         stagingRow.source_url,
+    source:             stagingRow.source,
+    thumbnail_url:      stagingRow.thumbnail_url   || null,
+    search_description: stagingRow.search_description || null,
+    curriculum_hint:    stagingRow.curriculum_hint || null,
+    wk_categories:      stagingRow.wk_categories  || [],
+    wk_topics:          stagingRow.wk_topics       || [],
+    wk_level:           stagingRow.wk_level        || null,
+    catalog_section:    stagingRow.catalog_section || null,
+    // Protected fields — COALESCE: keep existing if non-null
+    match_context:    existing?.match_context    ?? fields.match_context,
+    is_free:          existing?.is_free          != null ? existing.is_free          : fields.is_free,
+    season:           existing?.season           ?? fields.season,
+    season_start_mmdd: existing?.season_start_mmdd ?? fields.season_start_mmdd,
+    season_end_mmdd:  existing?.season_end_mmdd  ?? fields.season_end_mmdd,
+    is_multi_lesson:  existing?.is_multi_lesson  != null ? existing.is_multi_lesson  : fields.is_multi_lesson,
+    updated_at:       new Date().toISOString(),
+    // is_active intentionally omitted — DEFAULT true on insert; existing value preserved
+  };
+
+  // 3. Upsert to supplements
+  const { error: upsertErr } = await sb
+    .from('supplements')
+    .upsert(record, { onConflict: 'source_url,series_id' });
+
+  if (upsertErr) return { ok: false, error: `Upsert failed: ${upsertErr.message}` };
+
+  // 4. Mark staging row as promoted
+  const { error: stagingErr } = await sb
+    .from('supplement_staging')
+    .update({ status: 'promoted' })
+    .eq('staging_id', stagingRow.staging_id);
+
+  if (stagingErr) return { ok: false, error: `Staging update failed: ${stagingErr.message}` };
+
+  // Update local state
+  stagingRow.status = 'promoted';
+  const enrichRow = state.allRows.find(r => r.staging_id === stagingRow.staging_id);
+  if (enrichRow) enrichRow.status = 'promoted';
+
+  return { ok: true };
+}
+
+// ── Single promote ────────────────────────────────────────────────────────────
+window.singlePromote = async function(id) {
+  const row = state.promoteRows.find(r => r.staging_id === id);
+  if (!row) return;
+  const btn = document.getElementById(`promote-btn-${id}`);
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  setPRowStatus(id, 'info', '⏳ Promoting…');
+
+  const result = await promoteRow(row);
+
+  if (result.ok) {
+    setPRowStatus(id, 'success', '✓ Promoted');
+    rerenderPromoteRow(id);
+    renderStats();
+  } else {
+    setPRowStatus(id, 'error', `✗ ${result.error}`);
+    if (btn) { btn.disabled = false; btn.textContent = 'Promote'; }
+  }
+};
+
+// ── Bulk promote ──────────────────────────────────────────────────────────────
+window.bulkPromote = async function() {
+  if (state.promoteRunning) return;
+
+  const targets = state.promoteRows.filter(r => r.status === 'described');
+  if (!targets.length) {
+    showMsgEl(document.getElementById('promote-list-msg'), 'info', 'No described rows to promote — all may already be promoted.');
+    return;
+  }
+
+  state.promoteRunning        = true;
+  state.promoteCancelRequested = false;
+  document.getElementById('btn-bulk-promote').disabled = true;
+  document.getElementById('btn-cancel-promote').classList.remove('hidden');
+
+  const pEl      = document.getElementById('promote-progress');
+  const lEl      = document.getElementById('promote-progress-label');
+  const fEl      = document.getElementById('promote-progress-fill');
+  const failEl   = document.getElementById('promote-failures');
+  const failList = document.getElementById('promote-failure-list');
+
+  pEl.classList.remove('hidden');
+  failEl.classList.add('hidden');
+  failList.innerHTML = '';
+
+  const total = targets.length;
+  const failures = [];
+  let processed = 0;
+
+  for (let i = 0; i < total; i++) {
+    if (state.promoteCancelRequested) {
+      lEl.textContent = `Stopped at ${i} of ${total} — ${failures.length} failures.`;
+      break;
+    }
+    const row = targets[i];
+    lEl.textContent = `Promoting ${i + 1} of ${total} — ${row.title || row.source_url}`;
+    fEl.style.width = `${Math.round((i / total) * 100)}%`;
+
+    const result = await promoteRow(row);
+    processed++;
+    if (!result.ok) {
+      failures.push({ title: row.title, url: row.source_url, error: result.error });
+    } else {
+      rerenderPromoteRow(row.staging_id);
+    }
+  }
+
+  if (!state.promoteCancelRequested) {
+    fEl.style.width = '100%';
+    lEl.textContent = `Done — ${processed - failures.length} of ${processed} promoted successfully.`;
+  }
+
+  if (failures.length) {
+    failList.innerHTML = failures.map(f =>
+      `<div class="failure-entry"><strong>${escHtml((f.title || f.url || '').slice(0,50))}</strong> — ${escHtml(f.error)}</div>`
+    ).join('');
+    failEl.classList.remove('hidden');
+  }
+
+  state.promoteRunning        = false;
+  state.promoteCancelRequested = false;
+  document.getElementById('btn-cancel-promote').classList.add('hidden');
+  document.getElementById('btn-cancel-promote').textContent = '⏹ Stop after this row';
+  updateBulkPromoteBtn();
+  renderStats();
+};
+
+window.requestPromoteCancel = function() {
+  state.promoteCancelRequested = true;
+  document.getElementById('btn-cancel-promote').textContent = '⏹ Stopping…';
+};
+
+// Bulk promote button enabled only when both checklist items checked
+window.updateBulkPromoteBtn = function() {
+  const ok = document.getElementById('check-workbooks')?.checked &&
+             document.getElementById('check-snapshot')?.checked;
+  const btn = document.getElementById('btn-bulk-promote');
+  if (btn) { btn.disabled = !ok || state.promoteRunning; btn.style.opacity = (ok && !state.promoteRunning) ? '1' : '0.4'; }
+};
+
+function rerenderPromoteRow(id) {
+  const row   = state.promoteRows.find(r => r.staging_id === id);
+  const rowEl = document.getElementById(`prow-${id}`);
+  if (row && rowEl) rowEl.outerHTML = promoteRowHtml(row);
+}
+
+function setPRowStatus(id, type, msg) {
+  const el = document.getElementById(`prow-status-${id}`);
+  if (!el) return;
+  const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
+  el.style.color  = c[type] || 'var(--text-mid)';
+  el.textContent  = msg;
+  el.classList.remove('hidden');
+}
 
 // ── Discovery instructions modal ──────────────────────────────────────────────
 window.showDiscoveryInstructions = function() {
