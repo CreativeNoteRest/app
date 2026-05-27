@@ -549,7 +549,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn-primary" id="btn-bulk-embed" onclick="bulkEmbed()">Generate embeddings</button>
-        <button class="btn-secondary hidden" id="btn-cancel-embed" style="display:none!important;">⏹ Stop not available — runs server-side</button>
+        <button class="btn-secondary hidden" id="btn-cancel-embed" onclick="requestEmbedCancel()">⏹ Stop after this batch</button>
       </div>
       <div id="embed-progress" class="hidden">
         <div class="progress-wrap" style="margin-top:12px;">
@@ -599,6 +599,7 @@ const state = {
   seasonLabels:           [],   // canonical season_label values from season_windows
   promoteRunning:         false,
   promoteCancelRequested: false,
+  embedCancelRequested:   false,
 };
 
 // ── Curriculum hint parser ────────────────────────────────────────────────────
@@ -1198,6 +1199,12 @@ window.requestCancel = function() {
   document.getElementById('btn-cancel-hint').textContent     = '⏹ Stopping…';
 };
 
+window.requestEmbedCancel = function() {
+  state.embedCancelRequested = true;
+  document.getElementById('btn-cancel-embed').textContent = '⏹ Stopping…';
+  document.getElementById('btn-cancel-embed').disabled = true;
+};
+
 function showMsgEl(el, type, msg) {
   const c = { info: 'var(--info)', success: 'var(--success)', error: 'var(--danger)' };
   el.style.color = c[type] || 'var(--text-mid)';
@@ -1677,8 +1684,10 @@ window.bulkEmbed = async function() {
   const overwrite   = document.getElementById('embed-overwrite-mode').value === 'true';
   const BATCH_SIZE  = 25;
 
+  state.embedCancelRequested = false;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Running…';
+  document.getElementById('btn-cancel-embed').classList.remove('hidden');
   progressEl.classList.remove('hidden');
   labelEl.textContent = 'Starting…';
   fillEl.style.width = '0%';
@@ -1747,6 +1756,11 @@ window.bulkEmbed = async function() {
 
       if (data.remaining === 0) break;  // all done
 
+      if (state.embedCancelRequested) {
+        labelEl.textContent = 'Stopped after batch ' + batch + '.';
+        break;
+      }
+
       batch++;
       // Brief pause between batches to let Gemini breathe
       await new Promise(r => setTimeout(r, 1000));
@@ -1772,6 +1786,8 @@ window.bulkEmbed = async function() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Generate embeddings';
+    document.getElementById('btn-cancel-embed').classList.add('hidden');
+    state.embedCancelRequested = false;
   }
 };
 
