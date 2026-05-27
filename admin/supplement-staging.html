@@ -430,11 +430,6 @@
         <option value="toolkit">Toolkit</option>
         <option value="piano-books">Piano books</option>
       </select>
-      <select id="filter-workbook" onchange="applyFilters()">
-        <option value="">All rows</option>
-        <option value="workbook">Workbooks only</option>
-        <option value="supplement">Supplements only</option>
-      </select>
       <span class="filter-count" id="filter-count">—</span>
     </div>
   </div>
@@ -452,11 +447,7 @@
 
     <!-- Pre-promotion checklist -->
     <div class="card" style="background:var(--warn-light);border-color:var(--warn-border);">
-      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:10px;">Before you promote — confirm both items</div>
-      <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;margin-bottom:8px;cursor:pointer;">
-        <input type="checkbox" id="check-workbooks" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
-        I have reviewed the piano-books rows and flagged all core curriculum workbooks as <strong>is_workbook</strong> using the Mark workbook button in the Enrich tab.
-      </label>
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#92400E;margin-bottom:10px;">Before you promote — confirm this item</div>
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;cursor:pointer;flex:1;">
           <input type="checkbox" id="check-snapshot" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
@@ -735,13 +726,10 @@ window.applyFilters = function() {
   const q  = document.getElementById('filter-search').value.toLowerCase();
   const st = document.getElementById('filter-status').value;
   const ca = document.getElementById('filter-catalog').value;
-  const wb = document.getElementById('filter-workbook').value;
   state.filteredRows = state.allRows.filter(r => {
     if (q  && !(r.title || r.source_url || '').toLowerCase().includes(q)) return false;
     if (st && r.status !== st)   return false;
     if (ca && r.catalog !== ca)  return false;
-    if (wb === 'workbook'   && !r.is_workbook)  return false;
-    if (wb === 'supplement' &&  r.is_workbook)  return false;
     return true;
   });
   document.getElementById('filter-count').textContent = `${state.filteredRows.length} of ${state.allRows.length}`;
@@ -773,7 +761,6 @@ function rowHtml(r) {
   const catalogBadge = r.catalog === 'toolkit'
     ? `<span class="badge badge-toolkit">Toolkit</span>`
     : `<span class="badge badge-piano">Piano books</span>`;
-  const wbBadge  = r.is_workbook ? `<span class="badge badge-workbook">📚 Workbook</span>` : '';
   const freeBadge = r.is_free === true  ? `<span class="badge badge-free">Free</span>`
                   : r.is_free === false ? `<span class="badge badge-paid">Paid</span>` : '';
   const pdfSkippedBadge = r.pdf_skipped ? `<span class="badge" style="background:var(--warn-light);color:#92400E;border-color:var(--warn-border);">⚠️ PDF skipped — review</span>` : '';
@@ -787,28 +774,25 @@ function rowHtml(r) {
 
   const dis = state.bulkRunning ? 'disabled' : '';
   const scrapeBtn   = `<button class="btn-sm btn-sm-info" id="scrape-btn-${id}" onclick="singleScrape('${id}')" ${dis}>Scrape</button>`;
-  const describeBtn = (r.status === 'scraped' || r.status === 'described')
+  const describeBtn = (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted')
     ? `<button class="btn-sm btn-sm-info" id="desc-btn-${id}" onclick="singleDescribe('${id}')" ${dis}>Gen desc</button>` : '';
   const hintBtn = (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted')
     ? `<button class="btn-sm btn-sm-info" id="hint-btn-${id}" onclick="singleExtractHint('${id}')" ${dis}>Hint</button>` : '';
-  const wbToggle = r.is_workbook
-    ? `<button class="btn-sm btn-sm-warn" onclick="toggleWorkbook('${id}',false)">Unmark workbook</button>`
-    : `<button class="btn-sm btn-sm-neutral" onclick="toggleWorkbook('${id}',true)">Mark workbook</button>`;
 
   const hintVal = escHtml(r.curriculum_hint || '');
   const descVal = escHtml(r.search_description || '');
 
   return `
-<div class="staging-row${r.is_workbook ? ' is-workbook' : ''}" id="row-${id}">
+<div class="staging-row" id="row-${id}">
   <div class="row-top">
     ${thumbHtml}
     <div class="row-body">
       <div class="row-title">${displayTitle}</div>
-      <div class="row-meta">${statusBadge}${catalogBadge}${wbBadge}${freeBadge}${pdfSkippedBadge}${levelText}${sectionText}${catText}</div>
+      <div class="row-meta">${statusBadge}${catalogBadge}${freeBadge}${pdfSkippedBadge}${levelText}${sectionText}${catText}</div>
       <div id="row-status-${id}" class="row-status hidden"></div>
       ${descPreview}
     </div>
-    <div class="row-actions">${scrapeBtn}${describeBtn}${hintBtn}${wbToggle}</div>
+    <div class="row-actions">${scrapeBtn}${describeBtn}${hintBtn}</div>
   </div>
   <div class="inline-fields">
     <div class="inline-field" style="min-width:200px;max-width:280px;">
@@ -1251,7 +1235,6 @@ function promoteRowHtml(r) {
   const statusBadge = isPromoted
     ? `<span class="badge badge-promoted">✓ Promoted</span>`
     : `<span class="badge badge-described">Described</span>`;
-  const wbBadge = r.is_workbook ? `<span class="badge badge-workbook">📚 Workbook</span>` : '';
 
   const descPreview = r.search_description
     ? `<div class="desc-preview">${escHtml(r.search_description)}</div>` : '';
@@ -1269,12 +1252,12 @@ function promoteRowHtml(r) {
     ? `<span style="font-size:0.72rem;color:var(--text-light);">🗓 ${escHtml(r.season)}</span>` : '';
 
   return `
-<div class="staging-row${r.is_workbook ? ' is-workbook' : ''}${isPromoted ? ' promoted-row' : ''}" id="prow-${id}" style="${isPromoted ? 'opacity:0.6;' : ''}">
+<div class="staging-row${isPromoted ? ' promoted-row' : ''}" id="prow-${id}" style="${isPromoted ? 'opacity:0.6;' : ''}">
   <div class="row-top">
     ${thumbHtml}
     <div class="row-body">
       <div class="row-title"><a href="${escHtml(r.source_url)}" target="_blank" rel="noopener">${title || escHtml(r.source_url)}</a></div>
-      <div class="row-meta">${statusBadge}${catalogBadge}${freeBadge}${wbBadge}${seasonDisplay}</div>
+      <div class="row-meta">${statusBadge}${catalogBadge}${freeBadge}${seasonDisplay}</div>
       ${hintLine}
       <div id="prow-status-${id}" class="row-status hidden"></div>
       ${descPreview}
@@ -1543,8 +1526,7 @@ window.confirmClearStaging = async function() {
 
 // Bulk promote button enabled only when both checklist items checked
 window.updateBulkPromoteBtn = function() {
-  const ok = document.getElementById('check-workbooks')?.checked &&
-             document.getElementById('check-snapshot')?.checked;
+  const ok = document.getElementById('check-snapshot')?.checked;
   const btn = document.getElementById('btn-bulk-promote');
   if (btn) { btn.disabled = !ok || state.promoteRunning; btn.style.opacity = (ok && !state.promoteRunning) ? '1' : '0.4'; }
 };
