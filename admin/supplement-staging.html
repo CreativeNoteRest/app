@@ -456,7 +456,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Bulk promote</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> rows. Upserts on (source_url, series_id) — never overwrites existing match_context, is_free, or season fields on production rows.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> rows. Upserts on (source_url, series_id). Values set in the UI below overwrite existing production values.</div>
         </div>
         <button class="btn-primary" id="btn-bulk-promote" onclick="bulkPromote()" disabled style="opacity:0.4;">Promote all described</button>
         <button class="btn-secondary hidden" id="btn-cancel-promote" onclick="requestPromoteCancel()">⏹ Stop after this row</button>
@@ -474,7 +474,42 @@
     </div>
 
     <!-- Promote list -->
-    <div id="promote-list-loading" class="status-line" style="padding:12px 4px;display:none;"><span class="spinner spinner-dark"></span> Loading rows…</div>
+    <!-- Staging management -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Staging management</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Download a CSV backup of all staging rows, or clear the staging table between ingestion runs.</div>
+        </div>
+        <button class="btn-secondary" onclick="downloadStagingCsv()">&#11015; Download CSV</button>
+        <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);" onclick="openClearModal()">&#128465; Clear staging</button>
+      </div>
+    </div>
+
+    <!-- Clear staging modal -->
+    <div id="clear-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px;">Clear staging table</div>
+        <div style="font-size:0.82rem;color:var(--text-mid);line-height:1.6;margin-bottom:18px;">Choose which rows to delete. This cannot be undone -- download a CSV backup first if needed.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.85rem;">
+            <input type="radio" name="clear-scope" value="promoted" checked style="margin-top:2px;accent-color:var(--brand);" />
+            <div><strong>Promoted rows only</strong><div style="color:var(--text-light);font-size:0.78rem;margin-top:2px;">Removes rows with status = promoted. Safe to run after a successful batch.</div></div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid var(--danger);border-radius:8px;cursor:pointer;font-size:0.85rem;background:#fff8f8;">
+            <input type="radio" name="clear-scope" value="all" style="margin-top:2px;accent-color:var(--danger);" />
+            <div><strong style="color:var(--danger);">All rows</strong><div style="color:var(--text-light);font-size:0.78rem;margin-top:2px;">Removes all staging rows regardless of status. Use to reset before a full re-discovery run.</div></div>
+          </label>
+        </div>
+        <div id="clear-modal-status" style="font-size:0.82rem;margin-bottom:12px;min-height:20px;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button class="btn-secondary" onclick="closeClearModal()">Cancel</button>
+          <button class="btn-primary" style="background:var(--danger);border-color:var(--danger);" onclick="confirmClearStaging()">Delete rows</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="promote-list-loading" class="status-line" style="padding:12px 4px;display:none;"><span class="spinner spinner-dark"></span> Loading rows&#8230;</div>
     <div id="promote-list-msg" class="hidden"></div>
     <div id="promote-list" class="staging-list"></div>
     <div id="promote-list-empty" class="empty-state hidden">No described rows found. Complete Phase 2 enrichment first.</div>
@@ -1273,43 +1308,32 @@ function readPromoteFields(id) {
   };
 }
 
-// ── Core promote: read-then-write with COALESCE ───────────────────────────────
+// ── Core promote: upsert to supplements ──────────────────────────────────────────
 async function promoteRow(stagingRow) {
   const fields = readPromoteFields(stagingRow.staging_id);
 
-  // 1. Check for existing production row
-  const { data: existing } = await sb
-    .from('supplements')
-    .select('supplement_id, match_context, is_free, season, season_start_mmdd, season_end_mmdd, is_multi_lesson')
-    .eq('source_url', stagingRow.source_url)
-    .eq('series_id', SERIES_ID)
-    .maybeSingle();
-
-  // 2. COALESCE — never overwrite non-null production values
   const record = {
     series_id:          SERIES_ID,
     title:              stagingRow.title,
     source_url:         stagingRow.source_url,
     source:             stagingRow.source,
-    thumbnail_url:      stagingRow.thumbnail_url   || null,
+    thumbnail_url:      stagingRow.thumbnail_url      || null,
     search_description: stagingRow.search_description || null,
-    curriculum_hint:    stagingRow.curriculum_hint || null,
-    wk_categories:      stagingRow.wk_categories  || [],
-    wk_topics:          stagingRow.wk_topics       || [],
-    wk_level:           stagingRow.wk_level        || null,
-    catalog_section:    stagingRow.catalog_section || null,
-    // Protected fields — COALESCE: keep existing if non-null
-    match_context:    existing?.match_context    ?? fields.match_context,
-    is_free:          existing?.is_free          != null ? existing.is_free          : fields.is_free,
-    season:           existing?.season           ?? fields.season,
-    season_start_mmdd: existing?.season_start_mmdd ?? fields.season_start_mmdd,
-    season_end_mmdd:  existing?.season_end_mmdd  ?? fields.season_end_mmdd,
-    is_multi_lesson:  existing?.is_multi_lesson  != null ? existing.is_multi_lesson  : fields.is_multi_lesson,
-    updated_at:       new Date().toISOString(),
-    // is_active intentionally omitted — DEFAULT true on insert; existing value preserved
+    curriculum_hint:    stagingRow.curriculum_hint    || null,
+    wk_categories:      stagingRow.wk_categories      || [],
+    wk_topics:          stagingRow.wk_topics          || [],
+    wk_level:           stagingRow.wk_level           || null,
+    catalog_section:    stagingRow.catalog_section    || null,
+    match_context:      fields.match_context,
+    is_free:            fields.is_free,
+    season:             fields.season,
+    season_start_mmdd:  fields.season_start_mmdd,
+    season_end_mmdd:    fields.season_end_mmdd,
+    is_multi_lesson:    fields.is_multi_lesson,
+    updated_at:         new Date().toISOString(),
+    // is_active intentionally omitted -- DEFAULT true on insert; existing false preserved
   };
 
-  // 3. Upsert to supplements
   const { error: upsertErr } = await sb
     .from('supplements')
     .upsert(record, { onConflict: 'source_url,series_id' });
@@ -1422,6 +1446,83 @@ window.bulkPromote = async function() {
 window.requestPromoteCancel = function() {
   state.promoteCancelRequested = true;
   document.getElementById('btn-cancel-promote').textContent = '⏹ Stopping…';
+};
+
+// -- CSV download ---------------------------------------------------------
+window.downloadStagingCsv = async function() {
+  const { data, error } = await sb
+    .from('supplement_staging')
+    .select('*')
+    .eq('series_id', SERIES_ID)
+    .order('catalog', { ascending: true })
+    .order('title',   { ascending: true });
+
+  if (error || !data?.length) {
+    alert(error ? `Failed to fetch rows: ${error.message}` : 'No staging rows to download.');
+    return;
+  }
+
+  const cols = Object.keys(data[0]);
+  const escape = v => {
+    if (v == null) return '';
+    const s = Array.isArray(v) ? JSON.stringify(v) : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csv = [cols.join(','), ...data.map(r => cols.map(c => escape(r[c])).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `supplement_staging_${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// -- Clear staging modal --------------------------------------------------
+window.openClearModal = function() {
+  document.getElementById('clear-modal-status').textContent = '';
+  document.getElementById('clear-modal').style.display = 'flex';
+};
+
+window.closeClearModal = function() {
+  document.getElementById('clear-modal').style.display = 'none';
+};
+
+window.confirmClearStaging = async function() {
+  const scope = document.querySelector('input[name="clear-scope"]:checked')?.value || 'promoted';
+  const statusEl = document.getElementById('clear-modal-status');
+  statusEl.style.color = 'var(--text-mid)';
+  statusEl.textContent = 'Deleting rows...';
+
+  let query = sb.from('supplement_staging').delete().eq('series_id', SERIES_ID);
+  if (scope === 'promoted') query = query.eq('status', 'promoted');
+
+  const { error, count } = await query.select();
+
+  if (error) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = `Failed: ${error.message}`;
+    return;
+  }
+
+  closeClearModal();
+
+  // Reset local state
+  if (scope === 'all') {
+    state.allRows      = [];
+    state.filteredRows = [];
+    state.promoteRows  = [];
+    state.promoteLoaded = false;
+    document.getElementById('promote-list').innerHTML = '';
+    document.getElementById('promote-list-empty').classList.remove('hidden');
+  } else {
+    state.allRows      = state.allRows.filter(r => r.status !== 'promoted');
+    state.filteredRows = state.filteredRows.filter(r => r.status !== 'promoted');
+    state.promoteRows  = state.promoteRows.filter(r => r.status !== 'promoted');
+    renderPromoteList();
+  }
+  renderStats();
 };
 
 // Bulk promote button enabled only when both checklist items checked
