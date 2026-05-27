@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       series_id,
       supplement_ids,
       overwrite   = false,
-      batch_size  = 200,
+      batch_size  = 25,
     } = body;
 
     if (!auth_user_id || !series_id) {

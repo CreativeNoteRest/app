@@ -1237,7 +1237,7 @@ async function loadPromoteRows() {
 
   const { data, error } = await sb
     .from('supplement_staging')
-    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
+    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, season, status')
     .eq('series_id', SERIES_ID)
     .in('status', ['described', 'hinted', 'promoted'])
     .order('catalog', { ascending: true })
@@ -1675,7 +1675,7 @@ window.bulkEmbed = async function() {
   const failListEl = document.getElementById('embed-failure-list');
 
   const overwrite   = document.getElementById('embed-overwrite-mode').value === 'true';
-  const BATCH_SIZE  = 200;
+  const BATCH_SIZE  = 25;
 
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Running…';
