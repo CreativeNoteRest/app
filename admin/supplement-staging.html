@@ -1431,9 +1431,9 @@ window.singlePromote = async function(id) {
 window.bulkPromote = async function() {
   if (state.promoteRunning) return;
 
-  const targets = state.promoteRows.filter(r => r.status === 'described');
+  const targets = state.promoteRows.filter(r => r.status === 'described' || r.status === 'hinted');
   if (!targets.length) {
-    showMsgEl(document.getElementById('promote-list-msg'), 'info', 'No described rows to promote — all may already be promoted.');
+    showMsgEl(document.getElementById('promote-list-msg'), 'info', 'No ready rows to promote — all may already be promoted or not yet described.');
     return;
   }
 
