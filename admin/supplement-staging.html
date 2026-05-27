@@ -714,6 +714,7 @@ function renderStats() {
     described:  r.filter(x => x.status === 'described').length,
     promoted:   r.filter(x => x.status === 'promoted').length,
     workbook:   r.filter(x => x.is_workbook).length,
+    with_hint:  r.filter(x => x.curriculum_hint).length,
   };
   function tile(label, count, color) {
     return `<div class="stat-tile"><div class="stat-num" style="color:${color}">${count}</div><div class="stat-label">${label}</div></div>`;
@@ -723,6 +724,7 @@ function renderStats() {
     tile('Discovered', c.discovered, 'var(--text-light)') +
     tile('Scraped', c.scraped, 'var(--info)') +
     tile('Described', c.described, 'var(--success)') +
+    tile('With Hint', c.with_hint, 'var(--brand)') +
     tile('Promoted', c.promoted, '#7C3AED') +
     tile('Workbooks', c.workbook, '#92400E') +
     tile('Total', c.total, 'var(--brand)');
