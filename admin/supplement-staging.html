@@ -197,6 +197,12 @@
     .cookie-open-btn { height: 42px; padding: 0 16px; background: var(--card); color: var(--info); border: 1.5px solid var(--info-border); border-radius: 9px; font-size: 0.83rem; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.15s; }
     .cookie-open-btn:hover { background: var(--info-light); }
 
+    /* ── Hint info popover ── */
+    .hint-info-btn { background: none; border: none; cursor: pointer; font-size: 0.78rem; color: var(--text-light); line-height: 1; padding: 1px 3px; border-radius: 4px; transition: color 0.15s; margin-left: 2px; }
+    .hint-info-btn:hover { color: var(--info); }
+    .hint-info-popover { position: absolute; top: 28px; left: 0; z-index: 100; background: var(--card); border: 1px solid var(--info-border); border-radius: 9px; padding: 12px 14px; width: 270px; box-shadow: 0 4px 18px rgba(0,0,0,0.11); font-size: 0.76rem; color: var(--text-mid); line-height: 1.55; }
+    .hint-info-popover strong { color: var(--text); display: block; margin-bottom: 5px; font-size: 0.78rem; }
+
     /* ── Utility ── */
     .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }
     .spinner-dark { border-color: var(--border); border-top-color: var(--brand); }
@@ -378,9 +384,14 @@
 
       <!-- 3 — Hint -->
       <div class="bulk-card">
-        <div class="bulk-card-header">
+        <div class="bulk-card-header" style="position:relative;">
           <div class="bulk-step-num">3</div>
           <div class="bulk-card-title">Hint</div>
+          <button class="hint-info-btn" onclick="toggleHintInfo(event)" title="Why are some items skipped?">ⓘ</button>
+          <div class="hint-info-popover hidden" id="hint-info-popover">
+            <strong>Why are some items skipped?</strong>
+            Items are skipped if they already have a curriculum hint from the title parse at scrape time — skip mode leaves those alone. Items that Gemini processes but returns no hint for are typically studio admin or practice resources with no curriculum level (recital planners, photo props, practice trackers, etc.). This is correct — those items genuinely don't belong to any curriculum level.
+          </div>
         </div>
         <div class="bulk-hint">Asks Gemini to identify the curriculum level from title and description. Fast and cheap — no page fetch. Runs after describe.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
@@ -1568,6 +1579,16 @@ window.copyCmd = function(btn, text) {
 // Close modal on backdrop click
 document.getElementById('discovery-modal-backdrop').addEventListener('click', function(e) {
   if (e.target === this) hideDiscoveryInstructions();
+});
+
+// ── Hint info popover ─────────────────────────────────────────────────────────
+window.toggleHintInfo = function(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('hint-info-popover');
+  pop.classList.toggle('hidden');
+};
+document.addEventListener('click', function() {
+  document.getElementById('hint-info-popover')?.classList.add('hidden');
 });
 
 checkSession();
