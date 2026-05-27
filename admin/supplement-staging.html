@@ -536,7 +536,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="flex:1;min-width:220px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Generate embeddings</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Generates a semantic embedding for each promoted supplement using its title, curriculum hint, and search description. Only processes rows where embedding is missing unless overwrite is selected. Takes ~70 seconds for a full library run.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Generates a semantic embedding for each promoted supplement using its title, curriculum hint, and search description. Only processes rows where embedding is missing unless overwrite is selected.</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
@@ -1674,61 +1674,78 @@ window.bulkEmbed = async function() {
   const failuresEl = document.getElementById('embed-failures');
   const failListEl = document.getElementById('embed-failure-list');
 
-  const overwrite = document.getElementById('embed-overwrite-mode').value === 'true';
+  const overwrite   = document.getElementById('embed-overwrite-mode').value === 'true';
+  const BATCH_SIZE  = 200;
 
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Running…';
   progressEl.classList.remove('hidden');
-  labelEl.textContent = 'Sending to Edge Function — this takes ~70 seconds for a full run…';
-  fillEl.style.width = '15%';
+  labelEl.textContent = 'Starting…';
+  fillEl.style.width = '0%';
   resultEl.textContent = '';
   failuresEl.classList.add('hidden');
   failListEl.innerHTML = '';
 
+  let totalProcessed = 0;
+  let totalSkipped   = 0;
+  let allFailures    = [];
+  let batch          = 1;
+
   try {
-    // Animate the bar while waiting (server-side batch, no per-row feedback)
-    let pct = 15;
-    const ticker = setInterval(() => {
-      if (pct < 85) { pct += 2; fillEl.style.width = `${pct}%`; }
-    }, 1500);
+    while (true) {
+      labelEl.textContent = `Batch ${batch} — embedding up to ${BATCH_SIZE} supplements…`;
 
-    const resp = await fetch(`${EF_BASE}/generate-supplement-embeddings`, {
-      method: 'POST',
-      headers: EF_HEADERS,
-      body: JSON.stringify({
-        auth_user_id: state.authUserId,
-        series_id:    SERIES_ID,
-        overwrite,
-      }),
-    });
+      const resp = await fetch(`${EF_BASE}/generate-supplement-embeddings`, {
+        method: 'POST',
+        headers: EF_HEADERS,
+        body: JSON.stringify({
+          auth_user_id: state.authUserId,
+          series_id:    SERIES_ID,
+          overwrite,
+          batch_size:   BATCH_SIZE,
+        }),
+      });
 
-    clearInterval(ticker);
-    fillEl.style.width = '100%';
+      const data = await resp.json();
 
-    const data = await resp.json();
+      if (!resp.ok) {
+        labelEl.textContent = `Failed on batch ${batch}.`;
+        resultEl.style.color = 'var(--danger)';
+        resultEl.textContent = data.error || `HTTP ${resp.status}`;
+        return;
+      }
 
-    if (!resp.ok) {
-      labelEl.textContent = 'Failed.';
-      resultEl.style.color = 'var(--danger)';
-      resultEl.textContent = data.error || `HTTP ${resp.status}`;
-      return;
+      totalProcessed += (data.processed || 0);
+      totalSkipped   += (data.skipped   || 0);
+      if (data.failures?.length) allFailures = allFailures.concat(data.failures);
+
+      // Update progress bar — if more remain we don't know total, so pulse between batches
+      const pct = data.remaining === 0 ? 100 : Math.min(90, batch * 30);
+      fillEl.style.width = `${pct}%`;
+
+      resultEl.style.color = 'var(--text-mid)';
+      resultEl.innerHTML =
+        `<strong style="color:var(--success)">✓ ${totalProcessed} embedded so far</strong>` +
+        (totalSkipped  ? `&nbsp;&nbsp;· ${totalSkipped} skipped (no description)` : '') +
+        (allFailures.length ? `&nbsp;&nbsp;· <span style="color:var(--danger)">${allFailures.length} failed</span>` : '');
+
+      if (data.remaining === 0) break;  // all done
+
+      batch++;
+      // Brief pause between batches to let Gemini breathe
+      await new Promise(r => setTimeout(r, 1000));
     }
 
     labelEl.textContent = 'Complete.';
-    resultEl.style.color = 'var(--text-mid)';
-    resultEl.innerHTML =
-      `<strong style="color:var(--success)">✓ ${data.processed} embedded</strong>` +
-      (data.skipped  ? `&nbsp;&nbsp;· ${data.skipped} skipped (no description)` : '') +
-      (data.failed   ? `&nbsp;&nbsp;· <span style="color:var(--danger)">${data.failed} failed</span>` : '');
+    fillEl.style.width = '100%';
 
-    if (data.failures?.length) {
+    if (allFailures.length) {
       failuresEl.classList.remove('hidden');
-      failListEl.innerHTML = data.failures
+      failListEl.innerHTML = allFailures
         .map(f => `<div class="failure-entry"><strong>${escHtml(f.title)}</strong> — ${escHtml(f.error)}</div>`)
         .join('');
     }
 
-    // Refresh stats
     await loadEmbedStats();
 
   } catch (err) {
