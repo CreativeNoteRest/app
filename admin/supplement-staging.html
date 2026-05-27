@@ -422,6 +422,7 @@
         <option value="discovered">Discovered</option>
         <option value="scraped">Scraped</option>
         <option value="described">Described</option>
+        <option value="hinted">Hinted</option>
         <option value="promoted">Promoted</option>
       </select>
       <select id="filter-catalog" onchange="applyFilters()">
@@ -712,9 +713,8 @@ function renderStats() {
     discovered: r.filter(x => x.status === 'discovered').length,
     scraped:    r.filter(x => x.status === 'scraped').length,
     described:  r.filter(x => x.status === 'described').length,
+    hinted:     r.filter(x => x.status === 'hinted').length,
     promoted:   r.filter(x => x.status === 'promoted').length,
-    workbook:   r.filter(x => x.is_workbook).length,
-    with_hint:  r.filter(x => x.curriculum_hint).length,
   };
   function tile(label, count, color) {
     return `<div class="stat-tile"><div class="stat-num" style="color:${color}">${count}</div><div class="stat-label">${label}</div></div>`;
@@ -724,9 +724,8 @@ function renderStats() {
     tile('Discovered', c.discovered, 'var(--text-light)') +
     tile('Scraped', c.scraped, 'var(--info)') +
     tile('Described', c.described, 'var(--success)') +
-    tile('With Hint', c.with_hint, 'var(--brand)') +
+    tile('Hinted', c.hinted, 'var(--brand)') +
     tile('Promoted', c.promoted, '#7C3AED') +
-    tile('Workbooks', c.workbook, '#92400E') +
     tile('Total', c.total, 'var(--brand)');
   grid.classList.remove('hidden');
 }
@@ -790,7 +789,7 @@ function rowHtml(r) {
   const scrapeBtn   = `<button class="btn-sm btn-sm-info" id="scrape-btn-${id}" onclick="singleScrape('${id}')" ${dis}>Scrape</button>`;
   const describeBtn = (r.status === 'scraped' || r.status === 'described')
     ? `<button class="btn-sm btn-sm-info" id="desc-btn-${id}" onclick="singleDescribe('${id}')" ${dis}>Gen desc</button>` : '';
-  const hintBtn = (r.status === 'scraped' || r.status === 'described')
+  const hintBtn = (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted')
     ? `<button class="btn-sm btn-sm-info" id="hint-btn-${id}" onclick="singleExtractHint('${id}')" ${dis}>Hint</button>` : '';
   const wbToggle = r.is_workbook
     ? `<button class="btn-sm btn-sm-warn" onclick="toggleWorkbook('${id}',false)">Unmark workbook</button>`
@@ -972,7 +971,7 @@ window.bulkDescribe = async function() {
   const overwrite = document.getElementById('overwrite-mode').value === 'overwrite';
   // Skip mode: only scraped (no description yet). Overwrite: scraped + described.
   const targets = state.allRows.filter(r =>
-    overwrite ? (r.status === 'scraped' || r.status === 'described')
+    overwrite ? (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted')
               : (r.status === 'scraped' && !r.search_description)
   );
   if (!targets.length) { alert(overwrite ? 'No rows to generate descriptions for.' : 'No scraped rows without a description.'); return; }
@@ -1029,10 +1028,11 @@ async function extractHintRow(row) {
     if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` };
     const hint = data.curriculum_hint || null;
     const { error: we } = await sb.from('supplement_staging')
-      .update({ curriculum_hint: hint })
+      .update({ curriculum_hint: hint, status: 'hinted' })
       .eq('staging_id', row.staging_id);
     if (we) return { ok: false, error: `DB write: ${we.message}` };
     row.curriculum_hint = hint;
+    row.status = 'hinted';
     return { ok: true, hint };
   } catch (e) { return { ok: false, error: e.message }; }
 }
@@ -1057,7 +1057,7 @@ window.bulkExtractHints = async function() {
   if (state.bulkRunning) return;
   const overwrite = document.getElementById('overwrite-mode').value === 'overwrite';
   const targets = state.allRows.filter(r =>
-    (r.status === 'scraped' || r.status === 'described') &&
+    (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted') &&
     (overwrite ? true : !r.curriculum_hint)
   );
   if (!targets.length) { alert(overwrite ? 'No rows to extract hints for.' : 'No rows without a curriculum hint.'); return; }
@@ -1203,7 +1203,7 @@ async function loadPromoteRows() {
     .from('supplement_staging')
     .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
     .eq('series_id', SERIES_ID)
-    .in('status', ['described', 'promoted'])
+    .in('status', ['described', 'hinted', 'promoted'])
     .order('catalog', { ascending: true })
     .order('title',   { ascending: true });
 
