@@ -445,10 +445,13 @@
         <input type="checkbox" id="check-workbooks" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
         I have reviewed the piano-books rows and flagged all core curriculum workbooks as <strong>is_workbook</strong> using the Mark workbook button in the Enrich tab.
       </label>
-      <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;cursor:pointer;">
-        <input type="checkbox" id="check-snapshot" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
-        I have taken a pre-load snapshot (CSV export of the supplements table from the Supabase table editor).
-      </label>
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:0.85rem;color:#92400E;cursor:pointer;flex:1;">
+          <input type="checkbox" id="check-snapshot" onchange="updateBulkPromoteBtn()" style="margin-top:2px;accent-color:var(--warn);flex-shrink:0;" />
+          I have taken a pre-load snapshot (CSV export of the supplements table from the Supabase table editor).
+        </label>
+        <button class="btn-secondary" onclick="downloadStagingCsv()" style="flex-shrink:0;font-size:0.75rem;padding:4px 10px;white-space:nowrap;">&#11015; Download CSV</button>
+      </div>
     </div>
 
     <!-- Bulk promote action -->
@@ -481,7 +484,6 @@
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Staging management</div>
           <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Download a CSV backup of all staging rows, or clear the staging table between ingestion runs.</div>
         </div>
-        <button class="btn-secondary" onclick="downloadStagingCsv()">&#11015; Download CSV</button>
         <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);" onclick="openClearModal()">&#128465; Clear staging</button>
       </div>
     </div>
@@ -540,6 +542,7 @@ const state = {
   cancelRequested:        false,
   promoteRows:            [],
   promoteLoaded:          false,
+  seasonLabels:           [],   // canonical season_label values from season_windows
   promoteRunning:         false,
   promoteCancelRequested: false,
 };
@@ -1175,6 +1178,14 @@ async function loadPromoteRows() {
   loadEl.style.display = 'flex';
   msgEl.classList.add('hidden');
 
+  // Fetch canonical season labels for dropdown
+  const { data: seasonData } = await sb
+    .from('season_windows')
+    .select('season_label')
+    .eq('series_id', SERIES_ID)
+    .order('season_label', { ascending: true });
+  state.seasonLabels = (seasonData || []).map(r => r.season_label);
+
   const { data, error } = await sb
     .from('supplement_staging')
     .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, status')
@@ -1275,17 +1286,12 @@ function promoteRowHtml(r) {
         <option value="false" ${r.is_free===false ? 'selected':''}>Paid</option>
       </select>
     </div>
-    <div class="inline-field" style="min-width:120px;">
+    <div class="inline-field" style="min-width:160px;">
       <label for="pseason-${id}">Season</label>
-      <input id="pseason-${id}" type="text" value="${escHtml(r.season||'')}" placeholder="e.g. Christmas" style="width:120px;" />
-    </div>
-    <div class="inline-field" style="min-width:80px;">
-      <label for="pstart-${id}">Start MM-DD</label>
-      <input id="pstart-${id}" type="text" value="${escHtml(r.season_start_mmdd||'')}" placeholder="12-01" style="width:80px;" />
-    </div>
-    <div class="inline-field" style="min-width:80px;">
-      <label for="pend-${id}">End MM-DD</label>
-      <input id="pend-${id}" type="text" value="${escHtml(r.season_end_mmdd||'')}" placeholder="01-06" style="width:80px;" />
+      <select id="pseason-${id}" style="height:30px;padding:0 8px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--surface);">
+        <option value="">None</option>
+        ${(state.seasonLabels||[]).map(s => `<option value="${s}" ${r.season===s?'selected':''}>${s}</option>`).join('')}
+      </select>
     </div>
     <div class="inline-field">
       <label style="white-space:nowrap;">Multi-lesson</label>
@@ -1301,9 +1307,7 @@ function readPromoteFields(id) {
     match_context:    document.getElementById(`pmc-${id}`)?.value    || 'lesson_skill',
     is_free:          document.getElementById(`pfree-${id}`)?.value === 'true'  ? true
                     : document.getElementById(`pfree-${id}`)?.value === 'false' ? false : null,
-    season:           document.getElementById(`pseason-${id}`)?.value.trim() || null,
-    season_start_mmdd: document.getElementById(`pstart-${id}`)?.value.trim() || null,
-    season_end_mmdd:  document.getElementById(`pend-${id}`)?.value.trim() || null,
+    season:           document.getElementById(`pseason-${id}`)?.value || null,
     is_multi_lesson:  document.getElementById(`pmulti-${id}`)?.checked || false,
   };
 }
@@ -1327,8 +1331,6 @@ async function promoteRow(stagingRow) {
     match_context:      fields.match_context,
     is_free:            fields.is_free,
     season:             fields.season,
-    season_start_mmdd:  fields.season_start_mmdd,
-    season_end_mmdd:    fields.season_end_mmdd,
     is_multi_lesson:    fields.is_multi_lesson,
     updated_at:         new Date().toISOString(),
     // is_active intentionally omitted -- DEFAULT true on insert; existing false preserved
