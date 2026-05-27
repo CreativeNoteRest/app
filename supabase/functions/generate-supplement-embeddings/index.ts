@@ -101,8 +101,9 @@ Deno.serve(async (req) => {
       auth_user_id,
       series_id,
       supplement_ids,
-      overwrite   = false,
-      batch_size  = 25,
+      overwrite  = false,
+      batch_size = 25,
+      after_id   = null,   // cursor: supplement_id of last row processed in prior batch
     } = body;
 
     if (!auth_user_id || !series_id) {
@@ -121,17 +122,26 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorised" }, 403);
     }
 
-    // Build query
+    // Build query — always order by supplement_id for stable cursor pagination
     let query = serviceClient
       .from("supplements")
       .select("supplement_id, title, curriculum_hint, search_description, wk_topics")
       .eq("series_id", series_id)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .order("supplement_id", { ascending: true });
 
     if (supplement_ids && supplement_ids.length > 0) {
+      // Specific IDs mode — cursor not applicable
       query = query.in("supplement_id", supplement_ids);
-    } else if (!overwrite) {
-      query = query.is("embedding", null);
+    } else {
+      if (!overwrite) {
+        // New-only mode: only rows missing an embedding
+        query = query.is("embedding", null);
+      }
+      // Cursor: start after the last processed ID
+      if (after_id) {
+        query = query.gt("supplement_id", after_id);
+      }
     }
 
     // Fetch one batch + one extra to know if more remain
@@ -144,7 +154,7 @@ Deno.serve(async (req) => {
     }
 
     if (!rows || rows.length === 0) {
-      return jsonResponse({ processed: 0, skipped: 0, failed: 0, remaining: 0 });
+      return jsonResponse({ processed: 0, skipped: 0, failed: 0, remaining: 0, last_id: null });
     }
 
     const hasMore = rows.length > batch_size;
@@ -191,11 +201,16 @@ Deno.serve(async (req) => {
       await new Promise((r) => setTimeout(r, 100));
     }
 
+    // Return the last supplement_id processed so the browser can pass it
+    // as after_id on the next batch call — prevents re-processing same rows
+    const lastId = batch[batch.length - 1]?.supplement_id ?? null;
+
     return jsonResponse({
       processed,
       skipped,
       failed:    failures.length,
       remaining: hasMore ? -1 : 0,
+      last_id:   lastId,
       failures:  failures.length > 0 ? failures : undefined,
     });
 

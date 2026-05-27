@@ -1699,6 +1699,7 @@ window.bulkEmbed = async function() {
   let totalSkipped   = 0;
   let allFailures    = [];
   let batch          = 1;
+  let lastId         = null;   // cursor — last supplement_id from prior batch
 
   // Fetch the count of supplements to embed before starting so the
   // progress bar can show real percentage rather than batch-count estimate
@@ -1726,6 +1727,7 @@ window.bulkEmbed = async function() {
           series_id:    SERIES_ID,
           overwrite,
           batch_size:   BATCH_SIZE,
+          after_id:     lastId,
         }),
       });
 
@@ -1741,6 +1743,7 @@ window.bulkEmbed = async function() {
       totalProcessed += (data.processed || 0);
       totalSkipped   += (data.skipped   || 0);
       if (data.failures?.length) allFailures = allFailures.concat(data.failures);
+      if (data.last_id) lastId = data.last_id;   // advance cursor
 
       // Progress bar driven by real count — totalProcessed / totalToEmbed
       const pct = data.remaining === 0 ? 100
