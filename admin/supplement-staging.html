@@ -1691,6 +1691,20 @@ window.bulkEmbed = async function() {
   let allFailures    = [];
   let batch          = 1;
 
+  // Fetch the count of supplements to embed before starting so the
+  // progress bar can show real percentage rather than batch-count estimate
+  let totalToEmbed = 0;
+  {
+    const countCol = overwrite ? '*' : 'supplement_id';
+    let countQ = sb.from('supplements')
+      .select(countCol, { count: 'exact', head: true })
+      .eq('series_id', SERIES_ID)
+      .eq('is_active', true);
+    if (!overwrite) countQ = countQ.is('embedding', null);
+    const { count } = await countQ;
+    totalToEmbed = count || 0;
+  }
+
   try {
     while (true) {
       labelEl.textContent = `Batch ${batch} — embedding up to ${BATCH_SIZE} supplements…`;
@@ -1719,8 +1733,10 @@ window.bulkEmbed = async function() {
       totalSkipped   += (data.skipped   || 0);
       if (data.failures?.length) allFailures = allFailures.concat(data.failures);
 
-      // Update progress bar — if more remain we don't know total, so pulse between batches
-      const pct = data.remaining === 0 ? 100 : Math.min(90, batch * 30);
+      // Progress bar driven by real count — totalProcessed / totalToEmbed
+      const pct = data.remaining === 0 ? 100
+        : totalToEmbed > 0 ? Math.min(99, Math.round((totalProcessed / totalToEmbed) * 100))
+        : Math.min(90, batch * 30);  // fallback if count unavailable
       fillEl.style.width = `${pct}%`;
 
       resultEl.style.color = 'var(--text-mid)';

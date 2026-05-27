@@ -17,12 +17,18 @@ function buildEmbeddingInput(row: {
   title: string;
   curriculum_hint: string | null;
   search_description: string | null;
+  wk_topics: string[] | null;
 }): string | null {
   if (!row.search_description) return null;
   const parts: string[] = [];
   parts.push(row.title);
   if (row.curriculum_hint) parts.push(row.curriculum_hint);
   parts.push(row.search_description);
+  // Include topic slugs where present — carries seasonal and category signal
+  // for teacher browse search. Guard against null and empty array.
+  if (row.wk_topics && row.wk_topics.length > 0) {
+    parts.push(row.wk_topics.join(" "));
+  }
   return parts.join(". ");
 }
 
@@ -118,7 +124,7 @@ Deno.serve(async (req) => {
     // Build query
     let query = serviceClient
       .from("supplements")
-      .select("supplement_id, title, curriculum_hint, search_description")
+      .select("supplement_id, title, curriculum_hint, search_description, wk_topics")
       .eq("series_id", series_id)
       .eq("is_active", true);
 
