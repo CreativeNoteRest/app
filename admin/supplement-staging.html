@@ -315,6 +315,7 @@
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-btn-enrich" onclick="switchTab('enrich')">Phase 2 — Enrich</button>
     <button class="tab-btn" id="tab-btn-promote" onclick="switchTab('promote')">Phase 3 — Promote</button>
+    <button class="tab-btn" id="tab-btn-embed" onclick="switchTab('embed')">Phase 4 — Embed</button>
   </div>
 
   <!-- ── Enrich tab ── -->
@@ -462,9 +463,9 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Bulk promote</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> rows. Upserts on (source_url, series_id). Values set in the UI below overwrite existing production values.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> or <em>hinted</em> rows. Upserts on (source_url, series_id). Values set in the UI below overwrite existing production values.</div>
         </div>
-        <button class="btn-primary" id="btn-bulk-promote" onclick="bulkPromote()" disabled style="opacity:0.4;">Promote all described</button>
+        <button class="btn-primary" id="btn-bulk-promote" onclick="bulkPromote()" disabled style="opacity:0.4;">Promote all ready</button>
         <button class="btn-secondary hidden" id="btn-cancel-promote" onclick="requestPromoteCancel()">⏹ Stop after this row</button>
       </div>
       <div id="promote-progress" class="hidden">
@@ -520,6 +521,56 @@
     <div id="promote-list-empty" class="empty-state hidden">No described rows found. Complete Phase 2 enrichment first.</div>
 
   </div><!-- /tab-promote -->
+
+  <!-- ── Embed tab ── -->
+  <div class="tab-panel" id="tab-embed">
+
+    <!-- Stats card -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:10px;">Embedding status</div>
+      <div id="embed-stats" class="status-line"><span class="spinner spinner-dark"></span> Loading…</div>
+    </div>
+
+    <!-- Bulk embed action -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="flex:1;min-width:220px;">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Generate embeddings</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Generates a semantic embedding for each promoted supplement using its title, curriculum hint, and search description. Only processes rows where embedding is missing unless overwrite is selected. Takes ~70 seconds for a full library run.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-light);">Mode</span>
+        <select id="embed-overwrite-mode" style="height:32px;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.83rem;color:var(--text);background:var(--card);outline:none;">
+          <option value="false" selected>New only — skip already embedded</option>
+          <option value="true">Overwrite — re-embed all</option>
+        </select>
+        <span style="font-size:0.75rem;color:var(--text-light);">Use overwrite after bulk description edits.</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-primary" id="btn-bulk-embed" onclick="bulkEmbed()">Generate embeddings</button>
+        <button class="btn-secondary hidden" id="btn-cancel-embed" style="display:none!important;">⏹ Stop not available — runs server-side</button>
+      </div>
+      <div id="embed-progress" class="hidden">
+        <div class="progress-wrap" style="margin-top:12px;">
+          <div class="progress-label" id="embed-progress-label">Generating…</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="embed-progress-fill" style="width:0%"></div></div>
+        </div>
+        <div id="embed-result" style="margin-top:10px;font-size:0.82rem;line-height:1.6;"></div>
+        <div id="embed-failures" class="failure-log hidden" style="margin-top:8px;">
+          <div class="failure-log-title">Failures — these supplements were not embedded</div>
+          <div id="embed-failure-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info card -->
+    <div class="card" style="background:var(--info-light);border-color:var(--info-border);">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--info);margin-bottom:8px;">What embeddings are used for</div>
+      <div style="font-size:0.82rem;color:var(--text-mid);line-height:1.6;">Embeddings power the semantic supplement search at session close. After a student's position in the workbook gates the candidate pool, the teacher's session notes are compared against each supplement's embedding to rank the most relevant recommendations to the top. Run this after every promotion batch and after any bulk description edits.</div>
+    </div>
+
+  </div><!-- /tab-embed -->
 
 </main>
 </div>
@@ -1165,6 +1216,7 @@ window.switchTab = function(name) {
   document.getElementById(`tab-btn-${name}`).classList.add('active');
   document.getElementById(`tab-${name}`).classList.add('active');
   if (name === 'promote' && !state.promoteLoaded) loadPromoteRows();
+  if (name === 'embed') loadEmbedStats();
 };
 
 // ── Promote tab ───────────────────────────────────────────────────────────────
@@ -1575,6 +1627,120 @@ window.toggleHintInfo = function(e) {
 document.addEventListener('click', function() {
   document.getElementById('hint-info-popover')?.classList.add('hidden');
 });
+
+// ── Embed tab ─────────────────────────────────────────────────────────────────
+
+async function loadEmbedStats() {
+  const statsEl = document.getElementById('embed-stats');
+  statsEl.innerHTML = '<span class="spinner spinner-dark"></span> Loading…';
+
+  const { count: total, error: e1 } = await sb
+    .from('supplements')
+    .select('*', { count: 'exact', head: true })
+    .eq('series_id', SERIES_ID)
+    .eq('is_active', true);
+
+  const { count: embedded, error: e2 } = await sb
+    .from('supplements')
+    .select('*', { count: 'exact', head: true })
+    .eq('series_id', SERIES_ID)
+    .eq('is_active', true)
+    .not('embedding', 'is', null);
+
+  if (e1 || e2) {
+    statsEl.innerHTML = '<span style="color:var(--danger)">Failed to load stats.</span>';
+    return;
+  }
+
+  const missing = (total || 0) - (embedded || 0);
+  const pct = total ? Math.round(((embedded || 0) / total) * 100) : 0;
+  const missingColor = missing > 0 ? 'var(--warn)' : 'var(--success)';
+
+  statsEl.innerHTML = `
+    <div class="stats-grid" style="width:100%;">
+      <div class="stat-tile"><div class="stat-num" style="color:var(--text)">${total || 0}</div><div class="stat-label">Total active</div></div>
+      <div class="stat-tile"><div class="stat-num" style="color:var(--success)">${embedded || 0}</div><div class="stat-label">Embedded</div></div>
+      <div class="stat-tile"><div class="stat-num" style="color:${missingColor}">${missing}</div><div class="stat-label">Missing</div></div>
+      <div class="stat-tile"><div class="stat-num" style="color:var(--brand)">${pct}%</div><div class="stat-label">Coverage</div></div>
+    </div>`;
+}
+
+window.bulkEmbed = async function() {
+  const btn        = document.getElementById('btn-bulk-embed');
+  const progressEl = document.getElementById('embed-progress');
+  const labelEl    = document.getElementById('embed-progress-label');
+  const fillEl     = document.getElementById('embed-progress-fill');
+  const resultEl   = document.getElementById('embed-result');
+  const failuresEl = document.getElementById('embed-failures');
+  const failListEl = document.getElementById('embed-failure-list');
+
+  const overwrite = document.getElementById('embed-overwrite-mode').value === 'true';
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Running…';
+  progressEl.classList.remove('hidden');
+  labelEl.textContent = 'Sending to Edge Function — this takes ~70 seconds for a full run…';
+  fillEl.style.width = '15%';
+  resultEl.textContent = '';
+  failuresEl.classList.add('hidden');
+  failListEl.innerHTML = '';
+
+  try {
+    // Animate the bar while waiting (server-side batch, no per-row feedback)
+    let pct = 15;
+    const ticker = setInterval(() => {
+      if (pct < 85) { pct += 2; fillEl.style.width = `${pct}%`; }
+    }, 1500);
+
+    const resp = await fetch(`${EF_BASE}/generate-supplement-embeddings`, {
+      method: 'POST',
+      headers: EF_HEADERS,
+      body: JSON.stringify({
+        auth_user_id: state.authUserId,
+        series_id:    SERIES_ID,
+        overwrite,
+      }),
+    });
+
+    clearInterval(ticker);
+    fillEl.style.width = '100%';
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      labelEl.textContent = 'Failed.';
+      resultEl.style.color = 'var(--danger)';
+      resultEl.textContent = data.error || `HTTP ${resp.status}`;
+      return;
+    }
+
+    labelEl.textContent = 'Complete.';
+    resultEl.style.color = 'var(--text-mid)';
+    resultEl.innerHTML =
+      `<strong style="color:var(--success)">✓ ${data.processed} embedded</strong>` +
+      (data.skipped  ? `&nbsp;&nbsp;· ${data.skipped} skipped (no description)` : '') +
+      (data.failed   ? `&nbsp;&nbsp;· <span style="color:var(--danger)">${data.failed} failed</span>` : '');
+
+    if (data.failures?.length) {
+      failuresEl.classList.remove('hidden');
+      failListEl.innerHTML = data.failures
+        .map(f => `<div class="failure-entry"><strong>${escHtml(f.title)}</strong> — ${escHtml(f.error)}</div>`)
+        .join('');
+    }
+
+    // Refresh stats
+    await loadEmbedStats();
+
+  } catch (err) {
+    fillEl.style.width = '100%';
+    labelEl.textContent = 'Error.';
+    resultEl.style.color = 'var(--danger)';
+    resultEl.textContent = err.message || 'Unexpected error.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate embeddings';
+  }
+};
 
 checkSession();
 </script>

@@ -1,0 +1,166 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function buildEmbeddingInput(row: {
+  title: string;
+  curriculum_hint: string | null;
+  search_description: string | null;
+}): string | null {
+  // Requires at minimum a search_description to be worth embedding
+  if (!row.search_description) return null;
+
+  const parts: string[] = [];
+  parts.push(row.title);
+  if (row.curriculum_hint) parts.push(row.curriculum_hint);
+  parts.push(row.search_description);
+
+  return parts.join(". ");
+}
+
+async function generateEmbedding(
+  text: string,
+  geminiApiKey: string
+): Promise<number[]> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiApiKey}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "models/text-embedding-004",
+      content: { parts: [{ text }] },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini embedding API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  return data.embedding.values as number[];
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+
+    if (!geminiApiKey || !serviceRoleKey || !supabaseUrl) {
+      return jsonResponse({ error: "Missing required environment secrets" }, 500);
+    }
+
+    const body = await req.json();
+    const { auth_user_id, series_id, supplement_ids, overwrite = false } = body;
+
+    if (!auth_user_id || !series_id) {
+      return jsonResponse({ error: "auth_user_id and series_id are required" }, 400);
+    }
+
+    // Admin check
+    const serviceClient = createClient(supabaseUrl, serviceRoleKey);
+    const { data: teacher, error: teacherError } = await serviceClient
+      .from("teachers")
+      .select("is_admin")
+      .eq("auth_user_id", auth_user_id)
+      .single();
+
+    if (teacherError || !teacher?.is_admin) {
+      return jsonResponse({ error: "Unauthorised" }, 403);
+    }
+
+    // Build query — target specific IDs or all null-embedding rows
+    let query = serviceClient
+      .from("supplements")
+      .select("supplement_id, title, curriculum_hint, search_description")
+      .eq("series_id", series_id)
+      .eq("is_active", true);
+
+    if (supplement_ids && supplement_ids.length > 0) {
+      query = query.in("supplement_id", supplement_ids);
+    } else if (!overwrite) {
+      query = query.is("embedding", null);
+    }
+    // overwrite=true with no supplement_ids targets all active rows
+
+    const { data: rows, error: fetchError } = await query;
+
+    if (fetchError) {
+      return jsonResponse({ error: `Fetch error: ${fetchError.message}` }, 500);
+    }
+
+    if (!rows || rows.length === 0) {
+      return jsonResponse({ processed: 0, skipped: 0, failed: 0, message: "No rows to process" });
+    }
+
+    let processed = 0;
+    let skipped = 0;
+    const failures: { supplement_id: string; title: string; error: string }[] = [];
+
+    for (const row of rows) {
+      const embeddingInput = buildEmbeddingInput(row);
+
+      if (!embeddingInput) {
+        skipped++;
+        continue;
+      }
+
+      try {
+        const embedding = await generateEmbedding(embeddingInput, geminiApiKey);
+
+        const { error: updateError } = await serviceClient
+          .from("supplements")
+          .update({ embedding: JSON.stringify(embedding) })
+          .eq("supplement_id", row.supplement_id);
+
+        if (updateError) {
+          failures.push({
+            supplement_id: row.supplement_id,
+            title: row.title,
+            error: updateError.message,
+          });
+        } else {
+          processed++;
+        }
+      } catch (err) {
+        failures.push({
+          supplement_id: row.supplement_id,
+          title: row.title,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      // Small delay to avoid hammering the Gemini API on bulk runs
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    return jsonResponse({
+      processed,
+      skipped,
+      failed: failures.length,
+      failures: failures.length > 0 ? failures : undefined,
+    });
+
+  } catch (err) {
+    return jsonResponse({
+      error: err instanceof Error ? err.message : "Unexpected error",
+    }, 500);
+  }
+});
