@@ -93,7 +93,7 @@ Structure every description as follows:
 Use standard WunderKeys piano pedagogy terms where they apply:
 - Skills: note reading, rhythm and notation, hands together playing, scales and five-finger positions, chords and harmony, accompaniment patterns, technique and articulation, music theory and symbols, keyboard geography
 - Vehicles: songs, scale exercises, chord exercises, worksheets, flashcards, games, colouring pages, brag tags, practice trackers, workbook
-- Levels: Preschool, Primer, Level 1A, Level 1B, Level 2A, Level 2B, Pop Staff, Intermediate
+- Levels: Preschool (Preschool Book 1, Preschool Book 2, Preschool Book 3), Primer (Primer Book One, Primer Book Two, Primer Book Three), Level 1A, Level 1B, Lesson Book 2A, Lesson Book 2B, Pop Staff (Pop Staff Book One, Pop Staff Book Two, Pop Staff Book Three), Pop Studies (Pop Studies 1, Pop Studies 2, Pop Studies 3), Intermediate
 - Seasonal: use the season name if the content is clearly seasonal (e.g. Christmas, Halloween, spring)
 
 Prefer these terms over paraphrases — a teacher searching for "hands together" or "Christmas" should find the right supplement.
