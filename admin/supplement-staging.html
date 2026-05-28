@@ -607,7 +607,7 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span id="pl-dirty-indicator" class="hidden" style="font-size:0.75rem;color:var(--warn);font-weight:600;">● Unsaved changes</span>
-          <button class="btn-secondary" id="pl-btn-discard" onclick="plDiscard()" disabled>Discard changes</button>
+          <button class="btn-secondary" id="pl-btn-discard" onclick="plDiscard()" disabled>Discard &amp; Reload</button>
           <button class="btn-primary" id="pl-btn-save" onclick="plSave()" disabled>Save prompt</button>
         </div>
       </div>
@@ -1983,25 +1983,30 @@ window.plSave = async function() {
   msgEl.style.color = 'var(--text-mid)';
   msgEl.textContent = 'Saving…';
 
-  // admin-prompt-save EF — same endpoint used by prompts.html
-  const res = await fetch(`${EF_BASE}/admin-prompt-save`, {
-    method: 'POST',
-    headers: EF_HEADERS,
-    body: JSON.stringify({
-      auth_user_id: state.authUserId,
-      series_id:    SERIES_ID,
-      prompt_key:   'supplement_description_system',
-      prompt_text:  promptText,
-    }),
-  });
+  // Read current prompt_text to archive as prompt_text_previous before overwriting
+  const { data: current } = await sb
+    .from('prompts')
+    .select('prompt_text')
+    .eq('prompt_key', 'supplement_description_system')
+    .eq('series_id', SERIES_ID)
+    .single();
 
-  const data = await res.json().catch(() => ({}));
+  const { error } = await sb
+    .from('prompts')
+    .update({
+      prompt_text_previous: current?.prompt_text || null,
+      prompt_text:          promptText,
+      updated_at:           new Date().toISOString(),
+    })
+    .eq('prompt_key', 'supplement_description_system')
+    .eq('series_id', SERIES_ID);
+
   btn.textContent = 'Save prompt';
 
-  if (!res.ok) {
+  if (error) {
     btn.disabled = false;
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = `Save failed: ${data.error || `HTTP ${res.status}`}`;
+    msgEl.textContent = `Save failed: ${error.message}`;
     return;
   }
 
