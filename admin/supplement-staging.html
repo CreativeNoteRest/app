@@ -1041,12 +1041,12 @@ window.bulkScrape = async function() {
 window.bulkDescribe = async function() {
   if (state.bulkRunning) return;
   const overwrite = document.getElementById('overwrite-mode').value === 'overwrite';
-  // Skip mode: only scraped (no description yet). Overwrite: scraped + described.
+  // Skip mode: all scraped rows (status is source of truth). Overwrite: scraped + described + hinted.
   const targets = state.allRows.filter(r =>
     overwrite ? (r.status === 'scraped' || r.status === 'described' || r.status === 'hinted')
-              : (r.status === 'scraped' && !r.search_description)
+              : r.status === 'scraped'
   );
-  if (!targets.length) { alert(overwrite ? 'No rows to generate descriptions for.' : 'No scraped rows without a description.'); return; }
+  if (!targets.length) { alert(overwrite ? 'No rows to generate descriptions for.' : 'No scraped rows to describe.'); return; }
   state.bulkRunning = true; state.cancelRequested = false; setBulkDisabled(true);
   const pEl = document.getElementById('describe-progress');
   const lEl = document.getElementById('describe-progress-label');
