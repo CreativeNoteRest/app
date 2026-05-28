@@ -110,12 +110,8 @@
 
     /* ── Post-filter bar ──────────────────────────────────────────────── */
     .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
-    .filter-input { height: 34px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; min-width: 200px; flex: 1; }
-    .filter-input:focus { border-color: var(--brand); }
-    .filter-hint-group { display: flex; gap: 4px; }
-    .btn-hint-pill { height: 30px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 20px; background: var(--card); color: var(--text-mid); font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; }
-    .btn-hint-pill:hover { border-color: var(--brand); color: var(--brand); }
-    .btn-hint-pill.pill-active { border-color: var(--brand); background: var(--brand-light); color: var(--brand); }
+    .filter-select { height: 34px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--text); background: var(--card); outline: none; transition: border-color 0.15s; cursor: pointer; min-width: 200px; flex: 1; }
+    .filter-select:focus { border-color: var(--brand); }
     .filter-count { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; margin-left: auto; }
 
     /* ── Result cards ─────────────────────────────────────────────────── */
@@ -221,18 +217,9 @@
 
       <!-- Post-filter bar -->
       <div class="filter-bar">
-        <input
-          type="text"
-          class="filter-input"
-          id="filter-hint-text"
-          placeholder="Filter by curriculum hint…"
-          oninput="applyPostFilter()"
-        />
-        <div class="filter-hint-group">
-          <button type="button" class="btn-hint-pill pill-active" data-hint="all" onclick="setHintFilter('all', this)">All</button>
-          <button type="button" class="btn-hint-pill" data-hint="has" onclick="setHintFilter('has', this)">Has hint</button>
-          <button type="button" class="btn-hint-pill" data-hint="none" onclick="setHintFilter('none', this)">No hint</button>
-        </div>
+        <select class="filter-select" id="filter-hint-select" onchange="applyPostFilter()">
+          <option value="">All curriculum hints</option>
+        </select>
         <span class="filter-count" id="filter-count"></span>
       </div>
 
@@ -272,12 +259,11 @@
   const elResultsList = document.getElementById('results-list');
   const elResultsEmpty= document.getElementById('results-empty');
   const elFilterCount = document.getElementById('filter-count');
-  const elFilterHint  = document.getElementById('filter-hint-text');
+  const elFilterHint  = document.getElementById('filter-hint-select');
 
   // ── State ────────────────────────────────────────────────────────────────
   let authUserId    = null;
   let catalogFilter = '';       // '' = all, 'toolkit', 'piano-books'
-  let hintFilter    = 'all';    // 'all', 'has', 'none'
   let allResults    = [];       // raw results from EF
   let recognition   = null;     // Web Speech API instance
   let isRecording   = false;
@@ -449,10 +435,8 @@
       allResults = json.results ?? [];
       elResultsSec.classList.remove('hidden');
 
-      // Reset post-filters on new search
-      elFilterHint.value = '';
-      setHintFilter('all', document.querySelector('.btn-hint-pill[data-hint="all"]'));
-
+      // Rebuild hint dropdown from returned results, then apply filter
+      populateHintDropdown();
       applyPostFilter();
 
     } catch (err) {
@@ -479,27 +463,31 @@
   }
 
   // ── Post-filter ───────────────────────────────────────────────────────────
-  // Exposed on window for inline onclick handlers on hint pills
-  window.setHintFilter = function(value, btn) {
-    hintFilter = value;
-    document.querySelectorAll('.btn-hint-pill').forEach(b => b.classList.remove('pill-active'));
-    if (btn) btn.classList.add('pill-active');
-    applyPostFilter();
-  };
+  function populateHintDropdown() {
+    // Collect unique non-null hints from results, sorted alphabetically
+    const hints = [...new Set(
+      allResults
+        .map(r => r.curriculum_hint)
+        .filter(Boolean)
+    )].sort();
+
+    // Rebuild options — preserve "All" as first option
+    elFilterHint.innerHTML = '<option value="">All curriculum hints</option>';
+    hints.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = h;
+      elFilterHint.appendChild(opt);
+    });
+  }
 
   window.applyPostFilter = function() {
-    const hintText = elFilterHint.value.toLowerCase().trim();
+    const selected = elFilterHint.value.toLowerCase();
 
     const visible = allResults.filter(r => {
-      // Hint text filter — match against curriculum_hint field
-      if (hintText) {
-        const hint = (r.curriculum_hint || '').toLowerCase();
-        if (!hint.includes(hintText)) return false;
-      }
-      // Has/no hint toggle
-      if (hintFilter === 'has'  && !r.curriculum_hint) return false;
-      if (hintFilter === 'none' &&  r.curriculum_hint) return false;
-      return true;
+      if (!selected) return true;
+      // Contains match — handles nested hints like "Primer 1" matching "Primer 1 Unit 3"
+      return (r.curriculum_hint || '').toLowerCase().includes(selected);
     });
 
     renderResults(visible, allResults.length);
