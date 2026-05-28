@@ -292,6 +292,7 @@ Deno.serve(async (req: Request) => {
   let body: {
     auth_user_id?: string;
     pdf_vision_override?: boolean; // single-row manual override: raises PDF size limit to 10 MB
+    system_instruction_override?: string; // prompt lab: test a draft prompt without saving to DB
     // Mode A — generate
     url?: string;
     pdf_url?: string;
@@ -307,7 +308,7 @@ Deno.serve(async (req: Request) => {
     return err("Invalid JSON body");
   }
 
-  const { auth_user_id, url, pdf_url, context, cookie, page_text, curriculum_hint, pdf_vision_override } = body;
+  const { auth_user_id, url, pdf_url, context, cookie, page_text, curriculum_hint, pdf_vision_override, system_instruction_override } = body;
 
   // ── Ownership validation ────────────────────────────────────────────────────
   if (!auth_user_id) return err("Unauthorized", 401);
@@ -330,7 +331,9 @@ Deno.serve(async (req: Request) => {
   if (promptErr || !promptRow?.prompt_text) {
     return err("System prompt not found — add prompt_key supplement_description_system to the prompts table", 500);
   }
-  const systemInstruction = promptRow.prompt_text;
+  const systemInstruction = (system_instruction_override?.trim())
+    ? system_instruction_override.trim()
+    : promptRow.prompt_text;
 
   // ── Assemble signals ────────────────────────────────────────────────────────
   // Signal priority (highest to lowest specificity):

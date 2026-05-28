@@ -317,6 +317,7 @@
     <button class="tab-btn active" id="tab-btn-enrich" onclick="switchTab('enrich')">Phase 2 — Enrich</button>
     <button class="tab-btn" id="tab-btn-promote" onclick="switchTab('promote')">Phase 3 — Promote</button>
     <button class="tab-btn" id="tab-btn-embed" onclick="switchTab('embed')">Phase 4 — Embed</button>
+    <button class="tab-btn" id="tab-btn-promptlab" onclick="switchTab('promptlab')">Prompt Lab</button>
   </div>
 
   <!-- ── Enrich tab ── -->
@@ -594,6 +595,44 @@
 
   </div><!-- /tab-embed -->
 
+  <!-- ── Prompt Lab tab ── -->
+  <div class="tab-panel" id="tab-promptlab">
+
+    <!-- Prompt editor card -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:3px;" id="pl-prompt-label">Loading prompt…</div>
+          <div style="font-size:0.72rem;color:var(--text-light);">Key: <code style="font-size:0.72rem;background:var(--surface);padding:1px 5px;border-radius:4px;">supplement_description_system</code> &nbsp;·&nbsp; Last saved: <span id="pl-updated-at">—</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span id="pl-dirty-indicator" class="hidden" style="font-size:0.75rem;color:var(--warn);font-weight:600;">● Unsaved changes</span>
+          <button class="btn-secondary" id="pl-btn-discard" onclick="plDiscard()" disabled>Discard changes</button>
+          <button class="btn-primary" id="pl-btn-save" onclick="plSave()" disabled>Save prompt</button>
+        </div>
+      </div>
+      <div id="pl-load-msg" class="hidden" style="margin-bottom:10px;"></div>
+      <textarea id="pl-prompt-textarea" rows="18" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:monospace;font-size:0.8rem;line-height:1.6;color:var(--text);background:var(--surface);outline:none;resize:vertical;transition:border-color 0.15s;" placeholder="Loading…" oninput="plMarkDirty()"></textarea>
+      <div id="pl-save-msg" style="margin-top:8px;font-size:0.78rem;min-height:18px;"></div>
+    </div>
+
+    <!-- Test examples card -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Test examples</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">10 described supplements from staging. Click <strong>Test</strong> on any row to run the current draft prompt. Results are not saved.</div>
+        </div>
+        <button class="btn-secondary" id="pl-btn-load-examples" onclick="plLoadExamples()">Load examples</button>
+      </div>
+      <div id="pl-examples-loading" class="status-line hidden"><span class="spinner spinner-dark"></span> Loading…</div>
+      <div id="pl-examples-msg" class="hidden" style="margin-bottom:8px;"></div>
+      <div id="pl-examples-list" class="staging-list"></div>
+      <div id="pl-examples-empty" class="empty-state hidden">No described or hinted rows found in staging.</div>
+    </div>
+
+  </div><!-- /tab-promptlab -->
+
 </main>
 </div>
 
@@ -622,6 +661,8 @@ const state = {
   promoteRunning:         false,
   promoteCancelRequested: false,
   embedCancelRequested:   false,
+  promptLabLoaded:        false,
+  promptLabOriginal:      '',   // last-saved prompt text — used for discard
 };
 
 // ── Curriculum hint parser ────────────────────────────────────────────────────
@@ -889,10 +930,7 @@ function rowHtml(r) {
       const opts = earlier.map(s => `<option value="${s}">${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('');
       return `<div class="inline-field" style="align-self:flex-end;">
         <label>Reset status</label>
-        <div style="display:flex;gap:5px;align-items:center;">
-          <select id="reset-sel-${id}" style="height:30px;padding:0 8px;border:1.5px solid var(--danger-border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--danger-light);color:var(--danger);outline:none;">${opts}</select>
-          <button class="btn-sm btn-sm-danger" onclick="resetRowStatus('${id}')">Reset</button>
-        </div>
+        <select id="reset-sel-${id}" onchange="resetRowStatus('${id}')" style="height:30px;padding:0 8px;border:1.5px solid var(--danger-border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--danger-light);color:var(--danger);outline:none;">${opts}</select>
       </div>`;
     })()}
   </div>
@@ -1305,6 +1343,7 @@ window.switchTab = function(name) {
   document.getElementById(`tab-${name}`).classList.add('active');
   if (name === 'promote' && !state.promoteLoaded) loadPromoteRows();
   if (name === 'embed') loadEmbedStats();
+  if (name === 'promptlab' && !state.promptLabLoaded) plInit();
 };
 
 // ── Promote tab ───────────────────────────────────────────────────────────────
@@ -1873,6 +1912,235 @@ window.bulkEmbed = async function() {
     document.getElementById('btn-cancel-embed').classList.add('hidden');
     state.embedCancelRequested = false;
   }
+};
+
+// ── Prompt Lab ────────────────────────────────────────────────────────────────
+
+async function plInit() {
+  await plLoadPrompt();
+  state.promptLabLoaded = true;
+}
+
+async function plLoadPrompt() {
+  const textarea  = document.getElementById('pl-prompt-textarea');
+  const labelEl   = document.getElementById('pl-prompt-label');
+  const updatedEl = document.getElementById('pl-updated-at');
+  const msgEl     = document.getElementById('pl-load-msg');
+  textarea.value = '';
+  textarea.placeholder = 'Loading…';
+  showMsgEl(msgEl, 'info', 'Loading prompt…');
+  msgEl.classList.remove('hidden');
+
+  const { data, error } = await sb
+    .from('prompts')
+    .select('prompt_label, prompt_text, updated_at')
+    .eq('prompt_key', 'supplement_description_system')
+    .eq('series_id', SERIES_ID)
+    .single();
+
+  if (error || !data) {
+    showMsgEl(msgEl, 'error', `Failed to load prompt: ${error?.message || 'Not found'}`);
+    return;
+  }
+
+  labelEl.textContent    = data.prompt_label || 'Supplement Description – System Instruction';
+  updatedEl.textContent  = data.updated_at
+    ? new Date(data.updated_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
+    : '—';
+  textarea.value         = data.prompt_text || '';
+  textarea.placeholder   = '';
+  state.promptLabOriginal = data.prompt_text || '';
+  msgEl.classList.add('hidden');
+  plSetDirty(false);
+}
+
+function plMarkDirty() {
+  const current = document.getElementById('pl-prompt-textarea').value;
+  plSetDirty(current !== state.promptLabOriginal);
+}
+
+function plSetDirty(dirty) {
+  document.getElementById('pl-dirty-indicator').classList.toggle('hidden', !dirty);
+  document.getElementById('pl-btn-discard').disabled = !dirty;
+  document.getElementById('pl-btn-save').disabled    = !dirty;
+}
+
+window.plDiscard = function() {
+  document.getElementById('pl-prompt-textarea').value = state.promptLabOriginal;
+  plSetDirty(false);
+  document.getElementById('pl-save-msg').textContent = '';
+};
+
+window.plSave = async function() {
+  const promptText = document.getElementById('pl-prompt-textarea').value.trim();
+  const msgEl      = document.getElementById('pl-save-msg');
+  const btn        = document.getElementById('pl-btn-save');
+  if (!promptText) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Prompt cannot be empty.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  msgEl.style.color = 'var(--text-mid)';
+  msgEl.textContent = 'Saving…';
+
+  // admin-prompt-save EF — same endpoint used by prompts.html
+  const res = await fetch(`${EF_BASE}/admin-prompt-save`, {
+    method: 'POST',
+    headers: EF_HEADERS,
+    body: JSON.stringify({
+      auth_user_id: state.authUserId,
+      series_id:    SERIES_ID,
+      prompt_key:   'supplement_description_system',
+      prompt_text:  promptText,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  btn.textContent = 'Save prompt';
+
+  if (!res.ok) {
+    btn.disabled = false;
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = `Save failed: ${data.error || `HTTP ${res.status}`}`;
+    return;
+  }
+
+  state.promptLabOriginal = promptText;
+  plSetDirty(false);
+  msgEl.style.color = 'var(--success)';
+  msgEl.textContent = '✓ Prompt saved';
+  // Refresh the updated_at timestamp
+  await plLoadPrompt();
+};
+
+// ── Prompt Lab: examples ──────────────────────────────────────────────────────
+
+window.plLoadExamples = async function() {
+  const loadEl  = document.getElementById('pl-examples-loading');
+  const msgEl   = document.getElementById('pl-examples-msg');
+  const listEl  = document.getElementById('pl-examples-list');
+  const emptyEl = document.getElementById('pl-examples-empty');
+  const btn     = document.getElementById('pl-btn-load-examples');
+
+  loadEl.classList.remove('hidden');
+  msgEl.classList.add('hidden');
+  listEl.innerHTML = '';
+  emptyEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  const { data, error } = await sb
+    .from('supplement_staging')
+    .select('staging_id, title, thumbnail_url, source_url, search_description, curriculum_hint, raw_page_text, pdf_url, status')
+    .eq('series_id', SERIES_ID)
+    .in('status', ['described', 'hinted'])
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  loadEl.classList.add('hidden');
+  btn.disabled = false;
+  btn.textContent = 'Reload examples';
+
+  if (error) {
+    showMsgEl(msgEl, 'error', `Failed to load examples: ${error.message}`);
+    msgEl.classList.remove('hidden');
+    return;
+  }
+
+  if (!data?.length) { emptyEl.classList.remove('hidden'); return; }
+
+  listEl.innerHTML = data.map(plExampleHtml).join('');
+};
+
+function plExampleHtml(r) {
+  const id        = r.staging_id;
+  const title     = escHtml(r.title || r.source_url || '');
+  const thumbHtml = r.thumbnail_url
+    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb">🖼</div>`;
+  const hintText  = r.curriculum_hint
+    ? `<span style="font-size:0.7rem;color:var(--text-light);">📚 ${escHtml(r.curriculum_hint)}</span>` : '';
+  const currentDesc = r.search_description
+    ? `<div style="margin-top:6px;"><div style="font-size:0.63rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:3px;">Current description</div><div class="desc-preview">${escHtml(r.search_description)}</div></div>` : '';
+
+  return `
+<div class="staging-row" id="pl-row-${id}">
+  <div class="row-top">
+    ${thumbHtml}
+    <div class="row-body">
+      <div class="row-title"><a href="${escHtml(r.source_url)}" target="_blank" rel="noopener">${title}</a></div>
+      <div class="row-meta">${hintText}</div>
+      ${currentDesc}
+      <div id="pl-result-${id}" style="display:none;margin-top:8px;">
+        <div style="font-size:0.63rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--brand);margin-bottom:3px;">Draft prompt result</div>
+        <div id="pl-result-text-${id}" class="desc-preview" style="border-color:var(--brand-light);background:#fffaf6;"></div>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn-sm btn-sm-warn" id="pl-test-btn-${id}" onclick="plTestExample('${id}')">Test</button>
+    </div>
+  </div>
+</div>`;
+}
+
+window.plTestExample = async function(id) {
+  const btn      = document.getElementById(`pl-test-btn-${id}`);
+  const resultEl = document.getElementById(`pl-result-${id}`);
+  const textEl   = document.getElementById(`pl-result-text-${id}`);
+  const draftPrompt = document.getElementById('pl-prompt-textarea').value.trim();
+
+  if (!draftPrompt) {
+    alert('The prompt textarea is empty. Enter a prompt before testing.');
+    return;
+  }
+
+  // Find the row data from the DOM-rendered list (we re-query to get raw_page_text/pdf_url)
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-dark"></span>';
+  resultEl.style.display = 'none';
+  textEl.textContent = '';
+
+  // Fetch fresh row data (raw_page_text may be large; we didn't store it in state for the lab)
+  const { data: row, error: rowErr } = await sb
+    .from('supplement_staging')
+    .select('source_url, curriculum_hint, raw_page_text, pdf_url')
+    .eq('staging_id', id)
+    .single();
+
+  if (rowErr || !row) {
+    btn.disabled = false;
+    btn.textContent = 'Test';
+    alert(`Could not load row data: ${rowErr?.message || 'Not found'}`);
+    return;
+  }
+
+  const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
+    method: 'POST',
+    headers: EF_HEADERS,
+    body: JSON.stringify({
+      auth_user_id:               state.authUserId,
+      url:                        row.source_url,
+      pdf_url:                    row.pdf_url    || null,
+      page_text:                  row.raw_page_text || '',
+      curriculum_hint:            row.curriculum_hint || null,
+      cookie:                     state.cookieWk,
+      pdf_vision_override:        true,   // single-row quality for testing
+      system_instruction_override: draftPrompt,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  btn.disabled = false;
+  btn.textContent = 'Retest';
+
+  if (!res.ok || !data.description) {
+    textEl.style.color = 'var(--danger)';
+    textEl.textContent = data.error || 'Gemini returned no description.';
+  } else {
+    textEl.style.color = 'var(--text)';
+    textEl.textContent = data.description;
+  }
+
+  resultEl.style.display = 'block';
 };
 
 checkSession();
