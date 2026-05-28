@@ -1954,10 +1954,11 @@ async function plLoadPrompt() {
   plSetDirty(false);
 }
 
-function plMarkDirty() {
-  const current = document.getElementById('pl-prompt-textarea').value;
-  plSetDirty(current !== state.promptLabOriginal);
-}
+window.plMarkDirty = function() {
+  const current  = document.getElementById('pl-prompt-textarea').value.replace(/\r\n/g, '\n');
+  const original = state.promptLabOriginal.replace(/\r\n/g, '\n');
+  plSetDirty(current !== original);
+};
 
 function plSetDirty(dirty) {
   document.getElementById('pl-dirty-indicator').classList.toggle('hidden', !dirty);
@@ -2033,9 +2034,7 @@ window.plLoadExamples = async function() {
     .select('staging_id, title, thumbnail_url, source_url, search_description, curriculum_hint, raw_page_text, pdf_url, status')
     .eq('series_id', SERIES_ID)
     .in('status', ['described', 'hinted'])
-    .order('scrape_attempted_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(50);
 
   loadEl.classList.add('hidden');
   btn.disabled = false;
@@ -2049,7 +2048,10 @@ window.plLoadExamples = async function() {
 
   if (!data?.length) { emptyEl.classList.remove('hidden'); return; }
 
-  listEl.innerHTML = data.map(plExampleHtml).join('');
+  // Shuffle and pick 10 random examples so Reload gives a different set
+  const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 10);
+
+  listEl.innerHTML = shuffled.map(plExampleHtml).join('');
 };
 
 function plExampleHtml(r) {
