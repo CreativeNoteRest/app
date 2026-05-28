@@ -1076,12 +1076,17 @@ window.generateDescription = async function() {
   const _rsp1 = document.getElementById('btn-edit-rescrape-pdf'); if (_rsp1) _rsp1.disabled = true;
   document.getElementById('btn-edit-combine').disabled = true;
 
-  // Mode A — send source material as page_text for synthesis (not condensation).
+  // Mode A — send source material plus PDF URL and title hint for full signal assembly.
   try {
     const res = await fetch(`${EF_BASE}/generate-supplement-description`, {
       method: 'POST',
       headers: EF_HEADERS,
-      body: JSON.stringify({ page_text: scraped, auth_user_id: state.authUserId })
+      body: JSON.stringify({
+        page_text: scraped,
+        pdf_url: document.getElementById('new-pdf-url').value.trim() || undefined,
+        curriculum_hint: document.getElementById('new-title').value.trim() || undefined,
+        auth_user_id: state.authUserId
+      })
     });
     const json = await res.json();
     if (!res.ok || json.error) { showMsg(msgEl, 'error', json.error || 'Generate failed.'); return; }
