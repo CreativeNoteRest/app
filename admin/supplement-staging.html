@@ -2033,7 +2033,8 @@ window.plLoadExamples = async function() {
     .select('staging_id, title, thumbnail_url, source_url, search_description, curriculum_hint, raw_page_text, pdf_url, status')
     .eq('series_id', SERIES_ID)
     .in('status', ['described', 'hinted'])
-    .order('updated_at', { ascending: false })
+    .order('scrape_attempted_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(10);
 
   loadEl.classList.add('hidden');
