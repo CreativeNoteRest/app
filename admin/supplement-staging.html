@@ -1227,11 +1227,16 @@ window.bulkResetStatus = async function() {
   const label = targetStatus.charAt(0).toUpperCase() + targetStatus.slice(1);
   if (!confirm(`Reset ${rows.length} filtered row(s) to "${label}"? This cannot be undone.`)) return;
   showMsgEl(msgEl, 'info', `Resetting ${rows.length} rows…`);
+  // Chunk IDs to avoid PostgREST URL length limit (~50 IDs per request is safe)
   const ids = rows.map(r => r.staging_id);
-  const { error } = await sb.from('supplement_staging')
-    .update({ status: targetStatus })
-    .in('staging_id', ids);
-  if (error) { showMsgEl(msgEl, 'error', `Failed: ${error.message}`); return; }
+  const CHUNK = 50;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const { error } = await sb.from('supplement_staging')
+      .update({ status: targetStatus })
+      .in('staging_id', chunk);
+    if (error) { showMsgEl(msgEl, 'error', `Failed on chunk ${Math.floor(i/CHUNK)+1}: ${error.message}`); return; }
+  }
   rows.forEach(r => {
     r.status = targetStatus;
     const ar = state.allRows.find(a => a.staging_id === r.staging_id);
