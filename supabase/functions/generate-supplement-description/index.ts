@@ -15,7 +15,7 @@
 //
 // Mode B — Re-summarise (existing description):
 //   { current_description, context }
-//   Re-optimises an existing description for searchability.
+//   Re-optimises an existing description using the current structure and vocabulary.
 //   No page or PDF fetch. Returns { description }.
 //
 // JWT verification: OFF (ES256 incompatibility — see WDN-041)
@@ -80,11 +80,23 @@ async function geminiRequest(url: string, body: unknown): Promise<unknown> {
 }
 
 
-const SYSTEM_INSTRUCTION = `You are a specialist in music education resource description.
-Your task is to write concise, search-optimised descriptions of piano teaching supplements.
-Descriptions are used internally to help match supplements to the right lessons.
-Write in plain English. No markdown. No bullet points. 2-4 sentences maximum.
-Focus on: what skill or concept the supplement targets, what format it is (worksheet, game, printable, workbook), and what type of student or lesson it suits.
+const SYSTEM_INSTRUCTION = `You are a specialist in piano music education resource description.
+Your task is to write concise, search-optimised descriptions of piano teaching supplements for the WunderKeys curriculum.
+Descriptions are used to match supplements to the right lessons via semantic search — a teacher searching for a skill should find the right supplement.
+Write in plain English. No markdown. No bullet points. 1-3 sentences maximum.
+
+Structure every description as follows:
+1. Lead with the primary skills or concepts targeted.
+2. Follow with the vehicle or format (e.g. songs, scale exercises, worksheets, flashcards, games, brag tags, practice trackers).
+3. Add any specific context that aids matching: curriculum level if determinable, seasonal theme if present, or behavioural or performance goal if applicable.
+
+Use standard WunderKeys piano pedagogy terms where they apply:
+- Skills: note reading, rhythm and notation, hands together playing, scales and five-finger positions, chords and harmony, accompaniment patterns, technique and articulation, music theory and symbols, keyboard geography
+- Vehicles: songs, scale exercises, chord exercises, worksheets, flashcards, games, colouring pages, brag tags, practice trackers, workbook
+- Levels: Preschool, Primer, Level 1A, Level 1B, Level 2A, Level 2B, Pop Staff, Intermediate
+- Seasonal: use the season name if the content is clearly seasonal (e.g. Christmas, Halloween, spring)
+
+Prefer these terms over paraphrases — a teacher searching for "hands together" or "Christmas" should find the right supplement.
 Do not invent information not present in the source material.
 Return only the description text — no preamble, no labels, no quotes.`;
 
@@ -256,7 +268,7 @@ Deno.serve(async (req: Request) => {
   // ── Mode B: Re-summarise ───────────────────────────────────────────────────
   if (current_description && !url && !pdf_url) {
     const prompt = [
-      "Re-write the following supplement description to be more concise and search-optimised.",
+      "Re-write the following supplement description to follow the structure and vocabulary in your instructions.",
       "Preserve all factual content. Do not add invented information.",
       context ? `Additional context to incorporate:\n${context}` : "",
       `\nCurrent description:\n${current_description}`,
@@ -303,7 +315,7 @@ Deno.serve(async (req: Request) => {
       }
     } catch { /* non-fatal */ }
     if (!parts.length) return err("Could not extract text from PDF.");
-    const pdfPrompt = ["Write a search-optimised description for the following piano teaching supplement.", ...parts].join("\n\n");
+    const pdfPrompt = ["Write a description for the following piano teaching supplement following the structure and vocabulary in your instructions.", ...parts].join("\n\n");
     try {
       const description = await callGeminiText(pdfPrompt);
       return ok({ description });
@@ -416,7 +428,7 @@ Deno.serve(async (req: Request) => {
       // Gemini reads the full PDF but the prompt directs it to use page 1
       // for description content and ignore bookstore/advertising pages.
       const promptText = [
-        "Write a search-optimised description for the following piano teaching supplement.",
+        "Write a description for the following piano teaching supplement following the structure and vocabulary in your instructions.",
         "The PDF attached contains the supplement. Use only the content from page 1 (the cover/description page).",
         "Ignore page 2 onward — those pages contain sheet music, bookstore listings, and advertising.",
         "Use only information present in the source material below and in page 1 of the PDF.",
@@ -431,7 +443,7 @@ Deno.serve(async (req: Request) => {
     } else {
       // Text-only call
       const prompt = [
-        "Write a search-optimised description for the following piano teaching supplement.",
+        "Write a description for the following piano teaching supplement following the structure and vocabulary in your instructions.",
         "Use only information present in the source material below.",
         ...textParts,
       ].join("\n\n");
