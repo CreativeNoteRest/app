@@ -157,6 +157,7 @@
     .badge-discovered { background: var(--surface);       color: var(--text-light); border-color: var(--border); }
     .badge-scraped    { background: var(--info-light);    color: var(--info);       border-color: var(--info-border); }
     .badge-described  { background: var(--success-light); color: var(--success);    border-color: var(--success-border); }
+    .badge-hinted     { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
     .badge-promoted   { background: #F3E8FF;              color: #7C3AED;           border-color: #DDD6FE; }
     .badge-workbook   { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
     .badge-toolkit    { background: var(--brand-light);   color: var(--brand);      border-color: #F9C4A0; }
@@ -433,6 +434,27 @@
       </select>
       <span class="filter-count" id="filter-count">—</span>
     </div>
+  </div>
+
+  <!-- ── Bulk status reset ── -->
+  <div class="card" style="padding:14px 20px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Bulk status reset</div>
+        <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Resets all <em>currently filtered</em> rows to the selected status. Use to re-run a pipeline phase on a batch.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-light);">Reset to</span>
+        <select id="bulk-reset-target" style="height:32px;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.83rem;color:var(--text);background:var(--card);outline:none;">
+          <option value="discovered">Discovered</option>
+          <option value="scraped">Scraped</option>
+          <option value="described">Described</option>
+          <option value="hinted">Hinted</option>
+        </select>
+        <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);" onclick="bulkResetStatus()">Reset filtered rows</button>
+      </div>
+    </div>
+    <div id="bulk-reset-msg" class="hidden" style="margin-top:8px;font-size:0.82rem;"></div>
   </div>
 
   <!-- ── List ── -->
@@ -859,6 +881,20 @@ function rowHtml(r) {
       <button class="inline-save-btn" onclick="saveInlineFields('${id}')">Save</button>
       <span id="inline-msg-${id}" class="inline-msg hidden"></span>
     </div>
+    ${(() => {
+      const order = ['discovered','scraped','described','hinted','promoted'];
+      const cur = order.indexOf(r.status);
+      const earlier = order.slice(0, cur);
+      if (!earlier.length) return '';
+      const opts = earlier.map(s => `<option value="${s}">${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('');
+      return `<div class="inline-field" style="align-self:flex-end;">
+        <label>Reset status</label>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <select id="reset-sel-${id}" style="height:30px;padding:0 8px;border:1.5px solid var(--danger-border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--danger-light);color:var(--danger);outline:none;">${opts}</select>
+          <button class="btn-sm btn-sm-danger" onclick="resetRowStatus('${id}')">Reset</button>
+        </div>
+      </div>`;
+    })()}
   </div>
 </div>`;
 }
@@ -1164,6 +1200,46 @@ window.saveInlineFields = async function(id) {
   showMsgEl(msgEl, 'success', 'Saved ✓');
   setTimeout(() => msgEl.classList.add('hidden'), 2200);
   renderStats();
+};
+
+// ── Status reset (single row) ─────────────────────────────────────────────────
+window.resetRowStatus = async function(id) {
+  const targetStatus = document.getElementById(`reset-sel-${id}`)?.value;
+  if (!targetStatus) return;
+  const row = state.allRows.find(r => r.staging_id === id);
+  if (!row) return;
+  setRowStatus(id, 'info', '⏳ Resetting…');
+  const { error } = await sb.from('supplement_staging')
+    .update({ status: targetStatus })
+    .eq('staging_id', id);
+  if (error) { setRowStatus(id, 'error', `✗ ${error.message}`); return; }
+  row.status = targetStatus;
+  rerenderRow(id);
+  renderStats();
+};
+
+// ── Status reset (bulk — filtered rows) ──────────────────────────────────────
+window.bulkResetStatus = async function() {
+  const targetStatus = document.getElementById('bulk-reset-target')?.value;
+  const msgEl = document.getElementById('bulk-reset-msg');
+  const rows = state.filteredRows;
+  if (!rows.length) { showMsgEl(msgEl, 'error', 'No rows in current filter to reset.'); return; }
+  const label = targetStatus.charAt(0).toUpperCase() + targetStatus.slice(1);
+  if (!confirm(`Reset ${rows.length} filtered row(s) to "${label}"? This cannot be undone.`)) return;
+  showMsgEl(msgEl, 'info', `Resetting ${rows.length} rows…`);
+  const ids = rows.map(r => r.staging_id);
+  const { error } = await sb.from('supplement_staging')
+    .update({ status: targetStatus })
+    .in('staging_id', ids);
+  if (error) { showMsgEl(msgEl, 'error', `Failed: ${error.message}`); return; }
+  rows.forEach(r => {
+    r.status = targetStatus;
+    const ar = state.allRows.find(a => a.staging_id === r.staging_id);
+    if (ar) ar.status = targetStatus;
+  });
+  showMsgEl(msgEl, 'success', `✓ ${rows.length} rows reset to "${label}"`);
+  renderStats();
+  renderList();
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
