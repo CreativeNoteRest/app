@@ -346,7 +346,7 @@
         <div class="section-label">Select summary</div>
         <select id="ds-phase-select" class="phase-select">
           <option value="">-- select a summary --</option>
-          <option value="2">Teacher Tag Matching</option>
+          <option value="2">Supplement Matching</option>
           <option value="3">Supplement Selection</option>
           <option value="4">Teacher Summary</option>
           <option value="5">Student Practice Plan</option>
@@ -419,9 +419,7 @@
 
           <!-- Phase 2 supplement ranking preview -->
           <div id="ds-supplement-preview" class="result-section hidden">
-            <div class="result-label">Teacher Tag Matching — Matched Tags</div>
-            <div id="ds-supplement-tags" class="result-meta" style="white-space:pre-wrap;"></div>
-            <div class="result-label" style="margin-top:1rem;">Ranked Supplements</div>
+            <div class="result-label">Supplement Matching — Ranked by Similarity</div>
             <div id="ds-supplement-list" style="font-size:0.85rem;"></div>
           </div>
 
@@ -494,7 +492,7 @@ const SUPABASE_URL = 'https://xaayekfrlphyyxenhcjl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
 const ADMIN_EMAILS = ['sgdensham@gmail.com', 'creativenotemusicstudio@gmail.com'];
 const PHASE_KEYS   = { 1:'session_close_phase1', 2:'session_close_phase2', 3:'session_close_phase3', 4:'session_close_phase4', 5:'session_close_phase5' };
-const DS_PHASE_LABELS = { 2:'Teacher Tag Matching', 3:'Supplement Selection', 4:'Teacher Summary', 5:'Student Practice Plan' };
+const DS_PHASE_LABELS = { 2:'Supplement Matching', 3:'Supplement Selection', 4:'Teacher Summary', 5:'Student Practice Plan' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -1214,7 +1212,9 @@ elDsBtnRun.addEventListener('click', async () => {
       body: JSON.stringify({ session_id: studentRow.session_id, teacher_id: studentRow.teacher_id, student_id: studentRow.student_id, series_id: studentRow.series_id, lesson_book_id: studentRow.lesson_book_id, student_name: studentRow.student_name, single_phase_run: true, phase: dsPhase, phase1_output: phase1Output, model_override: model, thinking_budget: budget, prompt_override: elDsTextarea.value })
     });
     const result = await res.json();
-    if (!result.success || !result.raw_output) {
+    // Phase 2 returns ranked_supplements instead of raw_output
+    const isPhase2 = dsPhase === 2;
+    if (!result.success || (!isPhase2 && !result.raw_output)) {
       elDsRunError.textContent = (DS_PHASE_LABELS[dsPhase] || 'Phase') + ' failed: ' + (result.error || 'Unknown error');
       elDsRunError.classList.remove('hidden');
       elDsBtnRun.disabled    = false;
@@ -1228,31 +1228,35 @@ elDsBtnRun.addEventListener('click', async () => {
       elDsBtnDlPrompt.classList.remove('hidden');
     }
 
-    elDsResultLabel.textContent  = 'AI response — ' + (DS_PHASE_LABELS[dsPhase] || 'Phase ' + dsPhase);
-    elDsResultMeta.textContent   = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
-    elDsResultTA.value           = result.raw_output;
-    elDsResult.classList.remove('hidden');
-    elDsBtnDlResp.classList.remove('hidden');
-    elDsRerunNotice.classList.add('hidden');
-    elDsResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // Phase 2: render tags + ranked supplements
     const elSupPreview = document.getElementById('ds-supplement-preview');
-    const elSupTags    = document.getElementById('ds-supplement-tags');
     const elSupList    = document.getElementById('ds-supplement-list');
-    if (dsPhase === 2 && result.ranked_supplements && elSupPreview && elSupTags && elSupList) {
-      elSupTags.textContent = result.parsed_output && result.parsed_output.length
-        ? result.parsed_output.join('\n')
-        : '(none matched)';
-      elSupList.innerHTML = result.ranked_supplements.map((s, i) =>
-        `<div style="padding:0.3rem 0;border-bottom:1px solid #eee;">
-          <strong>${i + 1}. ${s.title}</strong>
-          &nbsp;<span style="color:#888;">[score: ${s.score} | ${s.pool}]</span><br>
-          <span style="color:#aaa;">${(s.tags || []).join(', ')}</span>
-        </div>`
-      ).join('');
-      elSupPreview.classList.remove('hidden');
+
+    if (isPhase2) {
+      // Phase 2: render similarity-ranked supplement list — no raw AI output
+      elDsResult.classList.add('hidden');
+      elDsRerunNotice.classList.add('hidden');
+      if (result.ranked_supplements && elSupPreview && elSupList) {
+        elSupList.innerHTML = result.ranked_supplements.length
+          ? result.ranked_supplements.map((s, i) => {
+              const sim = s.similarity != null ? (s.similarity * 100).toFixed(1) + '%' : '—';
+              return `<div style="padding:0.3rem 0;border-bottom:1px solid #eee;">
+                <strong>${i + 1}. ${s.title}</strong>
+                &nbsp;<span style="color:#888;">[similarity: ${sim} | ${s.pool}]</span>
+              </div>`;
+            }).join('')
+          : '<div style="color:#aaa;padding:0.5rem 0;">No candidates matched for this session.</div>';
+        elSupPreview.classList.remove('hidden');
+        elSupPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     } else {
+      // Phases 4 & 5: render AI text response as normal
+      elDsResultLabel.textContent  = 'AI response — ' + (DS_PHASE_LABELS[dsPhase] || 'Phase ' + dsPhase);
+      elDsResultMeta.textContent   = 'Model: ' + (result.model_used || model) + '  |  Thinking budget: ' + (result.thinking_budget_used ?? budget) + '  |  Student: ' + studentRow.student_name;
+      elDsResultTA.value           = result.raw_output;
+      elDsResult.classList.remove('hidden');
+      elDsBtnDlResp.classList.remove('hidden');
+      elDsRerunNotice.classList.add('hidden');
+      elDsResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
       elSupPreview && elSupPreview.classList.add('hidden');
     }
   } catch (err) {
