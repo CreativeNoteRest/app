@@ -316,8 +316,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const state = {
   authUserId:     '',
   books:          [],   // [{ book_id, display_name, sequence_number }]
-  units:          [],   // [{ unit_id, unit_label, unit_title, unit_sort_order }]
-  pieces:         [],   // [{ piece_id, piece_title, page_start, unit_sort_order }]
+  units:          [],   // [{ unit_id, unit_label, unit_title }]
+  pieces:         [],   // [{ piece_id, piece_title, page_start }]
   activeBookId:   null,
   activeUnitId:   null,
   // unitMappedCounts: { unit_id: count } — for dot indicators
@@ -444,9 +444,9 @@ window.onBookSelect = async function() {
   // Load units
   const { data: units, error: uErr } = await sb
     .from('books_units')
-    .select('unit_id, unit_label, unit_title, unit_sort_order')
+    .select('unit_id, unit_label, unit_title')
     .eq('book_id', bookId)
-    .order('unit_sort_order');
+    .order('unit_label');
   if (uErr || !units) return;
   state.units = units;
 
@@ -539,9 +539,9 @@ window.onUnitSelect = async function(unitId) {
   // Load pieces for this unit
   const { data: pieces, error: pErr } = await sb
     .from('books_pieces')
-    .select('piece_id, piece_title, page_start, unit_sort_order')
+    .select('piece_id, piece_title, page_start')
     .eq('unit_id', unitId)
-    .order('unit_sort_order');
+    .order('page_start');
   if (!pErr && pieces) state.pieces = pieces;
 
   // Update unit panel title
@@ -839,7 +839,7 @@ window.applyMappings = async function() {
       .from('books_pieces')
       .select('piece_id')
       .eq('unit_id', state.activeUnitId)
-      .order('unit_sort_order')
+      .order('page_start')
       .limit(1);
     firstPieceId = fp?.[0]?.piece_id || null;
   }
