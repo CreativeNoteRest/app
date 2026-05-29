@@ -587,29 +587,35 @@ window.setListMode = function(mode, skipToggleUpdate) {
 
 // ── Sort supplements by signal strength ───────────────────────────────────────
 function signalScore(supp) {
-  // Returns 0 (best) to 2 (no signal)
-  if (!state.activeUnitId && !state.activeBookId) return 2;
+  // Returns 0 (unit hint match) → 1 (book hint match) → 2 (level/cat match) → 3 (no signal)
+  if (!state.activeUnitId && !state.activeBookId) return 3;
   const unit = state.units.find(u => u.unit_id === state.activeUnitId);
   const book = state.books.find(b => b.book_id === state.activeBookId);
-  const hint  = (supp.curriculum_hint || '').toLowerCase();
-  const cats  = (supp.wk_categories || []).join(' ').toLowerCase();
-  const level = (supp.wk_level || '').toLowerCase();
+  const hint     = (supp.curriculum_hint || '').toLowerCase();
+  const cats     = (supp.wk_categories || []).join(' ').toLowerCase();
+  const level    = (supp.wk_level || '').toLowerCase();
   const bookName = (book?.display_name || '').toLowerCase();
   const unitLabel = (unit?.unit_label || '').toLowerCase();
   const unitTitle = (unit?.unit_title || '').toLowerCase();
 
-  // Score 0: curriculum_hint mentions book name or unit label/title
-  if (hint && (hint.includes(unitLabel) || hint.includes(unitTitle) || hint.includes(bookName))) return 0;
-  // Score 1: wk_categories or wk_level matches book context
-  if (cats && (cats.includes(bookName) || bookName.includes(cats.split(' ')[0]))) return 1;
-  if (level && bookName.includes(level)) return 1;
-  return 2;
+  if (hint) {
+    // Score 0: hint mentions the active unit label or title
+    if (unitLabel && hint.includes(unitLabel)) return 0;
+    if (unitTitle && hint.includes(unitTitle)) return 0;
+    // Score 1: hint mentions the book but not this specific unit
+    if (bookName && hint.includes(bookName)) return 1;
+  }
+  // Score 2: wk_categories or wk_level matches book context
+  if (cats && (cats.includes(bookName) || bookName.includes(cats.split(' ')[0]))) return 2;
+  if (level && bookName.includes(level)) return 2;
+  return 3;
 }
 
 function signalBadge(supp) {
   const score = signalScore(supp);
-  if (score === 0) return `<span class="badge badge-hint">hint match</span>`;
-  if (score === 1) return `<span class="badge badge-cat">level match</span>`;
+  if (score === 0) return `<span class="badge badge-hint">unit match</span>`;
+  if (score === 1) return `<span class="badge badge-hint">hint match</span>`;
+  if (score === 2) return `<span class="badge badge-cat">level match</span>`;
   return '';
 }
 
@@ -644,10 +650,16 @@ function renderUnmappedList(listEl, query) {
   let supps = state.allSupplements.filter(s => !state.mappedForBook.has(s.supplement_id));
   if (query) supps = supps.filter(s => s.title.toLowerCase().includes(query));
 
-  // Sort by signal score
+  // Sort: signal score first, then curriculum_hint (groups units naturally), then title
   supps.sort((a, b) => {
     const diff = signalScore(a) - signalScore(b);
     if (diff !== 0) return diff;
+    // Within same score tier: sort by hint text first (clusters by unit naturally),
+    // then alphabetically by title
+    const hintA = a.curriculum_hint || '';
+    const hintB = b.curriculum_hint || '';
+    const hintDiff = hintA.localeCompare(hintB);
+    if (hintDiff !== 0) return hintDiff;
     return a.title.localeCompare(b.title);
   });
 
