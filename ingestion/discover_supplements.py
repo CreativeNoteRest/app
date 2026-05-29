@@ -407,12 +407,12 @@ def crawl_piano_books(session):
 
     url = f"{WK_BASE}{PIANO_BOOKS_LISTING_PATH}"
     log.info("Piano Books — fetching listing page: %s", url)
-    html = fetch_page(session, url, label="piano-books listing")
-    if html is None:
+    page_html = fetch_page(session, url, label="piano-books listing")
+    if page_html is None:
         log.error("Failed to fetch piano-books listing page. Aborting piano-books pass.")
         return items
 
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(page_html, "html.parser")
 
     # Scope to div.entry-content to avoid the book-nav block at the top of the
     # page, which contains anchor links that would pollute current_section.
@@ -444,7 +444,7 @@ def crawl_piano_books(session):
             if href in items:
                 continue  # duplicate link on page
 
-            title = html.unescape(element.get_text(strip=True))
+            title = html.unescape(element.get_text(strip=True))  # html = module (not local var)
 
             # Extract VU level from title
             wk_level = None

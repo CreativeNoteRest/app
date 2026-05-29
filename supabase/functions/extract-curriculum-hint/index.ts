@@ -43,6 +43,7 @@ function err(message: string, status = 400) {
 
 const SYSTEM_INSTRUCTION = `You are extracting a curriculum placement signal from a piano teaching supplement.
 Your task is to identify what level or unit of the WunderKeys curriculum this supplement targets.
+The description may contain an audience section describing the intended student level and a goals or skills section listing teachable concepts. Focus only on audience and level signals — ignore the skills and goals section.
 Return a JSON object with one field: curriculum_hint.
 The value must be one of these formats exactly, or null:
   "Primer"               — primer level, no specific unit identified

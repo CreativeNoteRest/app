@@ -97,11 +97,13 @@ function extractMetaName(html: string, name: string): string {
 }
 
 function extractTitle(html: string): string {
-  // Priority: og:title > <title> tag
   const og = extractMeta(html, "og:title");
-  if (og) return og;
-  const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return m ? m[1].trim() : "";
+  const raw = og || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1].trim() ?? "");
+  return raw.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+            .replace(/&amp;/g, "&")
+            .replace(/&quot;/g, '"')
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">");
 }
 
 function extractThumbnail(html: string): string {
