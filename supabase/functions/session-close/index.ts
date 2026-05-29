@@ -1,8 +1,8 @@
 // session-close Edge Function
-// May 2026 — Phase 2 Teacher Tag Matching + Ranking Simplification
+// May 2026 — Phase 2 replaced: vector similarity ranking replaces tag-based AI call
 // Phase 3 retired — supplement selection now pure JS passthrough
 // Read-only. All writes occur in the browser on teacher approval.
-// Phases: 1 (Piece Correlation), 2 (Teacher Tag Matching),
+// Phases: 1 (Piece Correlation), 2 (Vector Supplement Ranking),
 //         4 (Teacher Summary), 5 (Student Practice Plan)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -13,6 +13,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_EMBEDDING_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent';
 
 const ALLOWED_MODEL_OVERRIDES = [
   'gemini-2.5-flash-lite',
@@ -22,14 +23,12 @@ const ALLOWED_MODEL_OVERRIDES = [
 
 const PHASE_MAX_OUTPUT_TOKENS: Record<number, number> = {
   1: 3000,
-  2: 500,
   4: 5000,
   5: 5000,
 };
 
 const PHASE_DEFAULT_THINKING_BUDGET: Record<number, number> = {
   1: 0,
-  2: 0,
   4: 1024,
   5: 1024,
 };
@@ -149,7 +148,6 @@ Deno.serve(async (req: Request) => {
     // Validate required prompts
     const requiredPromptKeys = [
       'session_close_phase1',
-      'session_close_phase2',
       'session_close_phase4',
       'session_close_phase5',
     ];
@@ -172,8 +170,6 @@ Deno.serve(async (req: Request) => {
     const bookThreshold = parseInt(configMap.get('book_transition_page_threshold') ?? '10');
     const supplementMaxDisplay = parseInt(configMap.get('supplement_max_display') ?? '10');
 
-    const teacherTagWeight = parseInt(configMap.get('supplement_teacher_tag_weight') ?? '2');
-
     const resolvedModelOverride = (model_override && ALLOWED_MODEL_OVERRIDES.includes(model_override))
       ? model_override
       : null;
@@ -190,15 +186,12 @@ Deno.serve(async (req: Request) => {
 
       const phaseAiConfig = {
         phase1: resolvePhaseAIConfig(configMap, 1),
-        phase2: resolvePhaseAIConfig(configMap, 2),
         phase4: resolvePhaseAIConfig(configMap, 4),
         phase5: resolvePhaseAIConfig(configMap, 5),
       };
 
       const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
-      const phase2PromptDry = promptMap.get('session_close_phase2')!
-        .replace('{{entries}}', entries)
-        .replace('{{candidate_tags}}', '[Phase 1 dependent — not available in dry_run]');
+      const phase2PromptDry = '[Phase 2 now uses vector similarity — no prompt template]';
       const phase4PromptDry = promptMap.get('session_close_phase4')!
         .replace('{{student_name}}', student_name)
         .replace('{{session_date}}', sessionDate)
@@ -255,12 +248,6 @@ Deno.serve(async (req: Request) => {
       }
 
       if (phase === 2) {
-        if (!supplied_phase1_output) {
-          return jsonResponse({ success: false, error: 'single_phase_run phase 2 requires phase1_output.' });
-        }
-        const phase1 = validatePhase1Output(supplied_phase1_output as Phase1Output, booksPieces, booksUnits, pieceKeyMap);
-        const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
-
         let allCandidates = supplementCandidates;
         if (equivalentBooks && equivalentBooks.length > 0) {
           const { data: equivData } = await supabase.rpc('get_supplement_candidates', {
@@ -274,16 +261,16 @@ Deno.serve(async (req: Request) => {
           });
           if (equivData) allCandidates = equivData;
         }
-
-        const candidateTagList = buildCandidateTagList(allCandidates, effectiveLessonPage);
-        const promptText = assemblePhase2Prompt(promptMap, entries, candidateTagList);
-        if (prompt_only) return jsonResponse({ success: true, phase: 2, assembled_prompt_used: promptText, debug_candidate_count: allCandidates.length, debug_tag_count: candidateTagList.length });
-        const aiConfig = resolvePhaseAIConfig(configMap, 2, resolvedModelOverride, thinking_budget_override);
-        const raw = await callAI(promptText, aiConfig);
-        const parsed = parsePhase2JSON(raw, candidateTagList);
-        const ranked2 = rankSupplementCandidates(allCandidates, phase1, booksPieces, effectiveLessonPage, parsed, teacherTagWeight, supplementMaxDisplay);
-        const rankedWithScore = ranked2.fullList.map(s => ({ title: s.title, score: (s as any).totalScore, pool: s.pool, tags: s.tags }));
-        return jsonResponse({ success: true, phase: 2, raw_output: raw, parsed_output: parsed, assembled_prompt_used: promptText, ranked_supplements: rankedWithScore });
+        const effectiveLessonPage = deriveEffectiveLessonPage(
+          supplied_phase1_output
+            ? validatePhase1Output(supplied_phase1_output as Phase1Output, booksPieces, booksUnits, pieceKeyMap)
+            : { piece_references: [], unit_references: [], max_lesson_page: null, book_transition_suspected: false },
+          booksPieces,
+          prevLessonPage,
+        );
+        const ranked2 = await rankSupplementsByVector(supabase, allCandidates, entries, effectiveLessonPage, supplementMaxDisplay);
+        const rankedWithScore = ranked2.fullList.map(s => ({ title: s.title, similarity: (s as any).similarity ?? null, pool: s.pool }));
+        return jsonResponse({ success: true, phase: 2, ranked_supplements: rankedWithScore, debug_candidate_count: allCandidates.length });
       }
 
       if ([4, 5].includes(phase)) {
@@ -352,30 +339,13 @@ Deno.serve(async (req: Request) => {
     const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
     phase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
 
-    // --- Phase 2: Teacher tag matching ---
-    // Graceful fallback to empty set — never fails the pipeline
-    let teacherImpliedTags: string[] = [];
-    try {
-      const candidateTagList = buildCandidateTagList(allSupplementCandidates, effectiveLessonPage);
-      if (candidateTagList.length > 0) {
-        const phase2Prompt = assemblePhase2Prompt(promptMap, entries, candidateTagList);
-        const phase2Config = resolvePhaseAIConfig(configMap, 2);
-        const phase2Raw = await callAI(phase2Prompt, phase2Config);
-        teacherImpliedTags = parsePhase2JSON(phase2Raw, candidateTagList);
-      }
-    } catch (err) {
-      console.warn('Phase 2 teacher tag matching failed — falling back to empty set:', err);
-      teacherImpliedTags = [];
-    }
-
-    // --- JS supplement ranking ---
-    const ranked = rankSupplementCandidates(
+    // --- Phase 2: Vector similarity ranking ---
+    // Graceful fallback to position order — never fails the pipeline
+    const ranked = await rankSupplementsByVector(
+      supabase,
       allSupplementCandidates,
-      phase1,
-      booksPieces,
+      entries,
       effectiveLessonPage,
-      teacherImpliedTags,
-      teacherTagWeight,
       supplementMaxDisplay,
     );
 
@@ -525,9 +495,7 @@ async function fetchSessionData(params: {
         'book_transition_page_threshold',
         'active_supplement_check_after_sessions',
         'min_entry_character_count',
-        'supplement_teacher_tag_weight',
         'ai_phase1_model', 'ai_phase1_thinking_budget',
-        'ai_phase2_model', 'ai_phase2_thinking_budget',
         'ai_phase4_model', 'ai_phase4_thinking_budget',
         'ai_phase5_model', 'ai_phase5_thinking_budget',
       ]),
@@ -623,6 +591,8 @@ interface SupplementCandidate {
   tags: string[];
   match_context: string | null;
   thumbnail_url: string | null;
+  search_description: string | null;
+  similarity?: number | null;
 }
 
 interface PieceReference {
@@ -805,44 +775,112 @@ function parsePhase1JSON(text: string): Phase1Output | null {
 }
 
 // ---------------------------------------------------------------------------
-// parsePhase2JSON
+// embedText — calls Gemini embedding API, returns normalized vector
 // ---------------------------------------------------------------------------
 
-function parsePhase2JSON(text: string, candidateTagList: string[]): string[] {
-  try {
-    const cleaned = stripFences(text);
-    const parsed = JSON.parse(cleaned);
-    const tags: unknown = parsed.teacher_implied_tags;
-    if (!Array.isArray(tags)) return [];
-    const validSet = new Set(candidateTagList);
-    return (tags as unknown[])
-      .filter((t): t is string => typeof t === 'string' && validSet.has(t));
-  } catch {
-    return [];
+async function embedText(text: string): Promise<number[]> {
+  const delays = [3000, 6000];
+
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      const res = await fetch(GEMINI_EMBEDDING_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': geminiApiKey,
+        },
+        body: JSON.stringify({
+          model: 'models/gemini-embedding-001',
+          content: { parts: [{ text }] },
+          outputDimensionality: 768,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const values: number[] = json?.embedding?.values ?? [];
+        if (values.length === 0) throw new Error('Empty embedding returned');
+        // Normalize to unit length — required for gemini-embedding-001 at non-3072 dimensions
+        const magnitude = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
+        return magnitude > 0 ? values.map(v => v / magnitude) : values;
+      }
+
+      if ((res.status === 429 || res.status === 503) && attempt < delays.length) {
+        await delay(delays[attempt]);
+        continue;
+      }
+
+      const errText = await res.text();
+      throw new Error(`Embedding API HTTP ${res.status}: ${errText}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('Embedding API HTTP')) throw err;
+      if (attempt < delays.length) await delay(delays[attempt]);
+      else throw err;
+    }
   }
+
+  throw new Error('embedText: retries exhausted');
 }
 
 // ---------------------------------------------------------------------------
-// buildCandidateTagList
+// rankSupplementsByVector
 // ---------------------------------------------------------------------------
 
-function buildCandidateTagList(
+async function rankSupplementsByVector(
+  supabase: ReturnType<typeof createClient>,
   candidates: SupplementCandidate[],
+  entries: string,
   effectiveLessonPage: number | null,
-): string[] {
-  const tagSet = new Set<string>();
-  for (const c of candidates) {
-    const eligible =
-      c.pool === 'fallback' ||
-      effectiveLessonPage === null ||
-      (c.page_start !== null && c.page_start <= effectiveLessonPage);
-    if (eligible) {
-      for (const tag of c.tags ?? []) {
-        tagSet.add(tag);
-      }
+  maxDisplay: number,
+): Promise<RankedResult> {
+
+  // Step 1: Position filter — same gate as before
+  const filtered = candidates.filter(c => {
+    if (c.pool === 'fallback') return true;
+    if (effectiveLessonPage === null) return true;
+    return (c.page_start ?? 0) <= effectiveLessonPage;
+  });
+
+  if (filtered.length === 0) return { fullList: [] };
+
+  // Step 2: Embed teacher entries and rank via pgvector
+  try {
+    const queryVector = await embedText(entries);
+    const candidateIds = filtered.map(c => c.supplement_id);
+
+    const { data: ranked } = await supabase.rpc('rank_supplement_candidates_by_vector', {
+      p_query_embedding: `[${queryVector.join(',')}]`,
+      p_supplement_ids: candidateIds,
+    });
+
+    if (ranked && ranked.length > 0) {
+      // Build similarity lookup
+      const similarityMap = new Map<string, number>(
+        (ranked as { supplement_id: string; similarity: number }[])
+          .map(r => [r.supplement_id, r.similarity])
+      );
+
+      // Reorder filtered candidates by similarity; supplements without embeddings go last
+      const sorted = [...filtered].sort((a, b) => {
+        const simA = similarityMap.get(a.supplement_id) ?? -1;
+        const simB = similarityMap.get(b.supplement_id) ?? -1;
+        return simB - simA;
+      });
+
+      return {
+        fullList: sorted.slice(0, maxDisplay).map(c => ({
+          ...c,
+          similarity: similarityMap.get(c.supplement_id) ?? null,
+        })),
+      };
     }
+  } catch (err) {
+    console.warn('Phase 2 vector ranking failed — falling back to position order:', err);
   }
-  return Array.from(tagSet).sort();
+
+  // Fallback: position order ascending
+  const fallback = [...filtered].sort((a, b) => (a.page_start ?? 0) - (b.page_start ?? 0));
+  return { fullList: fallback.slice(0, maxDisplay) };
 }
 
 // ---------------------------------------------------------------------------
@@ -962,65 +1000,6 @@ function deriveBookTransition(
     'ready for next book',
   ].some(phrase => lower.includes(phrase));
   return hasTransitionLanguage && effectiveLessonPage !== null && effectiveLessonPage < bookThreshold;
-}
-
-// ---------------------------------------------------------------------------
-// rankSupplementCandidates
-// ---------------------------------------------------------------------------
-
-function rankSupplementCandidates(
-  candidates: SupplementCandidate[],
-  phase1: Phase1Output,
-  booksPieces: BookPiece[],
-  effectiveLessonPage: number | null,
-  teacherImpliedTags: string[],
-  teacherTagWeight: number,
-  maxDisplay: number,
-): RankedResult {
-  // Step 1: Position filter
-  const filtered = candidates.filter(c => {
-    if (c.pool === 'fallback') return true;
-    if (effectiveLessonPage === null) return true;
-    return (c.page_start ?? 0) <= effectiveLessonPage;
-  });
-
-  // Step 2: Build tag sets
-  const teacherTagSet = new Set<string>(teacherImpliedTags);
-
-  const pieceTagSet = new Set<string>(
-    phase1.piece_references.flatMap(r => r.page_level_tags_matched ?? [])
-  );
-
-  // Step 3: Score each candidate
-  const scored = filtered.map(c => {
-    const candidateTags = new Set<string>(c.tags ?? []);
-
-    let teacherScore = 0;
-    if (teacherTagSet.size > 0) {
-      for (const tag of candidateTags) {
-        if (teacherTagSet.has(tag)) teacherScore += teacherTagWeight;
-      }
-    }
-
-    let pieceScore = 0;
-    if (pieceTagSet.size > 0) {
-      for (const tag of candidateTags) {
-        if (pieceTagSet.has(tag)) pieceScore += 1;
-      }
-    }
-
-    const totalScore = teacherScore + pieceScore;
-    const sortPage = (c.page_start ?? 0) + (c.pool === 'current_book' ? 1000 : 0);
-
-    return { ...c, totalScore, sortPage };
-  });
-
-  // Step 4: Sort and trim
-  scored.sort((a, b) => b.totalScore - a.totalScore || b.sortPage - a.sortPage);
-
-  const topList = scored.slice(0, maxDisplay);
-
-  return { fullList: topList };
 }
 
 // ---------------------------------------------------------------------------
@@ -1149,17 +1128,6 @@ function assemblePhase1Prompt(
     .replace('{{entries}}', entries)
     .replace('{{piece_list}}', pieceList)
     .replace('{{prior_lesson_page}}', priorLessonPage);
-}
-
-function assemblePhase2Prompt(
-  promptMap: Map<string, string>,
-  entries: string,
-  candidateTagList: string[],
-): string {
-  const candidateTagsText = candidateTagList.join('\n');
-  return (promptMap.get('session_close_phase2') ?? '')
-    .replace('{{entries}}', entries)
-    .replace('{{candidate_tags}}', candidateTagsText);
 }
 
 function assemblePhase4Prompt(
