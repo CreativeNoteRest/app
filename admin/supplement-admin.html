@@ -464,34 +464,35 @@ window.onBookSelect = async function() {
       state.mappedRows[r.supplement_id] = { piece_id: r.earliest_piece_id, piece_label: null };
     });
 
-    // Count mapped supplements per unit — we need piece→unit lookup
-    // Build unit counts from pieces data loaded per-unit later;
-    // for now do a bulk pieces query to map piece_id → unit_id
+    // Count mapped supplements per unit — need piece→unit_label lookup
     if (mapRows.length > 0) {
       const pieceIds = [...new Set(mapRows.map(r => r.earliest_piece_id).filter(Boolean))];
       if (pieceIds.length > 0) {
         const { data: pieceRows } = await sb
           .from('books_pieces')
-          .select('piece_id, unit_id, title, page_start')
+          .select('piece_id, unit_label, piece_title, page_start')
           .in('piece_id', pieceIds);
         if (pieceRows) {
-          // Build piece_id → label and piece_id → unit_id lookups
+          // Build piece_id → label and piece_id → unit_label lookups
           const pieceLabel = {};
-          const pieceToUnit = {};
+          const pieceToUnitLabel = {};
           pieceRows.forEach(p => {
-            pieceLabel[p.piece_id]  = `p.${p.page_start} — ${p.piece_title}`;
-            pieceToUnit[p.piece_id] = p.unit_id;
+            pieceLabel[p.piece_id]       = `p.${p.page_start} — ${p.piece_title}`;
+            pieceToUnitLabel[p.piece_id] = p.unit_label;
           });
-          // Populate piece labels in mappedRows — iterate mapRows not pieceRows
-          // so every supplement gets its own label even when sharing a piece anchor
+          // Build unit_label → unit_id map from already-loaded units
+          const unitLabelToId = {};
+          state.units.forEach(u => { unitLabelToId[u.unit_label] = u.unit_id; });
+          // Populate piece labels in mappedRows
           mapRows.forEach(r => {
             if (state.mappedRows[r.supplement_id] && r.earliest_piece_id) {
               state.mappedRows[r.supplement_id].piece_label = pieceLabel[r.earliest_piece_id] || null;
             }
           });
-          // Build unit → mapped count
+          // Build unit → mapped count using unit_label → unit_id resolution
           mapRows.forEach(r => {
-            const uid = pieceToUnit[r.earliest_piece_id];
+            const ul  = pieceToUnitLabel[r.earliest_piece_id];
+            const uid = unitLabelToId[ul];
             if (uid) state.unitMappedCounts[uid] = (state.unitMappedCounts[uid] || 0) + 1;
           });
         }
@@ -536,16 +537,17 @@ window.onUnitSelect = async function(unitId) {
     btn.classList.toggle('active', btn.dataset.unitId === unitId);
   });
 
-  // Load pieces for this unit
+  // Load pieces for this unit — join is by book_id + unit_label (no unit_id FK on books_pieces)
+  const unit = state.units.find(u => u.unit_id === unitId);
   const { data: pieces, error: pErr } = await sb
     .from('books_pieces')
     .select('piece_id, piece_title, page_start')
-    .eq('unit_id', unitId)
+    .eq('book_id', state.activeBookId)
+    .eq('unit_label', unit?.unit_label || '')
     .order('page_start');
   if (!pErr && pieces) state.pieces = pieces;
 
   // Update unit panel title
-  const unit = state.units.find(u => u.unit_id === unitId);
   document.getElementById('supp-panel-title').textContent =
     unit ? `${unit.unit_label} — ${unit.unit_title}` : 'Supplements';
 
@@ -835,10 +837,12 @@ window.applyMappings = async function() {
     firstPieceId = state.pieces[0].piece_id;
   } else {
     // Fallback: query DB for first piece (should not normally be needed)
+    const activeUnit = state.units.find(u => u.unit_id === state.activeUnitId);
     const { data: fp } = await sb
       .from('books_pieces')
       .select('piece_id')
-      .eq('unit_id', state.activeUnitId)
+      .eq('book_id', state.activeBookId)
+      .eq('unit_label', activeUnit?.unit_label || '')
       .order('page_start')
       .limit(1);
     firstPieceId = fp?.[0]?.piece_id || null;
