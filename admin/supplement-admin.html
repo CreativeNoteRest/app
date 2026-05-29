@@ -316,8 +316,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const state = {
   authUserId:     '',
   books:          [],   // [{ book_id, display_name, sequence_number }]
-  units:          [],   // [{ unit_id, unit_label, unit_title, sort_order }]
-  pieces:         [],   // [{ piece_id, title, page_start, sort_order }]
+  units:          [],   // [{ unit_id, unit_label, unit_title, unit_sort_order }]
+  pieces:         [],   // [{ piece_id, piece_title, page_start, unit_sort_order }]
   activeBookId:   null,
   activeUnitId:   null,
   // unitMappedCounts: { unit_id: count } — for dot indicators
@@ -444,9 +444,9 @@ window.onBookSelect = async function() {
   // Load units
   const { data: units, error: uErr } = await sb
     .from('books_units')
-    .select('unit_id, unit_label, unit_title, sort_order')
+    .select('unit_id, unit_label, unit_title, unit_sort_order')
     .eq('book_id', bookId)
-    .order('sort_order');
+    .order('unit_sort_order');
   if (uErr || !units) return;
   state.units = units;
 
@@ -479,7 +479,7 @@ window.onBookSelect = async function() {
           const pieceLabel = {};
           const pieceToUnit = {};
           pieceRows.forEach(p => {
-            pieceLabel[p.piece_id]  = `p.${p.page_start} — ${p.title}`;
+            pieceLabel[p.piece_id]  = `p.${p.page_start} — ${p.piece_title}`;
             pieceToUnit[p.piece_id] = p.unit_id;
           });
           // Populate piece labels in mappedRows — iterate mapRows not pieceRows
@@ -539,9 +539,9 @@ window.onUnitSelect = async function(unitId) {
   // Load pieces for this unit
   const { data: pieces, error: pErr } = await sb
     .from('books_pieces')
-    .select('piece_id, title, page_start, sort_order')
+    .select('piece_id, piece_title, page_start, unit_sort_order')
     .eq('unit_id', unitId)
-    .order('sort_order');
+    .order('unit_sort_order');
   if (!pErr && pieces) state.pieces = pieces;
 
   // Update unit panel title
@@ -700,7 +700,7 @@ function buildUnmappedRow(s) {
   let pieceOpts = '<option value="">— first piece in unit —</option>';
   state.pieces.forEach(p => {
     const sel = selectedPiece === p.piece_id ? ' selected' : '';
-    pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.title)}</option>`;
+    pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.piece_title)}</option>`;
   });
 
   const linkHtml = s.source_url
@@ -827,7 +827,7 @@ window.applyMappings = async function() {
       .from('books_pieces')
       .select('piece_id')
       .eq('unit_id', state.activeUnitId)
-      .order('sort_order')
+      .order('unit_sort_order')
       .limit(1);
     firstPieceId = fp?.[0]?.piece_id || null;
   }
@@ -863,7 +863,7 @@ window.applyMappings = async function() {
     const pieceData = state.pieces.find(p => p.piece_id === resolvedPiece);
     state.mappedRows[suppId] = {
       piece_id: resolvedPiece,
-      piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.title}` : null,
+      piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : null,
     };
     // Update unit dot count
     state.unitMappedCounts[state.activeUnitId] =
