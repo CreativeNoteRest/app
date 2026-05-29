@@ -844,6 +844,12 @@ async function rankSupplementsByVector(
   if (filtered.length === 0) return { fullList: [] };
 
   // Step 2: Embed teacher entries and rank via pgvector
+  // Guard: empty entries cannot be embedded — fall back to position order
+  if (!entries || !entries.trim()) {
+    const fallback = [...filtered].sort((a, b) => (a.page_start ?? 0) - (b.page_start ?? 0));
+    return { fullList: fallback.slice(0, maxDisplay) };
+  }
+
   try {
     const queryVector = await embedText(entries);
     const candidateIds = filtered.map(c => c.supplement_id);
