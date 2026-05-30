@@ -13,6 +13,18 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+// Strip the AUDIENCE section from search_description before embedding.
+// search_description stores AUDIENCE + GOALS for future teacher-facing browse display,
+// but audience/level is already captured by curriculum_hint in the embedding input.
+// Embedding only the GOALS content focuses the vector on skills — the primary
+// ranking signal at session close. Fallback: if GOALS label is absent (thin-source
+// rows where Gemini stopped early), use the full description rather than nothing.
+function extractGoalsContent(searchDescription: string): string {
+  const goalsIndex = searchDescription.indexOf("GOALS");
+  if (goalsIndex === -1) return searchDescription;
+  return searchDescription.slice(goalsIndex + 5).trim();
+}
+
 function buildEmbeddingInput(row: {
   title: string;
   curriculum_hint: string | null;
@@ -23,7 +35,7 @@ function buildEmbeddingInput(row: {
   const parts: string[] = [];
   parts.push(row.title);
   if (row.curriculum_hint) parts.push(row.curriculum_hint);
-  parts.push(row.search_description);
+  parts.push(extractGoalsContent(row.search_description));
   // Include topic slugs where present — carries seasonal and category signal
   // for teacher browse search. Guard against null and empty array.
   if (row.wk_topics && row.wk_topics.length > 0) {
