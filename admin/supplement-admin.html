@@ -193,6 +193,57 @@
     .placeholder-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text-mid); margin-bottom: 6px; }
     .placeholder-sub { font-size: 0.82rem; line-height: 1.6; }
 
+    /* ── Manage tab ── */
+    .manage-search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .manage-search-wrap { flex: 1; min-width: 220px; position: relative; }
+    .manage-search-inp { width: 100%; height: 42px; padding: 0 14px 0 38px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .manage-search-inp:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.1); background: #fff; }
+    .manage-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; opacity: 0.4; }
+    .manage-search-hint { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; line-height: 1.5; }
+    .manage-search-hint code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 0.7rem; color: var(--text-mid); }
+    .manage-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .manage-filter-chip { height: 30px; padding: 0 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card); color: var(--text-mid); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .manage-filter-chip:hover { border-color: var(--brand); color: var(--brand); }
+    .manage-filter-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .manage-filter-chip.danger.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .manage-select-row { display: flex; align-items: center; gap: 10px; padding: 6px 0 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+    .manage-select-all-chk { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; }
+    .manage-select-label { font-size: 0.78rem; color: var(--text-mid); }
+    .manage-result-count { font-size: 0.78rem; color: var(--text-light); margin-left: auto; }
+
+    /* Manage supplement row */
+    .msupp-row { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s; }
+    .msupp-row.checked { border-color: var(--brand); background: #FFFAF6; }
+    .msupp-row.retired-row { opacity: 0.65; }
+    .msupp-row-check { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
+    .msupp-thumb { width: 40px; height: 50px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1rem; overflow: hidden; }
+    .msupp-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .msupp-body { flex: 1; min-width: 0; }
+    .msupp-title { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+    .msupp-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+    .msupp-hint { font-size: 0.74rem; color: var(--text-mid); }
+    .msupp-link { font-size: 0.73rem; font-weight: 600; color: var(--text-light); text-decoration: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; transition: color 0.15s, border-color 0.15s; margin-top: 4px; display: inline-block; }
+    .msupp-link:hover { color: var(--brand); border-color: var(--brand); }
+    .badge-active   { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-retired  { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+    .badge-free     { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
+    .badge-paid     { background: #F8FAFC; color: #64748B; border: 1px solid #CBD5E1; }
+
+    /* Manage action bar */
+    .manage-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1.5px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 10px; z-index: 40; box-shadow: 0 -2px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
+    .manage-bar-count { font-size: 0.88rem; color: var(--text-mid); flex: 1; min-width: 120px; }
+    .manage-bar-count strong { color: var(--text); }
+    .manage-bar-msg { font-size: 0.82rem; }
+    .btn-danger { height: 38px; padding: 0 16px; background: var(--danger); color: #fff; border: none; border-radius: 9px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-danger:hover { opacity: 0.85; }
+    .btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-staging { height: 38px; padding: 0 16px; background: #7C3AED; color: #fff; border: none; border-radius: 9px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-staging:hover { opacity: 0.85; }
+    .btn-staging:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-reactivate { height: 38px; padding: 0 16px; background: var(--success); color: #fff; border: none; border-radius: 9px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-reactivate:hover { opacity: 0.85; }
+    .btn-reactivate:disabled { opacity: 0.4; cursor: not-allowed; }
+
     .hidden { display: none !important; }
     .mt8  { margin-top: 8px; }
     .mt16 { margin-top: 16px; }
@@ -297,11 +348,50 @@
 
   <!-- ══ TAB: Manage supplements ══ -->
   <div id="tab-manage" class="hidden">
-    <div class="placeholder-panel">
-      <div class="placeholder-icon">🗂</div>
-      <div class="placeholder-title">Supplement management coming soon</div>
-      <div class="placeholder-sub">Retirement and metadata editing will be available here in a future update.</div>
+
+    <div class="card">
+      <div class="card-tag">Search &amp; Filter</div>
+      <div class="card-title" style="margin-bottom:10px;">Find supplements</div>
+
+      <div class="manage-search-row">
+        <div class="manage-search-wrap">
+          <span class="manage-search-icon">🔍</span>
+          <input class="manage-search-inp" id="manage-search" type="text"
+            placeholder="Search by title, or use keywords…"
+            oninput="manageSearch()" />
+        </div>
+        <button class="btn-secondary" onclick="manageClearSearch()">Clear</button>
+      </div>
+
+      <div class="manage-search-hint">
+        Keywords: <code>free</code> <code>paid</code> <code>multi</code> <code>unmapped</code>
+        <code>level a</code>…<code>level y</code> <code>vu</code> <code>retired</code>
+        — combine with any title words
+      </div>
+
+      <div class="manage-filter-row">
+        <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-right:2px;">Quick filter</span>
+        <button class="manage-filter-chip" id="chip-free"      onclick="manageToggleChip('free')">Free only</button>
+        <button class="manage-filter-chip" id="chip-paid"      onclick="manageToggleChip('paid')">Paid only</button>
+        <button class="manage-filter-chip" id="chip-multi"     onclick="manageToggleChip('multi')">Multi-lesson</button>
+        <button class="manage-filter-chip" id="chip-unmapped"  onclick="manageToggleChip('unmapped')">Unmapped</button>
+        <button class="manage-filter-chip danger" id="chip-retired" onclick="manageToggleChip('retired')">Show retired</button>
+      </div>
+
+      <div class="manage-select-row">
+        <input type="checkbox" class="manage-select-all-chk" id="manage-select-all"
+          onchange="manageSelectAll(this.checked)" />
+        <label class="manage-select-label" for="manage-select-all">Select all visible</label>
+        <span class="manage-result-count" id="manage-result-count"></span>
+      </div>
+
+      <div id="manage-list-loading" class="loading-row hidden">
+        <span class="spinner spinner-dark"></span> Loading supplements…
+      </div>
+      <div id="manage-list-msg" class="hidden"></div>
+      <div id="manage-list" class="supp-list"></div>
     </div>
+
   </div>
 
 </main>
@@ -317,6 +407,16 @@
       <button class="btn-primary" id="btn-move-confirm" onclick="confirmMove()">Move here</button>
     </div>
   </div>
+</div>
+
+<!-- ── Manage action bar ── -->
+<div class="manage-bar hidden" id="manage-bar">
+  <div class="manage-bar-count" id="manage-bar-count"></div>
+  <div class="manage-bar-msg hidden" id="manage-bar-msg"></div>
+  <button class="btn-danger"      id="btn-retire"     onclick="manageRetire()">Retire</button>
+  <button class="btn-reactivate"  id="btn-reactivate" onclick="manageReactivate()">Reactivate</button>
+  <button class="btn-staging"     id="btn-to-staging" onclick="managePushToStaging()">Push to staging</button>
+  <button class="btn-secondary"   onclick="manageClearSelection()">Clear</button>
 </div>
 
 <!-- ── Sticky apply bar (outside main, always at bottom) ── -->
@@ -1250,6 +1350,353 @@ function showMsg(el, type, msg) {
   el.textContent = msg;
   el.classList.remove('hidden');
 }
+
+// ══════════════════════════════════════════════════════════════════
+// ── MANAGE TAB ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+
+const mState = {
+  allSupplements:   [],      // { supplement_id, title, source_url, source, thumbnail_url, is_multi_lesson, is_free, is_active, wk_categories, wk_level, curriculum_hint }
+  mappedIds:        new Set(), // supplement_ids with any eligibility row
+  selected:         new Set(), // supplement_ids currently checked
+  loaded:           false,
+  chips:            { free: false, paid: false, multi: false, unmapped: false, retired: false },
+};
+
+// Load fresh when manage tab is activated (called from switchTab)
+async function manageLoad() {
+  if (mState.loaded) { manageRender(); return; }
+
+  document.getElementById('manage-list-loading').classList.remove('hidden');
+  document.getElementById('manage-list').innerHTML = '';
+  document.getElementById('manage-result-count').textContent = '';
+
+  // Load all supplements (active + retired)
+  const { data: supps, error: sErr } = await sb
+    .from('supplements')
+    .select('supplement_id, title, source_url, source, thumbnail_url, is_multi_lesson, is_free, is_active, wk_categories, wk_topics, wk_level, catalog_section, curriculum_hint, search_description, match_context, season')
+    .eq('series_id', SERIES_ID)
+    .order('title');
+
+  if (sErr || !supps) {
+    document.getElementById('manage-list-loading').classList.add('hidden');
+    showMsg(document.getElementById('manage-list-msg'), 'error', 'Failed to load supplements: ' + (sErr?.message || 'unknown error'));
+    return;
+  }
+  mState.allSupplements = supps;
+
+  // Load all eligibility map ids for this series (to power unmapped filter)
+  const { data: mapRows } = await sb
+    .from('supplement_eligibility_map')
+    .select('supplement_id')
+    .eq('series_id', SERIES_ID);
+  mState.mappedIds = new Set((mapRows || []).map(r => r.supplement_id));
+
+  mState.loaded = true;
+  document.getElementById('manage-list-loading').classList.add('hidden');
+  manageRender();
+}
+
+// ── Search parsing ─────────────────────────────────────────────────
+function manageParseQuery(raw) {
+  // Returns { filters: {}, titleTerms: [] }
+  const tokens = raw.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const filters = {};
+  const titleTerms = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'free')                          { filters.free = true;     i++; continue; }
+    if (t === 'paid')                          { filters.paid = true;     i++; continue; }
+    if (t === 'multi' || t === 'multi-lesson') { filters.multi = true;    i++; continue; }
+    if (t === 'unmapped')                      { filters.unmapped = true; i++; continue; }
+    if (t === 'retired' || t === 'inactive')   { filters.retired = true;  i++; continue; }
+    if (t === 'vu')                            { filters.vu = true;       i++; continue; }
+    // "level a" … "level y"
+    if (t === 'level' && tokens[i+1] && /^[a-y]$/.test(tokens[i+1])) {
+      filters.level = tokens[i+1]; i += 2; continue;
+    }
+    titleTerms.push(t);
+    i++;
+  }
+  return { filters, titleTerms };
+}
+
+function manageApplyFilters(supps, filters, titleTerms, chips) {
+  // Merge chip state into effective filters (chips are additive)
+  const f = Object.assign({}, filters);
+  if (chips.free)    f.free    = true;
+  if (chips.paid)    f.paid    = true;
+  if (chips.multi)   f.multi   = true;
+  if (chips.unmapped) f.unmapped = true;
+  if (chips.retired) f.retired = true;
+
+  // By default: active only. retired flag (from query or chip) reveals retired items.
+  const showRetired = !!f.retired;
+
+  return supps.filter(s => {
+    if (!showRetired && !s.is_active) return false;
+    if (f.free    && !s.is_free)         return false;
+    if (f.paid    && s.is_free !== false) return false;
+    if (f.multi   && !s.is_multi_lesson) return false;
+    if (f.unmapped && mState.mappedIds.has(s.supplement_id)) return false;
+    if (f.level   && (s.wk_level || '').toLowerCase() !== f.level) return false;
+    if (f.vu && !(s.wk_categories || []).some(c => c.toLowerCase().includes('v. u.'))) return false;
+    if (titleTerms.length) {
+      const haystack = (s.title || '').toLowerCase();
+      if (!titleTerms.every(t => haystack.includes(t))) return false;
+    }
+    return true;
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+function manageRender() {
+  const raw   = document.getElementById('manage-search').value;
+  const { filters, titleTerms } = manageParseQuery(raw);
+  let visible = manageApplyFilters(mState.allSupplements, filters, titleTerms, mState.chips);
+
+  const listEl = document.getElementById('manage-list');
+  const countEl = document.getElementById('manage-result-count');
+  const msgEl   = document.getElementById('manage-list-msg');
+  msgEl.classList.add('hidden');
+
+  countEl.textContent = `${visible.length} supplement${visible.length !== 1 ? 's' : ''}`;
+
+  if (!visible.length) {
+    listEl.innerHTML = '<div class="supp-empty">No supplements match your search.</div>';
+    manageUpdateSelectAll();
+    manageUpdateBar();
+    return;
+  }
+
+  listEl.innerHTML = '';
+  visible.forEach(s => listEl.appendChild(manageBuildRow(s)));
+  manageUpdateSelectAll();
+  manageUpdateBar();
+}
+
+function manageBuildRow(s) {
+  const isChecked = mState.selected.has(s.supplement_id);
+  const row = document.createElement('div');
+  row.className = 'msupp-row' + (isChecked ? ' checked' : '') + (!s.is_active ? ' retired-row' : '');
+  row.dataset.suppId = s.supplement_id;
+
+  const thumbHtml = s.thumbnail_url
+    ? `<div class="msupp-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
+    : `<div class="msupp-thumb">🎵</div>`;
+
+  const statusBadge = s.is_active
+    ? `<span class="badge badge-active">active</span>`
+    : `<span class="badge badge-retired">retired</span>`;
+  const freeBadge = s.is_free === true
+    ? `<span class="badge badge-free">free</span>`
+    : s.is_free === false
+      ? `<span class="badge badge-paid">paid</span>` : '';
+  const multiBadge = s.is_multi_lesson ? `<span class="badge badge-multi">multi-lesson</span>` : '';
+  const levelBadge = s.wk_level ? `<span class="badge badge-hint">Level ${s.wk_level.toUpperCase()}</span>` : '';
+  const catBadge = (s.wk_categories || []).length
+    ? `<span class="badge badge-cat">${escHtml(s.wk_categories[0])}</span>` : '';
+  const mappedBadge = !mState.mappedIds.has(s.supplement_id)
+    ? `<span class="badge" style="background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;">unmapped</span>` : '';
+
+  const hintHtml = s.curriculum_hint
+    ? `<div class="msupp-hint">hint: ${escHtml(s.curriculum_hint)}</div>` : '';
+  const linkHtml = s.source_url
+    ? `<a class="msupp-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
+
+  row.innerHTML = `
+    <input type="checkbox" class="msupp-row-check" id="mchk-${s.supplement_id}" ${isChecked ? 'checked' : ''} />
+    ${thumbHtml}
+    <div class="msupp-body">
+      <div class="msupp-title">${escHtml(s.title)}</div>
+      <div class="msupp-meta">${statusBadge}${freeBadge}${multiBadge}${levelBadge}${catBadge}${mappedBadge}</div>
+      ${hintHtml}
+      ${linkHtml}
+    </div>`;
+
+  row.querySelector(`#mchk-${s.supplement_id}`).addEventListener('change', e => {
+    if (e.target.checked) mState.selected.add(s.supplement_id);
+    else                  mState.selected.delete(s.supplement_id);
+    row.classList.toggle('checked', e.target.checked);
+    manageUpdateSelectAll();
+    manageUpdateBar();
+  });
+
+  return row;
+}
+
+// ── Selection helpers ──────────────────────────────────────────────
+window.manageSelectAll = function(checked) {
+  document.querySelectorAll('#manage-list .msupp-row').forEach(row => {
+    const id  = row.dataset.suppId;
+    const chk = row.querySelector(`#mchk-${id}`);
+    if (!chk) return;
+    chk.checked = checked;
+    if (checked) { mState.selected.add(id); row.classList.add('checked'); }
+    else         { mState.selected.delete(id); row.classList.remove('checked'); }
+  });
+  manageUpdateBar();
+};
+
+window.manageClearSelection = function() {
+  mState.selected.clear();
+  document.querySelectorAll('#manage-list .msupp-row-check').forEach(chk => chk.checked = false);
+  document.querySelectorAll('#manage-list .msupp-row').forEach(r => r.classList.remove('checked'));
+  document.getElementById('manage-select-all').checked = false;
+  manageUpdateBar();
+};
+
+function manageUpdateSelectAll() {
+  const rows = document.querySelectorAll('#manage-list .msupp-row');
+  const selectAllChk = document.getElementById('manage-select-all');
+  if (!rows.length) { selectAllChk.checked = false; selectAllChk.indeterminate = false; return; }
+  const checkedCount = [...rows].filter(r => mState.selected.has(r.dataset.suppId)).length;
+  selectAllChk.indeterminate = checkedCount > 0 && checkedCount < rows.length;
+  selectAllChk.checked = checkedCount === rows.length;
+}
+
+// ── Action bar ─────────────────────────────────────────────────────
+function manageUpdateBar() {
+  const bar   = document.getElementById('manage-bar');
+  const count = mState.selected.size;
+  if (count === 0) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  document.getElementById('manage-bar-count').innerHTML =
+    `<strong>${count}</strong> supplement${count !== 1 ? 's' : ''} selected`;
+  document.getElementById('manage-bar-msg').classList.add('hidden');
+}
+
+function manageShowBarMsg(type, text) {
+  const el = document.getElementById('manage-bar-msg');
+  el.className = `manage-bar-msg msg msg-${type}`;
+  el.textContent = text;
+  el.classList.remove('hidden');
+  if (type === 'success') setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+function manageSetBusy(busy) {
+  ['btn-retire','btn-reactivate','btn-to-staging'].forEach(id => {
+    document.getElementById(id).disabled = busy;
+  });
+}
+
+// ── Retire ─────────────────────────────────────────────────────────
+window.manageRetire = async function() {
+  const ids = [...mState.selected];
+  if (!ids.length) return;
+  if (!confirm(`Retire ${ids.length} supplement${ids.length !== 1 ? 's' : ''}? They will be set to is_active = false and hidden from recommendations.`)) return;
+  manageSetBusy(true);
+  const { error } = await sb
+    .from('supplements')
+    .update({ is_active: false })
+    .in('supplement_id', ids)
+    .eq('series_id', SERIES_ID);
+  if (error) { manageShowBarMsg('error', 'Retire failed: ' + error.message); manageSetBusy(false); return; }
+  ids.forEach(id => {
+    const s = mState.allSupplements.find(x => x.supplement_id === id);
+    if (s) s.is_active = false;
+  });
+  mState.selected.clear();
+  manageSetBusy(false);
+  manageShowBarMsg('success', `${ids.length} retired ✓`);
+  manageRender();
+};
+
+// ── Reactivate ─────────────────────────────────────────────────────
+window.manageReactivate = async function() {
+  const ids = [...mState.selected];
+  if (!ids.length) return;
+  if (!confirm(`Reactivate ${ids.length} supplement${ids.length !== 1 ? 's' : ''}? They will be set to is_active = true.`)) return;
+  manageSetBusy(true);
+  const { error } = await sb
+    .from('supplements')
+    .update({ is_active: true })
+    .in('supplement_id', ids)
+    .eq('series_id', SERIES_ID);
+  if (error) { manageShowBarMsg('error', 'Reactivate failed: ' + error.message); manageSetBusy(false); return; }
+  ids.forEach(id => {
+    const s = mState.allSupplements.find(x => x.supplement_id === id);
+    if (s) s.is_active = true;
+  });
+  mState.selected.clear();
+  manageSetBusy(false);
+  manageShowBarMsg('success', `${ids.length} reactivated ✓`);
+  manageRender();
+};
+
+// ── Push to staging ────────────────────────────────────────────────
+window.managePushToStaging = async function() {
+  const ids = [...mState.selected];
+  if (!ids.length) return;
+  const selectedSupps = mState.allSupplements.filter(s => ids.includes(s.supplement_id));
+  if (!confirm(`Push ${ids.length} supplement${ids.length !== 1 ? 's' : ''} to staging with status = promoted? You can then adjust status in the enrichment tool.`)) return;
+  manageSetBusy(true);
+
+  const rows = selectedSupps.map(s => ({
+    series_id:          SERIES_ID,
+    source_url:         s.source_url,
+    source:             s.source || 'wunderkeys',
+    status:             'promoted',
+    title:              s.title             || null,
+    thumbnail_url:      s.thumbnail_url     || null,
+    is_free:            s.is_free           ?? null,
+    curriculum_hint:    s.curriculum_hint   || null,
+    search_description: s.search_description || null,
+    match_context:      s.match_context     || null,
+    season:             s.season            || null,
+    is_multi_lesson:    s.is_multi_lesson   ?? null,
+    wk_topics:          s.wk_topics         || null,
+    wk_categories:      s.wk_categories     || null,
+    wk_level:           s.wk_level          || null,
+    catalog_section:    s.catalog_section   || null,
+  }));
+
+  const { error } = await sb
+    .from('supplement_staging')
+    .upsert(rows, { onConflict: 'source_url,series_id' });
+
+  if (error) { manageShowBarMsg('error', 'Staging push failed: ' + error.message); manageSetBusy(false); return; }
+  mState.selected.clear();
+  manageSetBusy(false);
+  manageShowBarMsg('success', `${ids.length} pushed to staging ✓`);
+  manageRender();
+};
+
+// ── Search & chip controls ─────────────────────────────────────────
+window.manageSearch = function() { manageRender(); };
+
+window.manageClearSearch = function() {
+  document.getElementById('manage-search').value = '';
+  // Clear chips too
+  Object.keys(mState.chips).forEach(k => mState.chips[k] = false);
+  document.querySelectorAll('.manage-filter-chip').forEach(c => c.classList.remove('active'));
+  manageRender();
+};
+
+window.manageToggleChip = function(key) {
+  mState.chips[key] = !mState.chips[key];
+  document.getElementById(`chip-${key}`).classList.toggle('active', mState.chips[key]);
+  manageRender();
+};
+
+// ── Tab switching: hook manage load ──────────────────────────────────
+const _origSwitchTab = window.switchTab;
+window.switchTab = function(tab) {
+  _origSwitchTab(tab);
+  // Hide the map apply-bar when switching to manage; hide manage-bar when on map
+  if (tab === 'manage') {
+    document.getElementById('apply-bar').classList.add('hidden');
+    if (!mState.loaded) manageLoad();
+    else manageRender();
+  } else {
+    document.getElementById('manage-bar').classList.add('hidden');
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ── END MANAGE TAB ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 checkSession();
