@@ -62,22 +62,22 @@
     .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
 
     /* ── Layout ── */
-    .main { max-width: 960px; margin: 0 auto; padding: 36px 24px 120px; }
-    .page-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
-    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 6px; }
+    .main { max-width: 960px; margin: 0 auto; padding: 20px 24px 120px; }
+    .page-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 2px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 2px; }
     .page-title em { color: var(--brand); font-style: italic; }
-    .page-subtitle { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .page-subtitle { font-size: 0.8rem; color: var(--text-mid); margin-bottom: 14px; line-height: 1.4; }
 
     /* ── Page tabs ── */
-    .page-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+    .page-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 14px; }
     .page-tab { height: 40px; padding: 0 22px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 0.88rem; font-weight: 600; color: var(--text-light); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
     .page-tab:hover { color: var(--text-mid); }
     .page-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
 
     /* ── Cards ── */
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
-    .card-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 3px; }
-    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); margin-bottom: 18px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+    .card-tag { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 2px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 10px; }
 
     /* ── Form elements ── */
     .form-lbl { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
@@ -114,20 +114,33 @@
     .badge-cat   { background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); }
     .badge-multi { background: #F3E8FF; color: #7C3AED; border: 1px solid #DDD6FE; }
     .badge-mapped { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-elsewhere { background: var(--warn-light); color: #92400E; border: 1px solid var(--warn-border); }
+
+    /* ── Move-here button (mapped-elsewhere rows) ── */
+    .btn-move-here { height: 26px; padding: 0 10px; background: var(--warn-light); color: #92400E; border: 1px solid var(--warn-border); border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .btn-move-here:hover { background: #FDE68A; border-color: #D97706; }
+
+    /* ── Move confirmation dialog ── */
+    .move-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .move-confirm-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+    .move-confirm-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+    .move-confirm-body { font-size: 0.85rem; color: var(--text-mid); line-height: 1.55; margin-bottom: 20px; }
+    .move-confirm-body strong { color: var(--text); }
+    .move-confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
     /* ── Book selector row ── */
-    .selector-row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
-    .selector-field { display: flex; flex-direction: column; gap: 6px; }
+    .selector-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+    .selector-field { display: flex; flex-direction: column; gap: 4px; }
     .selector-field.book { min-width: 240px; flex: 1; }
 
     /* ── Unit tabs ── */
-    .unit-tabs-wrap { margin-bottom: 20px; }
-    .unit-tabs-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; }
-    .unit-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-    .unit-tab { height: 36px; padding: 0 14px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; position: relative; white-space: nowrap; }
+    .unit-tabs-wrap { margin-bottom: 10px; }
+    .unit-tabs-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
+    .unit-tabs { display: flex; flex-wrap: wrap; gap: 5px; }
+    .unit-tab { height: 28px; padding: 0 10px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; position: relative; white-space: nowrap; }
     .unit-tab:hover { border-color: var(--brand); color: var(--brand); }
     .unit-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-    .unit-tab .unit-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--success); margin-left: 5px; vertical-align: middle; }
+    .unit-tab .unit-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--success); margin-left: 4px; vertical-align: middle; }
     .unit-tab.active .unit-dot { background: rgba(255,255,255,0.7); }
 
     /* ── List controls ── */
@@ -294,6 +307,18 @@
 </main>
 </div><!-- /view-app -->
 
+<!-- ── Move confirmation dialog ── -->
+<div class="move-confirm-overlay hidden" id="move-confirm-overlay">
+  <div class="move-confirm-card">
+    <div class="move-confirm-title">Move supplement?</div>
+    <div class="move-confirm-body" id="move-confirm-body"></div>
+    <div class="move-confirm-actions">
+      <button class="btn-secondary" onclick="cancelMoveConfirm()">Cancel</button>
+      <button class="btn-primary" id="btn-move-confirm" onclick="confirmMove()">Move here</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Sticky apply bar (outside main, always at bottom) ── -->
 <div class="apply-bar hidden" id="apply-bar">
   <div class="apply-bar-count" id="apply-bar-count"></div>
@@ -332,6 +357,8 @@ const state = {
   listMode:       'unmapped',  // 'unmapped' | 'mapped'
   // checks: { supplement_id: piece_id | '' } — '' means first piece in unit
   checks:         {},
+  // unmaps: Set of supplement_ids to delete from eligibility map on Apply
+  unmaps:         new Set(),
 };
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -428,6 +455,7 @@ window.onBookSelect = async function() {
   state.units        = [];
   state.pieces       = [];
   state.checks       = {};
+  state.unmaps       = new Set();
   state.mappedForBook = new Set();
   state.mappedRows    = {};
   state.unitMappedCounts = {};
@@ -486,7 +514,8 @@ window.onBookSelect = async function() {
           // Populate piece labels in mappedRows
           mapRows.forEach(r => {
             if (state.mappedRows[r.supplement_id] && r.earliest_piece_id) {
-              state.mappedRows[r.supplement_id].piece_label = pieceLabel[r.earliest_piece_id] || null;
+              state.mappedRows[r.supplement_id].piece_label  = pieceLabel[r.earliest_piece_id] || null;
+              state.mappedRows[r.supplement_id].unit_label   = pieceToUnitLabel[r.earliest_piece_id] || null;
             }
           });
           // Build unit → mapped count using unit_label → unit_id resolution
@@ -525,6 +554,7 @@ window.onUnitSelect = async function(unitId) {
   // Clear checks when switching units (pending work would be lost — acceptable)
   if (state.activeUnitId !== unitId) {
     state.checks = {};
+    state.unmaps = new Set();
     hideApplyBar();
   }
   state.activeUnitId = unitId;
@@ -769,44 +799,225 @@ function buildUnmappedRow(s) {
 }
 
 function buildMappedRow(s) {
-  const mapData = state.mappedRows[s.supplement_id];
-  const anchorLabel = mapData?.piece_label || '— anchor not resolved —';
+  const mapData      = state.mappedRows[s.supplement_id];
+  const anchorPieceId = mapData?.piece_id || null;
+  const anchorLabel   = mapData?.piece_label || '— anchor not resolved —';
+
+  // Determine if this supplement is anchored to the currently selected unit
+  const anchorPiece   = state.pieces.find(p => p.piece_id === anchorPieceId);
+  const inCurrentUnit = !!anchorPiece;
+
+  // Find which unit it belongs to (for the "In Unit X" badge when anchored elsewhere)
+  let fromUnitLabel = null;
+  if (!inCurrentUnit && anchorPieceId) {
+    fromUnitLabel = mapData?.unit_label || null;
+  }
+
+  const isQueuedForUnmap = state.unmaps.has(s.supplement_id);
+  const isChecked = inCurrentUnit && !isQueuedForUnmap;
 
   const row = document.createElement('div');
-  row.className = 'supp-row-mapped';
+  row.className = 'supp-row' + (isChecked ? ' checked' : '');
+  row.dataset.suppId = s.supplement_id;
 
   const thumbHtml = s.thumbnail_url
-    ? `<div class="supp-row-mapped-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
-    : `<div class="supp-row-mapped-thumb">🎵</div>`;
+    ? `<div class="supp-row-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
+    : `<div class="supp-row-thumb">🎵</div>`;
 
-  const linkHtml = s.source_url
+  const badgeHtml  = signalBadge(s);
+  const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">multi-lesson</span>' : '';
+  const linkHtml   = s.source_url
     ? `<a class="supp-row-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
 
-  row.innerHTML = `
-    ${thumbHtml}
-    <div class="supp-row-mapped-body">
-      <div class="supp-row-mapped-title">${escHtml(s.title)}</div>
-      <div class="supp-row-mapped-anchor">Anchor: ${escHtml(anchorLabel)}</div>
-    </div>
-    <div class="supp-row-mapped-actions">
-      ${linkHtml}
-    </div>`;
+  if (inCurrentUnit) {
+    // ── Mapped to current unit — show interactive checkbox + piece selector ──
+    let pieceOpts = '<option value="">— first piece in unit —</option>';
+    state.pieces.forEach(p => {
+      const sel = anchorPieceId === p.piece_id ? ' selected' : '';
+      pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.piece_title)}</option>`;
+    });
+
+    row.innerHTML = `
+      <div class="supp-row-top">
+        <input type="checkbox" class="supp-row-check" id="chk-m-${s.supplement_id}"
+          ${isChecked ? 'checked' : ''} />
+        ${thumbHtml}
+        <div class="supp-row-body">
+          <div class="supp-row-title">${escHtml(s.title)}</div>
+          <div class="supp-row-meta">${badgeHtml}${multiBadge}<span class="badge badge-mapped">mapped</span></div>
+          <div class="supp-row-actions">
+            <select class="supp-piece-sel" id="piece-m-${s.supplement_id}" ${!isChecked ? 'disabled' : ''}>
+              ${pieceOpts}
+            </select>
+            ${linkHtml}
+          </div>
+        </div>
+      </div>`;
+
+    const chk      = row.querySelector(`#chk-m-${s.supplement_id}`);
+    const pieceSel = row.querySelector(`#piece-m-${s.supplement_id}`);
+
+    chk.addEventListener('change', () => {
+      if (chk.checked) {
+        // Re-map: remove from unmaps, add to checks
+        state.unmaps.delete(s.supplement_id);
+        state.checks[s.supplement_id] = pieceSel.value || '';
+        row.classList.add('checked');
+        pieceSel.disabled = false;
+      } else {
+        // Unmap: remove from checks, add to unmaps
+        delete state.checks[s.supplement_id];
+        state.unmaps.add(s.supplement_id);
+        row.classList.remove('checked');
+        pieceSel.disabled = true;
+      }
+      updateApplyBar();
+    });
+
+    pieceSel.addEventListener('change', () => {
+      state.checks[s.supplement_id] = pieceSel.value;
+      if (!chk.checked) {
+        chk.checked = true;
+        state.unmaps.delete(s.supplement_id);
+        row.classList.add('checked');
+        pieceSel.disabled = false;
+        updateApplyBar();
+      }
+    });
+
+  } else {
+    // ── Mapped to a different unit — show "In [Unit]" badge + Move here button ──
+    const elsewhereBadge = fromUnitLabel
+      ? `<span class="badge badge-elsewhere">In ${escHtml(fromUnitLabel)}</span>`
+      : `<span class="badge badge-elsewhere">Mapped elsewhere</span>`;
+
+    row.innerHTML = `
+      <div class="supp-row-top">
+        <div style="width:17px;flex-shrink:0;"></div>
+        ${thumbHtml}
+        <div class="supp-row-body">
+          <div class="supp-row-title">${escHtml(s.title)}</div>
+          <div class="supp-row-meta">${badgeHtml}${multiBadge}${elsewhereBadge}</div>
+          <div class="supp-row-actions">
+            <button class="btn-move-here" data-supp-id="${s.supplement_id}">Move here</button>
+            ${linkHtml}
+          </div>
+        </div>
+      </div>`;
+
+    row.querySelector('.btn-move-here').addEventListener('click', () => {
+      showMoveConfirm(s.supplement_id, s.title, fromUnitLabel, anchorPieceId);
+    });
+  }
 
   return row;
 }
 
+// ── Move confirmation dialog ──────────────────────────────────────────────────
+let _moveConfirmCallback = null;
+
+function showMoveConfirm(suppId, suppTitle, fromUnitLabel, fromPieceId) {
+  const unit = state.units.find(u => u.unit_id === state.activeUnitId);
+  const toLabel = unit ? `${unit.unit_label} — ${unit.unit_title}` : 'this unit';
+  const fromDesc = fromUnitLabel || 'another unit';
+
+  document.getElementById('move-confirm-body').innerHTML =
+    `Move <strong>${escHtml(suppTitle)}</strong> from <strong>${escHtml(fromDesc)}</strong> ` +
+    `to <strong>${escHtml(toLabel)}</strong>?<br><br>` +
+    `The existing mapping will be replaced. This takes effect immediately.`;
+
+  _moveConfirmCallback = async () => {
+    // Delete old row then insert new one for current unit
+    const btn = document.getElementById('btn-move-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Moving…';
+
+    // Resolve first piece in current unit as default anchor
+    let firstPieceId = state.pieces.length > 0 ? state.pieces[0].piece_id : null;
+    if (!firstPieceId) {
+      const activeUnit = state.units.find(u => u.unit_id === state.activeUnitId);
+      const { data: fp } = await sb
+        .from('books_pieces').select('piece_id')
+        .eq('book_id', state.activeBookId)
+        .eq('unit_label', activeUnit?.unit_label || '')
+        .order('page_start').limit(1);
+      firstPieceId = fp?.[0]?.piece_id || null;
+    }
+
+    if (!firstPieceId) {
+      alert('Could not resolve a piece anchor for this unit. Ensure the unit has pieces defined.');
+      btn.disabled = false; btn.textContent = 'Move here';
+      return;
+    }
+
+    const { error } = await sb
+      .from('supplement_eligibility_map')
+      .upsert({
+        supplement_id:     suppId,
+        book_id:           state.activeBookId,
+        series_id:         SERIES_ID,
+        earliest_piece_id: firstPieceId,
+      }, { onConflict: 'supplement_id,book_id,series_id' });
+
+    if (error) {
+      alert(`Move failed: ${error.message}`);
+      btn.disabled = false; btn.textContent = 'Move here';
+      return;
+    }
+
+    // Update local state
+    const pieceData = state.pieces.find(p => p.piece_id === firstPieceId);
+    state.mappedRows[suppId] = {
+      piece_id:    firstPieceId,
+      piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : null,
+      unit_label:  state.units.find(u => u.unit_id === state.activeUnitId)?.unit_label || null,
+    };
+    // Increment current unit dot count
+    state.unitMappedCounts[state.activeUnitId] =
+      (state.unitMappedCounts[state.activeUnitId] || 0) + 1;
+
+    closeMoveConfirm();
+    btn.disabled = false; btn.textContent = 'Move here';
+    renderUnitTabs();
+    renderList();
+  };
+
+  document.getElementById('move-confirm-overlay').classList.remove('hidden');
+}
+
+window.cancelMoveConfirm = function() {
+  closeMoveConfirm();
+};
+
+window.confirmMove = function() {
+  if (_moveConfirmCallback) _moveConfirmCallback();
+};
+
+function closeMoveConfirm() {
+  document.getElementById('move-confirm-overlay').classList.add('hidden');
+  _moveConfirmCallback = null;
+}
+
 // ── Apply bar ─────────────────────────────────────────────────────────────────
 function updateApplyBar() {
-  const count = Object.keys(state.checks).length;
-  const bar   = document.getElementById('apply-bar');
-  const countEl = document.getElementById('apply-bar-count');
-  const msgEl   = document.getElementById('apply-msg');
+  const checkCount  = Object.keys(state.checks).length;
+  const unmapCount  = state.unmaps.size;
+  const total       = checkCount + unmapCount;
+  const bar         = document.getElementById('apply-bar');
+  const countEl     = document.getElementById('apply-bar-count');
+  const msgEl       = document.getElementById('apply-msg');
   msgEl.classList.add('hidden');
-  if (count === 0 || state.listMode === 'mapped') {
+  if (total === 0) {
     bar.classList.add('hidden');
   } else {
     bar.classList.remove('hidden');
-    countEl.innerHTML = `<strong>${count}</strong> supplement${count === 1 ? '' : 's'} selected — unchecked pieces will anchor to the first piece in the unit`;
+    const parts = [];
+    if (checkCount > 0) parts.push(`<strong>${checkCount}</strong> to map`);
+    if (unmapCount  > 0) parts.push(`<strong>${unmapCount}</strong> to unmap`);
+    countEl.innerHTML = parts.join(' · ') +
+      (state.listMode === 'unmapped' && checkCount > 0
+        ? ' — unchecked pieces will anchor to the first piece in the unit'
+        : '');
   }
 }
 
@@ -816,6 +1027,7 @@ function hideApplyBar() {
 
 window.clearAllChecks = function() {
   state.checks = {};
+  state.unmaps = new Set();
   updateApplyBar();
   renderList();
 };
@@ -823,7 +1035,8 @@ window.clearAllChecks = function() {
 // ── Apply mappings ────────────────────────────────────────────────────────────
 window.applyMappings = async function() {
   const suppIds = Object.keys(state.checks);
-  if (!suppIds.length || !state.activeBookId || !state.activeUnitId) return;
+  if (!state.activeBookId || !state.activeUnitId) return;
+  if (!suppIds.length && !state.unmaps.size) return;
 
   const btn    = document.getElementById('btn-apply');
   const msgEl  = document.getElementById('apply-msg');
@@ -831,30 +1044,32 @@ window.applyMappings = async function() {
   btn.textContent = 'Saving…';
   msgEl.classList.add('hidden');
 
-  // Resolve first piece in unit for any supplement without a chosen piece
+  // Resolve first piece in unit — only needed if there are supplements to map
   let firstPieceId = null;
-  if (state.pieces.length > 0) {
-    firstPieceId = state.pieces[0].piece_id;
-  } else {
-    // Fallback: query DB for first piece (should not normally be needed)
-    const activeUnit = state.units.find(u => u.unit_id === state.activeUnitId);
-    const { data: fp } = await sb
-      .from('books_pieces')
-      .select('piece_id')
-      .eq('book_id', state.activeBookId)
-      .eq('unit_label', activeUnit?.unit_label || '')
-      .order('page_start')
-      .limit(1);
-    firstPieceId = fp?.[0]?.piece_id || null;
+  if (suppIds.length > 0) {
+    if (state.pieces.length > 0) {
+      firstPieceId = state.pieces[0].piece_id;
+    } else {
+      // Fallback: query DB for first piece (should not normally be needed)
+      const activeUnit = state.units.find(u => u.unit_id === state.activeUnitId);
+      const { data: fp } = await sb
+        .from('books_pieces')
+        .select('piece_id')
+        .eq('book_id', state.activeBookId)
+        .eq('unit_label', activeUnit?.unit_label || '')
+        .order('page_start')
+        .limit(1);
+      firstPieceId = fp?.[0]?.piece_id || null;
+    }
+
+    if (!firstPieceId) {
+      showApplyMsg('error', 'Could not resolve a piece anchor for this unit. Please ensure the unit has pieces defined.');
+      btn.disabled = false; btn.textContent = 'Apply mappings';
+      return;
+    }
   }
 
-  if (!firstPieceId) {
-    showApplyMsg('error', 'Could not resolve a piece anchor for this unit. Please ensure the unit has pieces defined.');
-    btn.disabled = false; btn.textContent = 'Apply mappings';
-    return;
-  }
-
-  // Build upsert rows
+  // Build and run upsert rows (skipped if no checks)
   const rows = suppIds.map(suppId => ({
     supplement_id:    suppId,
     book_id:          state.activeBookId,
@@ -862,33 +1077,64 @@ window.applyMappings = async function() {
     earliest_piece_id: state.checks[suppId] || firstPieceId,
   }));
 
-  const { error } = await sb
-    .from('supplement_eligibility_map')
-    .upsert(rows, { onConflict: 'supplement_id,book_id,series_id' });
+  if (rows.length > 0) {
+    const { error } = await sb
+      .from('supplement_eligibility_map')
+      .upsert(rows, { onConflict: 'supplement_id,book_id,series_id' });
 
-  if (error) {
-    showApplyMsg('error', `Save failed: ${error.message}`);
-    btn.disabled = false; btn.textContent = 'Apply mappings';
-    return;
+    if (error) {
+      showApplyMsg('error', `Save failed: ${error.message}`);
+      btn.disabled = false; btn.textContent = 'Apply mappings';
+      return;
+    }
+
+    // Update local state — move saved supplements into mappedForBook
+    suppIds.forEach(suppId => {
+      state.mappedForBook.add(suppId);
+      const resolvedPiece = state.checks[suppId] || firstPieceId;
+      const pieceData = state.pieces.find(p => p.piece_id === resolvedPiece);
+      state.mappedRows[suppId] = {
+        piece_id: resolvedPiece,
+        piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : null,
+      };
+      // Update unit dot count
+      state.unitMappedCounts[state.activeUnitId] =
+        (state.unitMappedCounts[state.activeUnitId] || 0) + 1;
+    });
   }
 
-  // Update local state — move saved supplements into mappedForBook
-  suppIds.forEach(suppId => {
-    state.mappedForBook.add(suppId);
-    const resolvedPiece = state.checks[suppId] || firstPieceId;
-    const pieceData = state.pieces.find(p => p.piece_id === resolvedPiece);
-    state.mappedRows[suppId] = {
-      piece_id: resolvedPiece,
-      piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : null,
-    };
-    // Update unit dot count
-    state.unitMappedCounts[state.activeUnitId] =
-      (state.unitMappedCounts[state.activeUnitId] || 0) + 1;
-  });
+  // Process unmaps — delete rows for unchecked mapped supplements
+  const unmapIds = [...state.unmaps];
+  if (unmapIds.length > 0) {
+    const { error: delError } = await sb
+      .from('supplement_eligibility_map')
+      .delete()
+      .in('supplement_id', unmapIds)
+      .eq('book_id', state.activeBookId)
+      .eq('series_id', SERIES_ID);
+
+    if (delError) {
+      showApplyMsg('error', `Unmap failed: ${delError.message}`);
+      btn.disabled = false; btn.textContent = 'Apply mappings';
+      return;
+    }
+
+    // Update local state for unmapped items
+    unmapIds.forEach(suppId => {
+      state.mappedForBook.delete(suppId);
+      delete state.mappedRows[suppId];
+      // Decrement unit dot count (count cannot go below 0)
+      if (state.unitMappedCounts[state.activeUnitId] > 0) {
+        state.unitMappedCounts[state.activeUnitId]--;
+      }
+    });
+  }
 
   state.checks = {};
+  state.unmaps = new Set();
   renderUnitTabs(); // refresh dot indicators
-  showApplyMsg('success', `${rows.length} mapping${rows.length === 1 ? '' : 's'} saved ✓`);
+  showApplyMsg('success', `${rows.length} mapped, ${unmapIds.length} unmapped ✓`
+    .replace('0 mapped, ', '').replace(', 0 unmapped', ''));
   btn.disabled = false; btn.textContent = 'Apply mappings';
   renderList();
 };
