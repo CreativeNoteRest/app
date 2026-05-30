@@ -162,6 +162,11 @@
     .supp-row-check { margin-top: 2px; width: 17px; height: 17px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
     .supp-row-thumb { width: 44px; height: 56px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1.1rem; overflow: hidden; }
     .supp-row-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .supp-thumb-clickable { cursor: pointer; transition: opacity 0.15s; }
+    .supp-thumb-clickable:hover { opacity: 0.82; }
+    /* ── Thumbnail hover preview ── */
+    .thumb-preview { position: fixed; z-index: 200; pointer-events: none; display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); padding: 4px; }
+    .thumb-preview img { display: block; width: 200px; height: auto; border-radius: 5px; }
     .supp-row-body { flex: 1; min-width: 0; }
     .supp-row-title { font-weight: 600; font-size: 0.92rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
     .supp-row-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
@@ -264,6 +269,9 @@
     <button class="btn-signout" id="btn-signout">Sign out</button>
   </div>
 </header>
+
+<!-- ── Thumbnail hover preview overlay ── -->
+<div id="thumb-preview" class="thumb-preview"><img id="thumb-preview-img" src="" alt="" /></div>
 
 <!-- ── Login ── -->
 <div id="view-login" class="login-wrap">
@@ -837,6 +845,59 @@ function renderMappedList(listEl, query) {
   });
 }
 
+// ── Thumbnail hover preview + click-to-open ──────────────────────────────────
+const _thumbPreview    = document.getElementById('thumb-preview');
+const _thumbPreviewImg = document.getElementById('thumb-preview-img');
+
+function thumbHover(e, src) {
+  if (!src) return;
+  _thumbPreviewImg.src = src;
+  _thumbPreview.style.display = 'block';
+  _positionThumbPreview(e);
+}
+
+function _positionThumbPreview(e) {
+  const pad = 12;
+  const pw  = 208; // 200px img + 4px padding each side
+  let left  = e.clientX + pad;
+  let top   = e.clientY - 60;
+  if (left + pw > window.innerWidth)  left = e.clientX - pw - pad;
+  if (top < 8)                         top  = 8;
+  _thumbPreview.style.left = left + 'px';
+  _thumbPreview.style.top  = top  + 'px';
+}
+
+function thumbLeave() {
+  _thumbPreview.style.display = 'none';
+}
+
+function thumbClick(url) {
+  if (url) window.open(url, '_blank', 'noopener');
+}
+
+function attachThumbEvents(el, src, url) {
+  if (src) {
+    el.addEventListener('mouseenter', e => thumbHover(e, src));
+    el.addEventListener('mousemove',  e => _positionThumbPreview(e));
+    el.addEventListener('mouseleave', thumbLeave);
+  }
+  if (url) el.addEventListener('click', () => thumbClick(url));
+}
+
+function buildThumbHtml(thumbnailUrl, sourceUrl) {
+  if (thumbnailUrl) {
+    return `<div class="supp-row-thumb supp-thumb-clickable" data-src="${escHtml(thumbnailUrl)}" data-url="${escHtml(sourceUrl || '')}"><img src="${escHtml(thumbnailUrl)}" alt="" loading="lazy" /></div>`;
+  }
+  return sourceUrl
+    ? `<div class="supp-row-thumb supp-thumb-clickable" data-url="${escHtml(sourceUrl)}">🎵</div>`
+    : `<div class="supp-row-thumb">🎵</div>`;
+}
+
+function wireThumb(row, thumbnailUrl, sourceUrl) {
+  const el = row.querySelector('.supp-thumb-clickable');
+  if (el) attachThumbEvents(el, thumbnailUrl, sourceUrl);
+}
+
 function buildUnmappedRow(s) {
   const isChecked = s.supplement_id in state.checks;
   const selectedPiece = state.checks[s.supplement_id] || '';
@@ -845,9 +906,7 @@ function buildUnmappedRow(s) {
   row.className = 'supp-row' + (isChecked ? ' checked' : '');
   row.dataset.suppId = s.supplement_id;
 
-  const thumbHtml = s.thumbnail_url
-    ? `<div class="supp-row-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
-    : `<div class="supp-row-thumb">🎵</div>`;
+  const thumbHtml = buildThumbHtml(s.thumbnail_url, s.source_url);
 
   const badgeHtml = signalBadge(s);
   const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">multi-lesson</span>' : '';
@@ -861,9 +920,6 @@ function buildUnmappedRow(s) {
     pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.piece_title)}</option>`;
   });
 
-  const linkHtml = s.source_url
-    ? `<a class="supp-row-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
-
   row.innerHTML = `
     <div class="supp-row-top">
       <input type="checkbox" class="supp-row-check" id="chk-${s.supplement_id}"
@@ -876,10 +932,11 @@ function buildUnmappedRow(s) {
           <select class="supp-piece-sel" id="piece-${s.supplement_id}" ${!isChecked ? 'disabled' : ''}>
             ${pieceOpts}
           </select>
-          ${linkHtml}
         </div>
       </div>
     </div>`;
+
+  wireThumb(row, s.thumbnail_url, s.source_url);
 
   // Checkbox behaviour
   const chk = row.querySelector(`#chk-${s.supplement_id}`);
@@ -923,9 +980,7 @@ function buildElsewhereRow(s) {
   row.className = 'supp-row' + (isChecked ? ' checked' : '');
   row.dataset.suppId = s.supplement_id;
 
-  const thumbHtml = s.thumbnail_url
-    ? `<div class="supp-row-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
-    : `<div class="supp-row-thumb">🎵</div>`;
+  const thumbHtml = buildThumbHtml(s.thumbnail_url, s.source_url);
 
   const badgeHtml  = signalBadge(s);
   const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">multi-lesson</span>' : '';
@@ -939,9 +994,6 @@ function buildElsewhereRow(s) {
     pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.piece_title)}</option>`;
   });
 
-  const linkHtml = s.source_url
-    ? `<a class="supp-row-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
-
   row.innerHTML = `
     <div class="supp-row-top">
       <input type="checkbox" class="supp-row-check" id="chk-e-${s.supplement_id}"
@@ -954,10 +1006,11 @@ function buildElsewhereRow(s) {
           <select class="supp-piece-sel" id="piece-e-${s.supplement_id}" ${!isChecked ? 'disabled' : ''}>
             ${pieceOpts}
           </select>
-          ${linkHtml}
         </div>
       </div>
     </div>`;
+
+  wireThumb(row, s.thumbnail_url, s.source_url);
 
   const chk      = row.querySelector(`#chk-e-${s.supplement_id}`);
   const pieceSel = row.querySelector(`#piece-e-${s.supplement_id}`);
@@ -1010,14 +1063,10 @@ function buildMappedRow(s) {
   row.className = 'supp-row' + (isChecked ? ' checked' : '');
   row.dataset.suppId = s.supplement_id;
 
-  const thumbHtml = s.thumbnail_url
-    ? `<div class="supp-row-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
-    : `<div class="supp-row-thumb">🎵</div>`;
+  const thumbHtml = buildThumbHtml(s.thumbnail_url, s.source_url);
 
   const badgeHtml  = signalBadge(s);
   const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">multi-lesson</span>' : '';
-  const linkHtml   = s.source_url
-    ? `<a class="supp-row-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
 
   if (inCurrentUnit) {
     // ── Mapped to current unit — show interactive checkbox + piece selector ──
@@ -1039,7 +1088,6 @@ function buildMappedRow(s) {
             <select class="supp-piece-sel" id="piece-m-${s.supplement_id}" ${!isChecked ? 'disabled' : ''}>
               ${pieceOpts}
             </select>
-            ${linkHtml}
           </div>
         </div>
       </div>`;
@@ -1090,7 +1138,6 @@ function buildMappedRow(s) {
           <div class="supp-row-meta">${badgeHtml}${multiBadge}${elsewhereBadge}</div>
           <div class="supp-row-actions">
             <button class="btn-move-here" data-supp-id="${s.supplement_id}">Move here</button>
-            ${linkHtml}
           </div>
         </div>
       </div>`;
@@ -1100,6 +1147,7 @@ function buildMappedRow(s) {
     });
   }
 
+  wireThumb(row, s.thumbnail_url, s.source_url);
   return row;
 }
 
