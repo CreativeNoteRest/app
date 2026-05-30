@@ -987,7 +987,7 @@ function confirmAsync(title, body) {
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').textContent  = body;
     document.getElementById('confirm-modal').classList.add('open');
-    document.getElementById('modal-confirm').onclick = () => { closeModal(); resolve(true); };
+    document.getElementById('modal-confirm').onclick = () => { _modalResolve = null; closeModal(); resolve(true); };
   });
 }
 function closeModal() {
