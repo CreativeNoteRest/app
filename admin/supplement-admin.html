@@ -1281,6 +1281,7 @@ window.applyMappings = async function() {
     // Update local state — move saved supplements into mappedForBook
     suppIds.forEach(suppId => {
       state.mappedForBook.add(suppId);
+      state.mappedAnywhere.add(suppId);
       const resolvedPiece = state.checks[suppId] || firstPieceId;
       const pieceData = state.pieces.find(p => p.piece_id === resolvedPiece);
       state.mappedRows[suppId] = {
