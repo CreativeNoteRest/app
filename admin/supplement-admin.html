@@ -826,9 +826,22 @@ function renderMappedList(listEl, query) {
     state.mappedAnywhere.has(s.supplement_id) && !state.mappedForBook.has(s.supplement_id)
   );
 
-  let supps = [...forBook, ...elsewhere];
+  // Split forBook into current-unit (Cat 1) and other-unit (Cat 2) for tier ordering
+  const currentUnit = forBook.filter(s => {
+    const pieceId = state.mappedRows[s.supplement_id]?.piece_id;
+    return !!state.pieces.find(p => p.piece_id === pieceId);
+  });
+  const otherUnit = forBook.filter(s => {
+    const pieceId = state.mappedRows[s.supplement_id]?.piece_id;
+    return !state.pieces.find(p => p.piece_id === pieceId);
+  });
+
+  currentUnit.sort((a, b) => a.title.localeCompare(b.title));
+  otherUnit.sort((a, b) => a.title.localeCompare(b.title));
+  elsewhere.sort((a, b) => a.title.localeCompare(b.title));
+
+  let supps = [...currentUnit, ...otherUnit, ...elsewhere];
   if (query) supps = supps.filter(s => s.title.toLowerCase().includes(query));
-  supps.sort((a, b) => a.title.localeCompare(b.title));
 
   if (!supps.length) {
     listEl.innerHTML = '<div class="supp-empty">No mapped supplements for this book' + (query ? ' matching your search.' : '.') + '</div>';
