@@ -1094,8 +1094,9 @@ window.applyMappings = async function() {
       const resolvedPiece = state.checks[suppId] || firstPieceId;
       const pieceData = state.pieces.find(p => p.piece_id === resolvedPiece);
       state.mappedRows[suppId] = {
-        piece_id: resolvedPiece,
+        piece_id:   resolvedPiece,
         piece_label: pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : null,
+        unit_label: state.units.find(u => u.unit_id === state.activeUnitId)?.unit_label || null,
       };
       // Update unit dot count
       state.unitMappedCounts[state.activeUnitId] =
@@ -1133,8 +1134,10 @@ window.applyMappings = async function() {
   state.checks = {};
   state.unmaps = new Set();
   renderUnitTabs(); // refresh dot indicators
-  showApplyMsg('success', `${rows.length} mapped, ${unmapIds.length} unmapped ✓`
-    .replace('0 mapped, ', '').replace(', 0 unmapped', ''));
+  const msgParts = [];
+  if (rows.length   > 0) msgParts.push(`${rows.length} mapped`);
+  if (unmapIds.length > 0) msgParts.push(`${unmapIds.length} unmapped`);
+  showApplyMsg('success', msgParts.join(', ') + ' ✓');
   btn.disabled = false; btn.textContent = 'Apply mappings';
   renderList();
 };
