@@ -350,8 +350,10 @@ const state = {
   // allSupplements: full promoted+active list loaded once per session
   allSupplements: [],
   suppLoaded:     false,
-  // mappedForBook: Set of supplement_ids already mapped to activeBookId
+  // mappedForBook: Set of supplement_ids mapped to activeBookId
   mappedForBook:  new Set(),
+  // mappedAnywhere: Set of supplement_ids with any eligibility row in the series
+  mappedAnywhere: new Set(),
   // mappedRows: { supplement_id: { piece_id, piece_label } } for mapped view
   mappedRows:     {},
   listMode:       'unmapped',  // 'unmapped' | 'mapped'
@@ -457,6 +459,7 @@ window.onBookSelect = async function() {
   state.checks       = {};
   state.unmaps       = new Set();
   state.mappedForBook = new Set();
+  state.mappedAnywhere = new Set();
   state.mappedRows    = {};
   state.unitMappedCounts = {};
 
@@ -478,23 +481,28 @@ window.onBookSelect = async function() {
   if (uErr || !units) return;
   state.units = units;
 
-  // Load existing eligibility map rows for this book (for dot indicators + mapped set)
+  // Load all eligibility rows for this series — split below into per-book and anywhere sets
   const { data: mapRows } = await sb
     .from('supplement_eligibility_map')
-    .select('supplement_id, earliest_piece_id')
-    .eq('book_id', bookId)
+    .select('supplement_id, book_id, earliest_piece_id')
     .eq('series_id', SERIES_ID);
 
   if (mapRows) {
-    // Build mappedForBook set and mappedRows lookup (piece label resolved later)
+    // mappedForBook: rows anchored to the active book
+    // mappedAnywhere: any supplement_id with any row in the series
     mapRows.forEach(r => {
-      state.mappedForBook.add(r.supplement_id);
-      state.mappedRows[r.supplement_id] = { piece_id: r.earliest_piece_id, piece_label: null };
+      state.mappedAnywhere.add(r.supplement_id);
+      if (r.book_id === bookId) {
+        state.mappedForBook.add(r.supplement_id);
+        state.mappedRows[r.supplement_id] = { piece_id: r.earliest_piece_id, piece_label: null };
+      }
     });
 
-    // Count mapped supplements per unit — need piece→unit_label lookup
-    if (mapRows.length > 0) {
-      const pieceIds = [...new Set(mapRows.map(r => r.earliest_piece_id).filter(Boolean))];
+    // Build unit dot counts — requires piece→unit_label lookup for this book's rows only
+    const bookRows = mapRows.filter(r => r.book_id === bookId);
+    // Resolve piece labels and unit dot counts for this book's mapped rows
+    if (bookRows.length > 0) {
+      const pieceIds = [...new Set(bookRows.map(r => r.earliest_piece_id).filter(Boolean))];
       if (pieceIds.length > 0) {
         const { data: pieceRows } = await sb
           .from('books_pieces')
@@ -512,14 +520,14 @@ window.onBookSelect = async function() {
           const unitLabelToId = {};
           state.units.forEach(u => { unitLabelToId[u.unit_label] = u.unit_id; });
           // Populate piece labels in mappedRows
-          mapRows.forEach(r => {
+          bookRows.forEach(r => {
             if (state.mappedRows[r.supplement_id] && r.earliest_piece_id) {
               state.mappedRows[r.supplement_id].piece_label  = pieceLabel[r.earliest_piece_id] || null;
               state.mappedRows[r.supplement_id].unit_label   = pieceToUnitLabel[r.earliest_piece_id] || null;
             }
           });
           // Build unit → mapped count using unit_label → unit_id resolution
-          mapRows.forEach(r => {
+          bookRows.forEach(r => {
             const ul  = pieceToUnitLabel[r.earliest_piece_id];
             const uid = unitLabelToId[ul];
             if (uid) state.unitMappedCounts[uid] = (state.unitMappedCounts[uid] || 0) + 1;
@@ -608,12 +616,8 @@ window.setListMode = function(mode, skipToggleUpdate) {
     document.getElementById('toggle-unmapped').classList.toggle('active', mode === 'unmapped');
     document.getElementById('toggle-mapped').classList.toggle('active', mode === 'mapped');
   }
-  // Hide apply bar in mapped mode
-  if (mode === 'mapped') {
-    hideApplyBar();
-  } else {
-    updateApplyBar();
-  }
+  // Show apply bar if there are pending actions (Category 3 rows can be checked in mapped mode)
+  updateApplyBar();
   renderList();
 };
 
@@ -679,7 +683,7 @@ window.renderList = function() {
 };
 
 function renderUnmappedList(listEl, query) {
-  let supps = state.allSupplements.filter(s => !state.mappedForBook.has(s.supplement_id));
+  let supps = state.allSupplements.filter(s => !state.mappedAnywhere.has(s.supplement_id));
   if (query) supps = supps.filter(s => s.title.toLowerCase().includes(query));
 
   // Sort: signal score first, then curriculum_hint (groups units naturally), then title
@@ -707,8 +711,14 @@ function renderUnmappedList(listEl, query) {
 }
 
 function renderMappedList(listEl, query) {
-  const mappedIds = [...state.mappedForBook];
-  let supps = state.allSupplements.filter(s => mappedIds.includes(s.supplement_id));
+  // Category 1 + 2: mapped to this book (any unit)
+  const forBook = state.allSupplements.filter(s => state.mappedForBook.has(s.supplement_id));
+  // Category 3: mapped in other books but not this one
+  const elsewhere = state.allSupplements.filter(s =>
+    state.mappedAnywhere.has(s.supplement_id) && !state.mappedForBook.has(s.supplement_id)
+  );
+
+  let supps = [...forBook, ...elsewhere];
   if (query) supps = supps.filter(s => s.title.toLowerCase().includes(query));
   supps.sort((a, b) => a.title.localeCompare(b.title));
 
@@ -719,7 +729,11 @@ function renderMappedList(listEl, query) {
 
   listEl.innerHTML = '';
   supps.forEach(s => {
-    listEl.appendChild(buildMappedRow(s));
+    if (state.mappedForBook.has(s.supplement_id)) {
+      listEl.appendChild(buildMappedRow(s));
+    } else {
+      listEl.appendChild(buildElsewhereRow(s));
+    }
   });
 }
 
@@ -785,6 +799,82 @@ function buildUnmappedRow(s) {
   });
 
   // Piece select: checking a piece also checks the supplement
+  pieceSel.addEventListener('change', () => {
+    state.checks[s.supplement_id] = pieceSel.value;
+    if (!chk.checked) {
+      chk.checked = true;
+      row.classList.add('checked');
+      pieceSel.disabled = false;
+      updateApplyBar();
+    }
+  });
+
+  return row;
+}
+
+// ── Category 3 row — mapped in other books, not this one ──────────────────────
+// Behaves identically to an unmapped row (checkbox + piece selector + Apply),
+// but shows an "In other books" badge for context.
+function buildElsewhereRow(s) {
+  const isChecked = s.supplement_id in state.checks;
+  const selectedPiece = state.checks[s.supplement_id] || '';
+
+  const row = document.createElement('div');
+  row.className = 'supp-row' + (isChecked ? ' checked' : '');
+  row.dataset.suppId = s.supplement_id;
+
+  const thumbHtml = s.thumbnail_url
+    ? `<div class="supp-row-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
+    : `<div class="supp-row-thumb">🎵</div>`;
+
+  const badgeHtml  = signalBadge(s);
+  const multiBadge = s.is_multi_lesson ? '<span class="badge badge-multi">multi-lesson</span>' : '';
+  const elsewhereBadge = '<span class="badge" style="background:#F1F5F9;color:#64748B;border:1px solid #CBD5E1;">In other books</span>';
+  const hintText = s.curriculum_hint
+    ? `<span class="supp-row-hint-text">hint: ${escHtml(s.curriculum_hint)}</span>` : '';
+
+  let pieceOpts = '<option value="">— first piece in unit —</option>';
+  state.pieces.forEach(p => {
+    const sel = selectedPiece === p.piece_id ? ' selected' : '';
+    pieceOpts += `<option value="${p.piece_id}"${sel}>p.${p.page_start} — ${escHtml(p.piece_title)}</option>`;
+  });
+
+  const linkHtml = s.source_url
+    ? `<a class="supp-row-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
+
+  row.innerHTML = `
+    <div class="supp-row-top">
+      <input type="checkbox" class="supp-row-check" id="chk-e-${s.supplement_id}"
+        ${isChecked ? 'checked' : ''} />
+      ${thumbHtml}
+      <div class="supp-row-body">
+        <div class="supp-row-title">${escHtml(s.title)}</div>
+        <div class="supp-row-meta">${badgeHtml}${multiBadge}${elsewhereBadge}${hintText}</div>
+        <div class="supp-row-actions">
+          <select class="supp-piece-sel" id="piece-e-${s.supplement_id}" ${!isChecked ? 'disabled' : ''}>
+            ${pieceOpts}
+          </select>
+          ${linkHtml}
+        </div>
+      </div>
+    </div>`;
+
+  const chk      = row.querySelector(`#chk-e-${s.supplement_id}`);
+  const pieceSel = row.querySelector(`#piece-e-${s.supplement_id}`);
+
+  chk.addEventListener('change', () => {
+    if (chk.checked) {
+      state.checks[s.supplement_id] = pieceSel.value || '';
+      row.classList.add('checked');
+      pieceSel.disabled = false;
+    } else {
+      delete state.checks[s.supplement_id];
+      row.classList.remove('checked');
+      pieceSel.disabled = true;
+    }
+    updateApplyBar();
+  });
+
   pieceSel.addEventListener('change', () => {
     state.checks[s.supplement_id] = pieceSel.value;
     if (!chk.checked) {
