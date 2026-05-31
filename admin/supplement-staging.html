@@ -225,7 +225,6 @@
     <span class="header-sub">Supplement Ingestion</span>
   </div>
   <div class="header-right hidden" id="header-right">
-    <button class="btn-secondary" onclick="showDiscoveryInstructions()" style="font-size:0.75rem;">📋 Before you start</button>
     <button class="btn-cookie-indicator" id="cookie-btn-wk" onclick="showCookieHelp()" title="WK cookie — required for scraping">🔑 WK cookie</button>
     <span class="header-email" id="header-email"></span>
     <button class="btn-signout" id="btn-signout">Sign out</button>
@@ -260,34 +259,6 @@
     <div id="stats-grid" class="stats-grid hidden" style="flex:1;min-width:360px;"></div>
   </div>
 
-  <!-- Discovery instructions modal -->
-  <div id="discovery-modal-backdrop" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;">
-    <div style="background:var(--card);border-radius:var(--radius);padding:28px 32px;max-width:620px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;">
-      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:6px;">Before you start — Discovery</div>
-      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:18px;line-height:1.5;">Run these commands from <code style="background:var(--surface);padding:1px 6px;border-radius:4px;font-size:0.8rem;">C:\users\sdensham\cn_ingestion\</code> in PowerShell <strong>before</strong> using this page. Refresh the page after both runs complete.</div>
-
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 1 — Toolkit catalog</div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span>python discover_supplements.py --catalog toolkit --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
-        <button onclick="copyCmd(this,'python discover_supplements.py --catalog toolkit --series-id 96c05aaa-0329-4582-a35c-51423afc21dd')" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
-      </div>
-      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:16px;">Requires WK_POSTPASS in .env. Check the WK cookie button in the header — refresh if expired.</div>
-
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 2 — Piano books catalog</div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span>python discover_supplements.py --catalog piano-books --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
-        <button onclick="copyCmd(this,'python discover_supplements.py --catalog piano-books --series-id 96c05aaa-0329-4582-a35c-51423afc21dd')" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
-      </div>
-      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:20px;">No cookie required for piano books.</div>
-
-      <div style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#92400E;margin-bottom:20px;">
-        <strong>Incremental runs:</strong> Discovery is safe to re-run at any time — it only inserts URLs not already in staging or production. Run monthly or after WK content announcements.
-      </div>
-
-      <button onclick="hideDiscoveryInstructions()" style="height:36px;padding:0 20px;background:var(--brand);color:#fff;border:none;border-radius:9px;font-size:0.85rem;font-weight:600;cursor:pointer;">Got it</button>
-    </div>
-  </div>
-
   <!-- Cookie help -->
   <div id="cookie-help-panel" class="cookie-help hidden">
     <div class="cookie-help-title">Set WunderKeys cookie</div>
@@ -314,11 +285,53 @@
 
   <!-- ── Tab bar ── -->
   <div class="tab-bar">
+    <button class="tab-btn" id="tab-btn-discover" onclick="switchTab('discover')">Phase 1 — Discover</button>
     <button class="tab-btn active" id="tab-btn-enrich" onclick="switchTab('enrich')">Phase 2 — Enrich</button>
     <button class="tab-btn" id="tab-btn-promote" onclick="switchTab('promote')">Phase 3 — Promote</button>
     <button class="tab-btn" id="tab-btn-embed" onclick="switchTab('embed')">Phase 4 — Embed</button>
     <button class="tab-btn" id="tab-btn-promptlab" onclick="switchTab('promptlab')">Prompt Lab</button>
   </div>
+
+  <!-- ── Discover tab ── -->
+  <div class="tab-panel" id="tab-discover">
+
+    <div class="card">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:6px;">Phase 1 — Discover</div>
+      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:18px;line-height:1.5;">Crawls the WunderKeys toolkit and piano books catalog pages to collect new supplement URLs, titles, thumbnails, free/paid status, and taxonomy data (categories, level, catalog section). New URLs are inserted to <code style="background:var(--surface);padding:1px 6px;border-radius:4px;font-size:0.8rem;">supplement_staging</code> with status = <em>discovered</em>. match_context and season are derived deterministically at discovery — no manual input required. Safe to re-run at any time; only URLs absent from both staging and production are inserted.</div>
+
+      <!-- Working directory -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Working directory</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <input id="ingestion-path-input" type="text" style="flex:1;border:none;background:transparent;font-family:monospace;font-size:0.82rem;color:var(--text);outline:none;" placeholder="C:\users\sdensham\cn_ingestion\" />
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <button onclick="copyIngestionPath()" style="height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;" id="btn-copy-path">Copy</button>
+          <button onclick="saveIngestionPath()" style="height:26px;padding:0 10px;background:var(--card);color:var(--text-mid);border:1.5px solid var(--border);border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;" id="btn-save-path">Save</button>
+        </div>
+      </div>
+      <div id="path-save-msg" style="font-size:0.72rem;min-height:16px;margin-bottom:16px;color:var(--success);"></div>
+
+      <!-- Step 1 -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 1 — Toolkit catalog</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span id="cmd-toolkit">python discover_supplements.py --catalog toolkit --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
+        <button onclick="copyCmd(this, document.getElementById('cmd-toolkit').textContent)" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:16px;">Requires WK_POSTPASS in .env. Check the WK cookie button in the header — refresh if expired.</div>
+
+      <!-- Step 2 -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:6px;">Step 2 — Piano books catalog</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:monospace;font-size:0.82rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span id="cmd-piano">python discover_supplements.py --catalog piano-books --series-id 96c05aaa-0329-4582-a35c-51423afc21dd</span>
+        <button onclick="copyCmd(this, document.getElementById('cmd-piano').textContent)" style="flex-shrink:0;height:26px;padding:0 10px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;">Copy</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:20px;">No cookie required for piano books.</div>
+
+      <div style="background:var(--warn-light);border:1px solid var(--warn-border);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#92400E;">
+        <strong>Incremental runs:</strong> Discovery is safe to re-run at any time — it only inserts URLs not already in staging or production. Run monthly or after WK content announcements.
+      </div>
+    </div>
+
+  </div><!-- /tab-discover -->
 
   <!-- ── Enrich tab ── -->
   <div class="tab-panel active" id="tab-enrich">
@@ -345,7 +358,7 @@
           <div class="bulk-step-num">1</div>
           <div class="bulk-card-title">Scrape</div>
         </div>
-        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, and is_free. Parses curriculum hint from title. Runs sequentially — safe to leave running.</div>
+        <div class="bulk-hint">Fetches title, thumbnail, PDF URL, is_free, and raw page text. Parses curriculum hint from title. Runs sequentially — safe to leave running.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
           <button class="btn-primary" id="btn-bulk-scrape" onclick="bulkScrape()">Scrape all discovered</button>
           <button class="btn-secondary hidden" id="btn-cancel-scrape" onclick="requestCancel()">⏹ Stop after this row</button>
@@ -368,7 +381,7 @@
           <div class="bulk-step-num">2</div>
           <div class="bulk-card-title">Describe</div>
         </div>
-        <div class="bulk-hint">Calls Gemini with scraped page text and PDF page 1 to write a 2–4 sentence search description. Scrape must run first.</div>
+        <div class="bulk-hint">Calls Gemini with scraped page text and PDF page 1 to write a brief search description. Sets status to <em>described</em>. Scrape must run first.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
           <button class="btn-primary" id="btn-bulk-describe" onclick="bulkDescribe()">Generate descriptions</button>
           <button class="btn-secondary hidden" id="btn-cancel-describe" onclick="requestCancel()">⏹ Stop after this row</button>
@@ -396,7 +409,7 @@
             Items are skipped if they already have a curriculum hint from the title parse at scrape time — skip mode leaves those alone. Items that Gemini processes but returns no hint for are typically studio admin or practice resources with no curriculum level (recital planners, photo props, practice trackers, etc.). This is correct — those items genuinely don't belong to any curriculum level.
           </div>
         </div>
-        <div class="bulk-hint">Asks Gemini to identify the curriculum level from title and description. Fast and cheap — no page fetch. Runs after describe.</div>
+        <div class="bulk-hint">Asks Gemini to identify the curriculum level from title and description. Sets status to <em>hinted</em>. Fast and cheap — no page fetch. Runs after describe.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;">
           <button class="btn-primary" id="btn-bulk-hint" onclick="bulkExtractHints()">Extract curriculum hints</button>
           <button class="btn-secondary hidden" id="btn-cancel-hint" onclick="requestCancel()">⏹ Stop after this row</button>
@@ -486,7 +499,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Bulk promote</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> or <em>hinted</em> rows. Upserts on (source_url, series_id). Values set in the UI below overwrite existing production values.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Promotes all <em>described</em> or <em>hinted</em> rows from staging to the live production supplements table. Upserts on (source_url, series_id) — values shown in the review list below overwrite matching production records.</div>
         </div>
         <button class="btn-primary" id="btn-bulk-promote" onclick="bulkPromote()" disabled style="opacity:0.4;">Promote all ready</button>
         <button class="btn-secondary hidden" id="btn-cancel-promote" onclick="requestPromoteCancel()">⏹ Stop after this row</button>
@@ -509,7 +522,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Staging management</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Download a CSV backup of all staging rows, or clear the staging table between ingestion runs.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Download a CSV backup of all staging rows, or clear the staging table between ingestion runs. No records are deleted from the production supplements table.</div>
         </div>
         <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);" onclick="openClearModal()">&#128465; Clear staging</button>
       </div>
@@ -559,7 +572,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="flex:1;min-width:220px;">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);margin-bottom:2px;">Generate embeddings</div>
-          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Generates a semantic embedding for each promoted supplement using its title, curriculum hint, and search description. Only processes rows where embedding is missing unless overwrite is selected.</div>
+          <div style="font-size:0.78rem;color:var(--text-light);line-height:1.5;">Generates a semantic embedding for each supplement in the live production supplements table using its title, curriculum hint, and search description. Only processes rows where embedding is missing unless overwrite is selected.</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
@@ -651,6 +664,7 @@ const state = {
   authUserId:             '',
   cookieWk:               '',
   passwordWk:             '',
+  ingestionPath:          '',
   allRows:                [],
   filteredRows:           [],
   bulkRunning:            false,
@@ -742,13 +756,47 @@ document.getElementById('btn-signout').addEventListener('click', async () => {
 async function loadConfig() {
   const { data } = await sb.from('config').select('config_key, config_value')
     .eq('series_id', SERIES_ID)
-    .in('config_key', ['supplement_cookie_wk', 'supplement_password_wk']);
+    .in('config_key', ['supplement_cookie_wk', 'supplement_password_wk', 'ingestion_path_local']);
   if (!data) return;
   for (const row of data) {
-    if (row.config_key === 'supplement_cookie_wk')   state.cookieWk   = row.config_value || '';
-    if (row.config_key === 'supplement_password_wk') state.passwordWk = row.config_value || '';
+    if (row.config_key === 'supplement_cookie_wk')   state.cookieWk       = row.config_value || '';
+    if (row.config_key === 'supplement_password_wk') state.passwordWk     = row.config_value || '';
+    if (row.config_key === 'ingestion_path_local')   state.ingestionPath  = row.config_value || '';
   }
+  const pathInput = document.getElementById('ingestion-path-input');
+  if (pathInput) pathInput.value = state.ingestionPath || 'C:\\users\\sdensham\\cn_ingestion\\';
+  updateDiscoverCommands();
 }
+
+function updateDiscoverCommands() {
+  const path = (state.ingestionPath || 'C:\\users\\sdensham\\cn_ingestion\\').replace(/\\$/, '');
+  // Commands are read from the span text at copy time; nothing to update in place here
+}
+
+window.copyIngestionPath = function() {
+  const val = document.getElementById('ingestion-path-input').value;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById('btn-copy-path');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+};
+
+window.saveIngestionPath = async function() {
+  const val   = document.getElementById('ingestion-path-input').value.trim();
+  const msgEl = document.getElementById('path-save-msg');
+  if (!val) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Path cannot be empty.'; return; }
+  msgEl.style.color = 'var(--text-light)'; msgEl.textContent = 'Saving…';
+  const { error } = await sb.from('config').upsert(
+    { series_id: SERIES_ID, config_key: 'ingestion_path_local', config_value: val },
+    { onConflict: 'series_id,config_key' }
+  );
+  if (error) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = `Save failed: ${error.message}`; return; }
+  state.ingestionPath = val;
+  msgEl.style.color = 'var(--success)'; msgEl.textContent = '✓ Path saved';
+  setTimeout(() => { msgEl.textContent = ''; }, 3000);
+};
 
 function refreshCookieBtn() {
   const btn = document.getElementById('cookie-btn-wk');
@@ -1732,13 +1780,6 @@ function setPRowStatus(id, type, msg) {
 }
 
 // ── Discovery instructions modal ──────────────────────────────────────────────
-window.showDiscoveryInstructions = function() {
-  document.getElementById('discovery-modal-backdrop').classList.remove('hidden');
-  document.getElementById('discovery-modal-backdrop').style.display = 'flex';
-};
-window.hideDiscoveryInstructions = function() {
-  document.getElementById('discovery-modal-backdrop').classList.add('hidden');
-};
 window.copyCmd = function(btn, text) {
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent;
@@ -1746,10 +1787,6 @@ window.copyCmd = function(btn, text) {
     setTimeout(() => { btn.textContent = orig; }, 1800);
   });
 };
-// Close modal on backdrop click
-document.getElementById('discovery-modal-backdrop').addEventListener('click', function(e) {
-  if (e.target === this) hideDiscoveryInstructions();
-});
 
 // ── Hint info popover ─────────────────────────────────────────────────────────
 window.toggleHintInfo = function(e) {
@@ -2057,7 +2094,23 @@ window.plLoadExamples = async function() {
     return;
   }
 
-  if (!data?.length) { emptyEl.classList.remove('hidden'); return; }
+  if (!data?.length) {
+    // Fallback: pull random rows from production supplements
+    const { data: prodData, error: prodError } = await sb
+      .from('supplements')
+      .select('supplement_id, title, thumbnail_url, source_url, search_description, curriculum_hint')
+      .eq('series_id', SERIES_ID)
+      .not('search_description', 'is', null)
+      .limit(50);
+
+    if (prodError || !prodData?.length) { emptyEl.classList.remove('hidden'); return; }
+
+    const shuffled = [...prodData].sort(() => Math.random() - 0.5).slice(0, 10);
+    listEl.innerHTML = shuffled.map(r => plExampleHtml({ ...r, staging_id: r.supplement_id, raw_page_text: null, pdf_url: null, status: 'production', _fromProduction: true })).join('');
+    showMsgEl(msgEl, 'info', 'No staging rows available — showing 10 random rows from production.');
+    msgEl.classList.remove('hidden');
+    return;
+  }
 
   // Shuffle and pick 10 random examples so Reload gives a different set
   const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 10);
