@@ -96,6 +96,12 @@
     .btn-ghost-sm:hover { border-color: var(--brand); color: var(--brand); }
     .btn-danger-sm { height: 34px; padding: 0 14px; background: none; color: var(--danger); border: 1.5px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-danger-sm:hover { background: var(--danger-light); }
+    .btn-warning-sm { height: 34px; padding: 0 14px; background: none; color: var(--warn); border: 1.5px solid var(--warn-border); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .btn-warning-sm:hover { background: var(--warn-light); }
+    .remap-piece-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+    .remap-piece-option { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: border-color 0.15s, background 0.15s; }
+    .remap-piece-option:hover { border-color: var(--brand); background: var(--brand-light); }
+    .remap-piece-option.selected { border-color: var(--brand); background: var(--brand-light); font-weight: 600; }
     .btn-add { width: 100%; height: 36px; background: var(--surface); color: var(--brand); border: 1.5px dashed var(--brand); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-add:hover { background: var(--brand-light); }
 
@@ -351,6 +357,27 @@
     <div class="modal-actions">
       <button class="btn-ghost-sm" id="modal-cancel">Cancel</button>
       <button class="btn-danger-sm" id="modal-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Remap modal ══ -->
+<div class="modal-overlay" id="remap-modal">
+  <div class="modal" style="width:460px">
+    <div class="modal-title" id="remap-modal-title">Piece Has Eligibility Mappings</div>
+    <div class="modal-body" id="remap-modal-body"></div>
+    <div id="remap-piece-picker" style="display:none">
+      <div style="font-size:0.82rem;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Select replacement piece:</div>
+      <div class="remap-piece-list" id="remap-piece-list"></div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn-ghost-sm" id="remap-cancel-2">Cancel</button>
+        <button class="btn-danger-sm" id="remap-confirm-remap" disabled>Remap &amp; Delete</button>
+      </div>
+    </div>
+    <div id="remap-choice-actions" class="modal-actions">
+      <button class="btn-ghost-sm" id="remap-cancel-1">Cancel</button>
+      <button class="btn-warning-sm" id="remap-choose-remap">Remap to Another Piece</button>
+      <button class="btn-danger-sm" id="remap-choose-delete">Delete Mappings</button>
     </div>
   </div>
 </div>
@@ -951,6 +978,8 @@ document.getElementById('btn-add-piece').addEventListener('click', async () => {
 window.confirmDeletePiece = async (pieceId) => {
   const p = allPieces.find(x => x.piece_id === pieceId);
   if (!p) return;
+
+  // Build open-session warning (unchanged)
   let warning = '';
   const { data: openSessions } = await sb.from('active_sessions').select('session_id').eq('series_id', SERIES_ID);
   if (openSessions?.length) {
@@ -961,8 +990,113 @@ window.confirmDeletePiece = async (pieceId) => {
       if (matching?.length) warning = '\n\nWarning: there is an open session for this book. Deleting this piece may affect session close for that teacher.';
     }
   }
-  const ok = await confirmAsync('Delete Piece', `Delete "${p.piece_title}"? This cannot be undone.${warning}`);
-  if (!ok) return;
+
+  // Check for eligibility map references
+  const { data: mapRows, error: mapErr } = await sb
+    .from('supplement_eligibility_map')
+    .select('eligibility_map_id, supplement_id, book_id')
+    .eq('earliest_piece_id', pieceId);
+
+  if (mapErr) { toast('Could not check eligibility mappings: ' + mapErr.message, 'error'); return; }
+
+  if (!mapRows || mapRows.length === 0) {
+    // No mappings — simple confirm and delete
+    const ok = await confirmAsync('Delete Piece', `Delete "${p.piece_title}"? This cannot be undone.${warning}`);
+    if (!ok) return;
+    await _finalisePieceDelete(pieceId, p.piece_title);
+    return;
+  }
+
+  // Mappings exist — show remap modal
+  await remapAndDeletePiece(pieceId, p, mapRows, warning);
+};
+
+async function remapAndDeletePiece(pieceId, p, mapRows, warning) {
+  const n = mapRows.length;
+  const modal     = document.getElementById('remap-modal');
+  const bodyEl    = document.getElementById('remap-modal-body');
+  const choiceEl  = document.getElementById('remap-choice-actions');
+  const pickerEl  = document.getElementById('remap-piece-picker');
+  const listEl    = document.getElementById('remap-piece-list');
+  const confirmRemapBtn = document.getElementById('remap-confirm-remap');
+
+  bodyEl.textContent = `"${p.piece_title}" is the eligibility anchor for ${n} supplement mapping${n !== 1 ? 's' : ''}. Choose how to proceed.${warning}`;
+  choiceEl.style.display = 'flex';
+  pickerEl.style.display = 'none';
+  listEl.innerHTML = '';
+  confirmRemapBtn.disabled = true;
+  modal.classList.add('open');
+
+  await new Promise((resolve) => {
+    let selectedNewPieceId = null;
+
+    const closeRemap = () => { modal.classList.remove('open'); resolve(); };
+
+    document.getElementById('remap-cancel-1').onclick  = closeRemap;
+    document.getElementById('remap-cancel-2').onclick  = closeRemap;
+
+    // Option 1 — Delete mappings then delete piece
+    document.getElementById('remap-choose-delete').onclick = async () => {
+      closeRemap();
+      const { error: delMapErr } = await sb
+        .from('supplement_eligibility_map')
+        .delete()
+        .eq('earliest_piece_id', pieceId);
+      if (delMapErr) { toast('Failed to delete mappings: ' + delMapErr.message, 'error'); return; }
+      await _finalisePieceDelete(pieceId, p.piece_title);
+    };
+
+    // Option 2 — Remap to another piece
+    document.getElementById('remap-choose-remap').onclick = async () => {
+      // Fetch other pieces in same book + unit, excluding this piece
+      const { data: candidates, error: fetchErr } = await sb
+        .from('books_pieces')
+        .select('piece_id, piece_title, page_start')
+        .eq('book_id', currentBook.book_id)
+        .eq('unit_label', p.unit_label)
+        .neq('piece_id', pieceId)
+        .order('page_start');
+
+      if (fetchErr) { toast('Could not load pieces: ' + fetchErr.message, 'error'); closeRemap(); return; }
+      if (!candidates || candidates.length === 0) {
+        toast('No other pieces in this unit to remap to. Delete the mappings first, or add a piece.', 'warn'); return;
+      }
+
+      choiceEl.style.display = 'none';
+      listEl.innerHTML = '';
+      candidates.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'remap-piece-option';
+        div.textContent = `p.${c.page_start} — ${c.piece_title}`;
+        div.dataset.pid = c.piece_id;
+        div.onclick = () => {
+          listEl.querySelectorAll('.remap-piece-option').forEach(el => el.classList.remove('selected'));
+          div.classList.add('selected');
+          selectedNewPieceId = c.piece_id;
+          confirmRemapBtn.disabled = false;
+        };
+        listEl.appendChild(div);
+      });
+      pickerEl.style.display = 'block';
+
+      confirmRemapBtn.onclick = async () => {
+        if (!selectedNewPieceId) return;
+        closeRemap();
+        // UPDATE all map rows — single statement, no delete/insert, sidesteps unique constraint
+        const { error: updateErr } = await sb
+          .from('supplement_eligibility_map')
+          .update({ earliest_piece_id: selectedNewPieceId })
+          .eq('earliest_piece_id', pieceId);
+        if (updateErr) { toast('Remap failed: ' + updateErr.message, 'error'); return; }
+        await _finalisePieceDelete(pieceId, p.piece_title);
+        toast(`${n} mapping${n !== 1 ? 's' : ''} remapped. Piece deleted.`, 'success');
+      };
+    };
+  });
+}
+
+// Shared piece-delete finaliser — updates allPieces state and DOM
+async function _finalisePieceDelete(pieceId, pieceTitle) {
   const { error } = await sb.from('books_pieces').delete().eq('piece_id', pieceId);
   if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
   allPieces = allPieces.filter(x => x.piece_id !== pieceId);
@@ -977,7 +1111,7 @@ window.confirmDeletePiece = async (pieceId) => {
     document.getElementById('pieces-empty').classList.remove('hidden');
   }
   toast('Piece deleted', 'success');
-};
+}
 
 // ── Modal ────────────────────────────────────────────────────────────────
 let _modalResolve = null;
