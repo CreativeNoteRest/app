@@ -131,6 +131,27 @@
     .spinner-dark { border-color: var(--border); border-top-color: var(--brand); }
     @keyframes spin { to { transform: rotate(360deg); } }
     .hidden { display: none !important; }
+
+    /* ── How-to modal ─────────────────────────────────────────────────── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .modal-backdrop.hidden { display: none !important; }
+    .modal-box { background: var(--card); border-radius: var(--radius); box-shadow: 0 8px 40px rgba(0,0,0,0.18); max-width: 540px; width: 100%; padding: 32px 28px 24px; position: relative; }
+    .modal-title { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--text); margin-bottom: 6px; }
+    .modal-subtitle { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 22px; line-height: 1.5; }
+    .modal-steps { list-style: none; padding: 0; margin: 0 0 22px; counter-reset: modal-step; }
+    .modal-steps li { counter-increment: modal-step; display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+    .modal-steps li:last-child { margin-bottom: 0; }
+    .modal-step-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+    .modal-step-text { font-size: 0.88rem; color: var(--text); line-height: 1.6; }
+    .modal-step-text strong { color: var(--brand); }
+    .modal-step-text code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.82rem; color: var(--text-mid); }
+    .modal-retry { background: var(--warn-light); border: 1px solid var(--warn-border); border-radius: 8px; padding: 12px 14px; font-size: 0.82rem; color: var(--text-mid); line-height: 1.55; margin-bottom: 22px; }
+    .modal-retry strong { color: var(--warn); }
+    .modal-close { width: 100%; height: 42px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1rem; cursor: pointer; transition: opacity 0.15s; }
+    .modal-close:hover { opacity: 0.88; }
+    .btn-howto { background: none; border: none; font-size: 0.78rem; font-weight: 600; color: var(--info); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; transition: color 0.15s; }
+    .btn-howto:hover { color: var(--brand); }
+
     .mt8  { margin-top: 8px; }
     .mt16 { margin-top: 16px; }
     .mb8  { margin-bottom: 8px; }
@@ -234,8 +255,11 @@
       <div class="card">
         <div class="card-tag">Step 1</div>
         <div class="card-title">Paste extracted JSON</div>
-        <div class="section-label">Extracted JSON</div>
-        <div class="section-hint">Paste the full JSON output from the Claude browser extraction session. The JSON must cover exactly one book.</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px;">
+          <div class="section-label" style="margin-bottom:0;">Extracted JSON</div>
+          <button class="btn-howto" id="btn-howto">ⓘ How to get this JSON</button>
+        </div>
+        <div class="section-hint">Paste the full JSON output from the Claude extraction session. The JSON must cover exactly one book.</div>
         <textarea id="json-input" class="json-textarea" placeholder='{ "series_id": "...", "book_display_name": "...", ... }'></textarea>
         <div class="mt8">
           <button class="btn-secondary" id="btn-parse">Validate JSON</button>
@@ -372,6 +396,38 @@
   </div><!-- /tab-review -->
 
 </div><!-- /view-tool -->
+
+<!-- ── How-to modal ────────────────────────────────────────────────────── -->
+<div id="modal-howto" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-howto-title">
+  <div class="modal-box">
+    <h2 class="modal-title" id="modal-howto-title">How to extract book JSON</h2>
+    <p class="modal-subtitle">Use Claude to extract structured data from a workbook PDF, then paste it here.</p>
+    <ol class="modal-steps">
+      <li>
+        <div class="modal-step-num">1</div>
+        <div class="modal-step-text">Open <strong>Claude.ai</strong> and go to the <strong>Creative Note project</strong> in your Claude library.</div>
+      </li>
+      <li>
+        <div class="modal-step-num">2</div>
+        <div class="modal-step-text">Start a new conversation. Upload the workbook PDF, then tell Claude:<br>
+          <code style="display:block;margin-top:6px;padding:8px 10px;line-height:1.5;">"Use the WK book extraction prompt in the project library to process this book."</code>
+        </div>
+      </li>
+      <li>
+        <div class="modal-step-num">3</div>
+        <div class="modal-step-text">Claude will return a JSON block. <strong>Copy the full JSON output</strong> — from the opening <code>{</code> to the closing <code>}</code>.</div>
+      </li>
+      <li>
+        <div class="modal-step-num">4</div>
+        <div class="modal-step-text"><strong>Paste it into the box</strong> on this page, then click <strong>Validate JSON</strong> to continue.</div>
+      </li>
+    </ol>
+    <div class="modal-retry">
+      <strong>If it doesn't look right:</strong> Check that the full JSON was copied — it's easy to miss the opening or closing brace. If validation still fails, start a fresh Claude conversation and repeat from Step 1. The extraction prompt is designed to produce consistent output; a second run usually resolves any issues.
+    </div>
+    <button class="modal-close" id="btn-modal-close">Got it</button>
+  </div>
+</div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -1335,6 +1391,13 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════
 function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── How-to modal ────────────────────────────────────────────────────────
+const elModalHowto = document.getElementById('modal-howto');
+document.getElementById('btn-howto').addEventListener('click', () => elModalHowto.classList.remove('hidden'));
+document.getElementById('btn-modal-close').addEventListener('click', () => elModalHowto.classList.add('hidden'));
+elModalHowto.addEventListener('click', e => { if (e.target === elModalHowto) elModalHowto.classList.add('hidden'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') elModalHowto.classList.add('hidden'); });
 
 // ── Init ───────────────────────────────────────────────────────────────
 checkSession();
