@@ -199,19 +199,22 @@
     .placeholder-sub { font-size: 0.82rem; line-height: 1.6; }
 
     /* ── Manage tab ── */
-    .manage-search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .manage-search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
     .manage-search-wrap { flex: 1; min-width: 220px; position: relative; }
     .manage-search-inp { width: 100%; height: 42px; padding: 0 14px 0 38px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
     .manage-search-inp:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.1); background: #fff; }
     .manage-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; opacity: 0.4; }
-    .manage-search-hint { font-size: 0.72rem; color: var(--text-light); margin-bottom: 10px; line-height: 1.5; }
-    .manage-search-hint code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 0.7rem; color: var(--text-mid); }
-    .manage-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-    .manage-filter-chip { height: 30px; padding: 0 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card); color: var(--text-mid); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap; }
-    .manage-filter-chip:hover { border-color: var(--brand); color: var(--brand); }
-    .manage-filter-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
-    .manage-filter-chip.danger.active { background: var(--danger); border-color: var(--danger); color: #fff; }
-    .manage-select-row { display: flex; align-items: center; gap: 10px; padding: 6px 0 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+    .manage-filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .manage-filter-cell { display: flex; flex-direction: column; gap: 4px; }
+    .manage-filter-lbl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); }
+    .manage-filter-sel { height: 38px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: var(--surface); outline: none; cursor: pointer; transition: border-color 0.15s; }
+    .manage-filter-sel:focus { border-color: var(--brand); }
+    .manage-filter-sel:disabled { opacity: 0.4; cursor: not-allowed; }
+    .manage-desc-row { display: flex; gap: 8px; align-items: center; }
+    .manage-desc-inp { width: 80px; height: 38px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+    .manage-desc-inp:focus { border-color: var(--brand); background: #fff; }
+    .manage-desc-sep { font-size: 0.78rem; color: var(--text-light); white-space: nowrap; }
+    .manage-select-row { display: flex; align-items: center; gap: 10px; padding: 6px 0 10px; border-top: 1px solid var(--border); margin-top: 4px; margin-bottom: 10px; }
     .manage-select-all-chk { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; }
     .manage-select-label { font-size: 0.78rem; color: var(--text-mid); }
     .manage-result-count { font-size: 0.78rem; color: var(--text-light); margin-left: auto; }
@@ -365,25 +368,73 @@
         <div class="manage-search-wrap">
           <span class="manage-search-icon">🔍</span>
           <input class="manage-search-inp" id="manage-search" type="text"
-            placeholder="Search by title, or use keywords…"
+            placeholder="Search by title…"
             oninput="manageSearch()" />
         </div>
-        <button class="btn-secondary" onclick="manageClearSearch()">Clear</button>
+        <button class="btn-secondary" onclick="manageClearSearch()">Clear all</button>
       </div>
 
-      <div class="manage-search-hint">
-        Keywords: <code>free</code> <code>paid</code> <code>multi</code> <code>unmapped</code>
-        <code>level a</code>…<code>level y</code> <code>vu</code> <code>retired</code>
-        — combine with any title words
-      </div>
+      <div class="manage-filter-grid">
 
-      <div class="manage-filter-row">
-        <span style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);margin-right:2px;">Quick filter</span>
-        <button class="manage-filter-chip" id="chip-free"      onclick="manageToggleChip('free')">Free only</button>
-        <button class="manage-filter-chip" id="chip-paid"      onclick="manageToggleChip('paid')">Paid only</button>
-        <button class="manage-filter-chip" id="chip-multi"     onclick="manageToggleChip('multi')">Multi-lesson</button>
-        <button class="manage-filter-chip" id="chip-unmapped"  onclick="manageToggleChip('unmapped')">Unmapped</button>
-        <button class="manage-filter-chip danger" id="chip-retired" onclick="manageToggleChip('retired')">Show retired</button>
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Free / Paid</span>
+          <select class="manage-filter-sel" id="filter-free" onchange="manageSearch()">
+            <option value="all">All</option>
+            <option value="free">Free only</option>
+            <option value="paid">Paid only</option>
+          </select>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Mapped</span>
+          <select class="manage-filter-sel" id="filter-mapped" onchange="manageSearch()">
+            <option value="all">All</option>
+            <option value="mapped">Mapped only</option>
+            <option value="unmapped">Unmapped only</option>
+          </select>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Status</span>
+          <select class="manage-filter-sel" id="filter-status" onchange="manageSearch()">
+            <option value="active">Active only</option>
+            <option value="retired">Retired only</option>
+            <option value="all">Active + Retired</option>
+          </select>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Multi-lesson</span>
+          <select class="manage-filter-sel" id="filter-multi" onchange="manageSearch()">
+            <option value="all">All</option>
+            <option value="multi">Multi-lesson only</option>
+            <option value="single">Single-lesson only</option>
+          </select>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Description length</span>
+          <div class="manage-desc-row">
+            <input class="manage-desc-inp" id="filter-desc-under" type="number" min="0" placeholder="Under" oninput="manageSearch()" />
+            <span class="manage-desc-sep">/ over</span>
+            <input class="manage-desc-inp" id="filter-desc-over" type="number" min="0" placeholder="Over" oninput="manageSearch()" />
+          </div>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Workbook</span>
+          <select class="manage-filter-sel" id="filter-book" onchange="manageOnBookFilter()">
+            <option value="">Any book</option>
+          </select>
+        </div>
+
+        <div class="manage-filter-cell">
+          <span class="manage-filter-lbl">Unit</span>
+          <select class="manage-filter-sel" id="filter-unit" onchange="manageSearch()" disabled>
+            <option value="">Any unit</option>
+          </select>
+        </div>
+
       </div>
 
       <div class="manage-select-row">
@@ -1418,11 +1469,12 @@ function showMsg(el, type, msg) {
 // ══════════════════════════════════════════════════════════════════
 
 const mState = {
-  allSupplements:   [],      // { supplement_id, title, source_url, source, thumbnail_url, is_multi_lesson, is_free, is_active, wk_categories, wk_level, curriculum_hint }
+  allSupplements:   [],      // { supplement_id, title, source_url, source, thumbnail_url, is_multi_lesson, is_free, is_active, wk_categories, wk_level, curriculum_hint, search_description }
   mappedIds:        new Set(), // supplement_ids with any eligibility row
+  mappedBookIds:    {},        // { supplement_id: Set<book_id> }
+  mappedUnitLabels: {},        // { supplement_id: Set<unit_label> }
   selected:         new Set(), // supplement_ids currently checked
   loaded:           false,
-  chips:            { free: false, paid: false, multi: false, unmapped: false, retired: false },
 };
 
 // Load fresh when manage tab is activated (called from switchTab)
@@ -1447,76 +1499,120 @@ async function manageLoad() {
   }
   mState.allSupplements = supps;
 
-  // Load all eligibility map ids for this series (to power unmapped filter)
+  // Load all eligibility map rows for this series (supplement_id, book_id, unit via piece)
   const { data: mapRows } = await sb
     .from('supplement_eligibility_map')
-    .select('supplement_id')
+    .select('supplement_id, book_id, earliest_piece_id')
     .eq('series_id', SERIES_ID);
-  mState.mappedIds = new Set((mapRows || []).map(r => r.supplement_id));
+
+  mState.mappedIds        = new Set();
+  mState.mappedBookIds    = {};
+  mState.mappedUnitLabels = {};
+
+  // Collect all piece_ids we need to resolve unit_labels
+  const pieceIds = [...new Set((mapRows || []).map(r => r.earliest_piece_id).filter(Boolean))];
+  const pieceToUnit = {};
+  if (pieceIds.length > 0) {
+    // Chunk at 50 per known pattern
+    for (let i = 0; i < pieceIds.length; i += 50) {
+      const chunk = pieceIds.slice(i, i + 50);
+      const { data: pRows } = await sb
+        .from('books_pieces')
+        .select('piece_id, unit_label')
+        .in('piece_id', chunk);
+      (pRows || []).forEach(p => { pieceToUnit[p.piece_id] = p.unit_label; });
+    }
+  }
+
+  (mapRows || []).forEach(r => {
+    mState.mappedIds.add(r.supplement_id);
+    if (!mState.mappedBookIds[r.supplement_id])    mState.mappedBookIds[r.supplement_id]    = new Set();
+    if (!mState.mappedUnitLabels[r.supplement_id]) mState.mappedUnitLabels[r.supplement_id] = new Set();
+    if (r.book_id) mState.mappedBookIds[r.supplement_id].add(r.book_id);
+    const ul = r.earliest_piece_id ? pieceToUnit[r.earliest_piece_id] : null;
+    if (ul) mState.mappedUnitLabels[r.supplement_id].add(ul);
+  });
 
   mState.loaded = true;
   document.getElementById('manage-list-loading').classList.add('hidden');
+
+  // Populate filter-book dropdown from already-loaded books list
+  const filterBookSel = document.getElementById('filter-book');
+  filterBookSel.innerHTML = '<option value="">Any book</option>';
+  (state.books || []).forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.book_id;
+    o.textContent = b.display_name;
+    filterBookSel.appendChild(o);
+  });
+
   manageRender();
 }
 
-// ── Search parsing ─────────────────────────────────────────────────
-function manageParseQuery(raw) {
-  // Returns { filters: {}, titleTerms: [] }
-  const tokens = raw.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const filters = {};
-  const titleTerms = [];
-  let i = 0;
-  while (i < tokens.length) {
-    const t = tokens[i];
-    if (t === 'free')                          { filters.free = true;     i++; continue; }
-    if (t === 'paid')                          { filters.paid = true;     i++; continue; }
-    if (t === 'multi' || t === 'multi-lesson') { filters.multi = true;    i++; continue; }
-    if (t === 'unmapped')                      { filters.unmapped = true; i++; continue; }
-    if (t === 'retired' || t === 'inactive')   { filters.retired = true;  i++; continue; }
-    if (t === 'vu')                            { filters.vu = true;       i++; continue; }
-    // "level a" … "level y"
-    if (t === 'level' && tokens[i+1] && /^[a-y]$/.test(tokens[i+1])) {
-      filters.level = tokens[i+1]; i += 2; continue;
-    }
-    titleTerms.push(t);
-    i++;
-  }
-  return { filters, titleTerms };
+// ── Search & filter helpers ────────────────────────────────────────
+function manageGetFilterValues() {
+  return {
+    title:     (document.getElementById('manage-search').value || '').toLowerCase().trim(),
+    free:      document.getElementById('filter-free').value,      // all | free | paid
+    mapped:    document.getElementById('filter-mapped').value,    // all | mapped | unmapped
+    status:    document.getElementById('filter-status').value,    // active | retired | all
+    multi:     document.getElementById('filter-multi').value,     // all | multi | single
+    descUnder: parseInt(document.getElementById('filter-desc-under').value, 10) || null,
+    descOver:  parseInt(document.getElementById('filter-desc-over').value, 10) || null,
+    bookId:    document.getElementById('filter-book').value || null,
+    unitLabel: document.getElementById('filter-unit').value || null,
+  };
 }
 
-function manageApplyFilters(supps, filters, titleTerms, chips) {
-  // Merge chip state into effective filters (chips are additive)
-  const f = Object.assign({}, filters);
-  if (chips.free)    f.free    = true;
-  if (chips.paid)    f.paid    = true;
-  if (chips.multi)   f.multi   = true;
-  if (chips.unmapped) f.unmapped = true;
-  if (chips.retired) f.retired = true;
-
-  // By default: active only. retired flag (from query or chip) reveals retired items.
-  const showRetired = !!f.retired;
-
+function manageApplyFilters(supps, f) {
   return supps.filter(s => {
-    if (!showRetired && !s.is_active) return false;
-    if (f.free    && !s.is_free)         return false;
-    if (f.paid    && s.is_free !== false) return false;
-    if (f.multi   && !s.is_multi_lesson) return false;
-    if (f.unmapped && mState.mappedIds.has(s.supplement_id)) return false;
-    if (f.level   && (s.wk_level || '').toLowerCase() !== f.level) return false;
-    if (f.vu && !(s.wk_categories || []).some(c => c.toLowerCase().includes('v. u.'))) return false;
-    if (titleTerms.length) {
-      const haystack = (s.title || '').toLowerCase();
-      if (!titleTerms.every(t => haystack.includes(t))) return false;
+    // Status
+    if (f.status === 'active'  && !s.is_active) return false;
+    if (f.status === 'retired' &&  s.is_active) return false;
+
+    // Free / Paid
+    if (f.free === 'free' && !s.is_free)         return false;
+    if (f.free === 'paid' && s.is_free !== false) return false;
+
+    // Multi-lesson
+    if (f.multi === 'multi'  && !s.is_multi_lesson) return false;
+    if (f.multi === 'single' &&  s.is_multi_lesson) return false;
+
+    // Mapped state
+    const isMapped = mState.mappedIds.has(s.supplement_id);
+    if (f.mapped === 'mapped'   && !isMapped) return false;
+    if (f.mapped === 'unmapped' &&  isMapped) return false;
+
+    // Description length (against search_description)
+    const descLen = (s.search_description || '').length;
+    if (f.descUnder !== null && descLen >= f.descUnder) return false;
+    if (f.descOver  !== null && descLen <= f.descOver)  return false;
+
+    // Workbook filter
+    if (f.bookId) {
+      const bookSet = mState.mappedBookIds[s.supplement_id];
+      if (!bookSet || !bookSet.has(f.bookId)) return false;
     }
+
+    // Unit filter (only meaningful when a book is also selected)
+    if (f.unitLabel) {
+      const unitSet = mState.mappedUnitLabels[s.supplement_id];
+      if (!unitSet || !unitSet.has(f.unitLabel)) return false;
+    }
+
+    // Title search
+    if (f.title) {
+      if (!(s.title || '').toLowerCase().includes(f.title)) return false;
+    }
+
     return true;
   });
 }
 
 // ── Render ─────────────────────────────────────────────────────────
 function manageRender() {
-  const raw   = document.getElementById('manage-search').value;
-  const { filters, titleTerms } = manageParseQuery(raw);
-  let visible = manageApplyFilters(mState.allSupplements, filters, titleTerms, mState.chips);
+  const f = manageGetFilterValues();
+  let visible = manageApplyFilters(mState.allSupplements, f);
 
   const listEl = document.getElementById('manage-list');
   const countEl = document.getElementById('manage-result-count');
@@ -1725,21 +1821,60 @@ window.managePushToStaging = async function() {
   manageRender();
 };
 
-// ── Search & chip controls ─────────────────────────────────────────
+// ── Search & filter controls ───────────────────────────────────────
 window.manageSearch = function() { manageRender(); };
 
 window.manageClearSearch = function() {
   document.getElementById('manage-search').value = '';
-  // Clear chips too
-  Object.keys(mState.chips).forEach(k => mState.chips[k] = false);
-  document.querySelectorAll('.manage-filter-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('filter-free').value    = 'all';
+  document.getElementById('filter-mapped').value  = 'all';
+  document.getElementById('filter-status').value  = 'active';
+  document.getElementById('filter-multi').value   = 'all';
+  document.getElementById('filter-desc-under').value = '';
+  document.getElementById('filter-desc-over').value  = '';
+  document.getElementById('filter-book').value    = '';
+  const unitSel = document.getElementById('filter-unit');
+  unitSel.innerHTML = '<option value="">Any unit</option>';
+  unitSel.disabled  = true;
   manageRender();
 };
 
-window.manageToggleChip = function(key) {
-  mState.chips[key] = !mState.chips[key];
-  document.getElementById(`chip-${key}`).classList.toggle('active', mState.chips[key]);
-  manageRender();
+// Populate unit dropdown when a book is chosen in the filter panel
+window.manageOnBookFilter = async function() {
+  const bookId  = document.getElementById('filter-book').value;
+  const unitSel = document.getElementById('filter-unit');
+  unitSel.innerHTML = '<option value="">Any unit</option>';
+
+  if (!bookId) {
+    unitSel.disabled = true;
+    manageSearch();
+    return;
+  }
+
+  unitSel.disabled = true;
+
+  // Prefer already-loaded units if the same book is active in the Map tab
+  let units = [];
+  if (state.activeBookId === bookId && state.units.length > 0) {
+    units = state.units;
+  } else {
+    const { data } = await sb
+      .from('books_units')
+      .select('unit_id, unit_label, unit_title')
+      .eq('book_id', bookId)
+      .order('unit_label');
+    units = data || [];
+  }
+
+  units.forEach(u => {
+    const o = document.createElement('option');
+    o.value       = u.unit_label;
+    o.textContent = `${u.unit_label} — ${u.unit_title}`;
+    unitSel.appendChild(o);
+  });
+
+  unitSel.disabled = false;
+  manageSearch();
 };
 
 // ── Tab switching: hook manage load ──────────────────────────────────
