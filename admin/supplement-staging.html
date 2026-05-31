@@ -1219,6 +1219,7 @@ window.singleExtractHint = async function(id) {
     const msg = result.hint ? `✓ Hint: ${result.hint}` : '✓ No curriculum signal found';
     setRowStatus(id, 'success', msg);
     rerenderRow(id);
+    renderStats();
   } else {
     setRowStatus(id, 'error', `✗ ${result.error}`);
   }
@@ -1266,7 +1267,7 @@ window.bulkExtractHints = async function() {
   document.getElementById('btn-cancel-scrape').textContent   = '⏹ Stop after this row';
   document.getElementById('btn-cancel-describe').textContent = '⏹ Stop after this row';
   document.getElementById('btn-cancel-hint').textContent     = '⏹ Stop after this row';
-  setBulkDisabled(false); applyFilters();
+  setBulkDisabled(false); renderStats(); applyFilters();
 };
 
 // ── Workbook toggle ───────────────────────────────────────────────────────────
