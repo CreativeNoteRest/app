@@ -1021,6 +1021,12 @@ async function describeRow(row, visionOverride = false) {
       status: 'described',
     }).eq('staging_id', row.staging_id);
     if (we) return { ok: false, error: `DB write: ${we.message}` };
+    // Clear stale embedding on the live supplements record. The new description
+    // no longer matches the stored vector. No-op if this row is not yet promoted.
+    await sb.from('supplements')
+      .update({ embedding: null })
+      .eq('source_url', row.source_url)
+      .eq('series_id', SERIES_ID);
     row.search_description = data.description;
     row.status = 'described';
     row.pdf_skipped = data.pdf_skipped || false;
