@@ -304,7 +304,7 @@
         <div class="action-bar">
           <button class="btn-primary" id="btn-import" disabled>Import to staging</button>
           <button class="btn-secondary" id="btn-reset">Start over</button>
-          <a class="btn-secondary hidden" id="btn-go-review" href="/admin/review.html">Open Review →</a>
+          <button class="btn-secondary hidden" id="btn-go-review">Open Review →</button>
         </div>
       </div>
 
@@ -318,7 +318,7 @@
         <div id="stg-list"></div>
         <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
           <button class="btn-secondary" id="btn-refresh-stg" style="height:36px;font-size:0.82rem;padding:0 16px;">↻ Refresh</button>
-          <a href="/admin/review.html" class="btn-secondary" style="height:36px;font-size:0.82rem;padding:0 16px;display:inline-flex;align-items:center;">Open Review →</a>
+          <button class="btn-secondary" id="btn-open-review" style="height:36px;font-size:0.82rem;padding:0 16px;">Open Review →</button>
         </div>
       </div>
     </main>
@@ -829,8 +829,11 @@ async function loadStagingSummary() {
   if (error) {
     elError.textContent = 'Failed to load staging: ' + error.message;
     elError.classList.remove('hidden');
+    console.error('[staging] loadStagingSummary error:', error);
     return;
   }
+
+  console.log('[staging] rows returned:', (data || []).length);
 
   const seen = new Map();
   (data || []).forEach(r => {
@@ -857,11 +860,11 @@ async function loadStagingSummary() {
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span style="font-size:0.68rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:3px 9px;border-radius:20px;${statusStyle[book.book_status] || ''}">${esc(book.book_status)}</span>
-        <a href="/admin/review.html?book=${encodeURIComponent(book.book_id)}"
-           style="height:32px;padding:0 14px;display:inline-flex;align-items:center;font-size:0.8rem;font-weight:600;color:var(--brand);border:1.5px solid var(--brand);border-radius:8px;text-decoration:none;transition:background 0.15s;"
+        <button onclick="openInReview('${esc(book.book_id)}')"
+           style="height:32px;padding:0 14px;display:inline-flex;align-items:center;font-size:0.8rem;font-weight:600;color:var(--brand);background:none;border:1.5px solid var(--brand);border-radius:8px;cursor:pointer;transition:background 0.15s;"
            onmouseover="this.style.background='var(--brand-light)'" onmouseout="this.style.background='transparent'">
           Open in Review →
-        </a>
+        </button>
         <button onclick="deleteStaging('${esc(book.book_id)}')"
           style="height:32px;padding:0 12px;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;font-weight:600;color:var(--text-light);cursor:pointer;"
           onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'"
@@ -881,7 +884,22 @@ window.deleteStaging = async (bookId) => {
   await loadStagingSummary();
 };
 
+// Open in Review tab and pre-select a book
+window.openInReview = async (bookId) => {
+  switchTab('review');
+  if (!rvLoaded) {
+    rvLoaded = true;
+    await loadBookList();
+  }
+  if (bookId && elRvSelect.querySelector(`option[value="${bookId}"]`)) {
+    elRvSelect.value = bookId;
+    await loadBookDetail(bookId);
+  }
+};
+
 document.getElementById('btn-refresh-stg').addEventListener('click', loadStagingSummary);
+document.getElementById('btn-open-review').addEventListener('click', () => switchTab('review'));
+document.getElementById('btn-go-review').addEventListener('click', () => switchTab('review'));
 
 // ═══════════════════════════════════════════════════════════════════════
 // REVIEW
@@ -904,8 +922,11 @@ async function loadBookList() {
   if (error) {
     elRvError.textContent = 'Failed to load staged books: ' + error.message;
     elRvError.classList.remove('hidden');
+    console.error('[review] loadBookList error:', error);
     return;
   }
+
+  console.log('[review] rows returned:', (data || []).length);
 
   const seen = new Map();
   (data || []).forEach(r => { if (!seen.has(r.book_id)) seen.set(r.book_id, r); });
