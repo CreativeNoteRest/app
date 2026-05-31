@@ -141,8 +141,12 @@
     .staging-row:hover { border-color: #CBBFB5; }
     .staging-row.is-workbook { border-left: 3px solid var(--warn); }
     .row-top { display: flex; align-items: flex-start; gap: 12px; }
-    .row-thumb { width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-light); overflow: hidden; }
-    .row-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .row-thumb { width: 44px; height: 56px; border-radius: 0; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-light); overflow: hidden; }
+    .row-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+    .row-thumb-clickable { cursor: pointer; transition: opacity 0.15s; }
+    .row-thumb-clickable:hover { opacity: 0.82; }
+    .thumb-preview { position: fixed; z-index: 200; pointer-events: none; display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); padding: 4px; }
+    .thumb-preview img { display: block; width: 200px; height: auto; border-radius: 0; }
     .row-body { flex: 1; min-width: 0; }
     .row-title { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row-title a { color: inherit; text-decoration: none; }
@@ -215,6 +219,9 @@
   </style>
 </head>
 <body>
+
+<!-- ── Thumbnail hover preview overlay ── -->
+<div id="thumb-preview" class="thumb-preview"><img id="thumb-preview-img" src="" alt="" /></div>
 
 <header class="app-header">
   <div class="header-brand">
@@ -906,6 +913,7 @@ function renderList() {
   if (!state.filteredRows.length) { listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
   emptyEl.classList.add('hidden');
   listEl.innerHTML = state.filteredRows.map(rowHtml).join('');
+  _wireThumbEls(listEl);
 }
 
 function rowHtml(r) {
@@ -917,8 +925,8 @@ function rowHtml(r) {
     : `<a href="${escHtml(r.source_url)}" target="_blank" rel="noopener" style="color:var(--text-light);font-style:italic;">${urlShort}</a>`;
 
   const thumbHtml = r.thumbnail_url
-    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
-    : `<div class="row-thumb">🖼</div>`;
+    ? `<div class="row-thumb row-thumb-clickable" data-src="${escHtml(r.thumbnail_url)}" data-url="${escHtml(r.source_url || '')}"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb row-thumb-clickable" data-url="${escHtml(r.source_url || '')}">🖼</div>`;
 
   const statusBadge  = `<span class="badge badge-${r.status}">${r.status}</span>`;
   const catalogBadge = r.catalog === 'toolkit'
@@ -1343,7 +1351,11 @@ window.bulkResetStatus = async function() {
 function rerenderRow(id) {
   const row   = state.allRows.find(r => r.staging_id === id);
   const rowEl = document.getElementById(`row-${id}`);
-  if (row && rowEl) rowEl.outerHTML = rowHtml(row);
+  if (row && rowEl) {
+    rowEl.outerHTML = rowHtml(row);
+    const newEl = document.getElementById(`row-${id}`);
+    if (newEl) _wireThumbEls(newEl);
+  }
 }
 
 function setRowStatus(id, type, msg) {
@@ -1448,6 +1460,7 @@ function renderPromoteList() {
   }
   emptyEl.classList.add('hidden');
   listEl.innerHTML = rows.map(promoteRowHtml).join('');
+  _wireThumbEls(listEl);
 }
 
 function promoteRowHtml(r) {
@@ -1456,8 +1469,8 @@ function promoteRowHtml(r) {
   const isPromoted = r.status === 'promoted';
 
   const thumbHtml = r.thumbnail_url
-    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
-    : `<div class="row-thumb">🖼</div>`;
+    ? `<div class="row-thumb row-thumb-clickable" data-src="${escHtml(r.thumbnail_url)}" data-url="${escHtml(r.source_url || '')}"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb row-thumb-clickable" data-url="${escHtml(r.source_url || '')}">🖼</div>`;
 
   const catalogBadge = r.catalog === 'toolkit'
     ? `<span class="badge badge-toolkit">Toolkit</span>`
@@ -1767,7 +1780,11 @@ window.updateBulkPromoteBtn = function() {
 function rerenderPromoteRow(id) {
   const row   = state.promoteRows.find(r => r.staging_id === id);
   const rowEl = document.getElementById(`prow-${id}`);
-  if (row && rowEl) rowEl.outerHTML = promoteRowHtml(row);
+  if (row && rowEl) {
+    rowEl.outerHTML = promoteRowHtml(row);
+    const newEl = document.getElementById(`prow-${id}`);
+    if (newEl) _wireThumbEls(newEl);
+  }
 }
 
 function setPRowStatus(id, type, msg) {
@@ -1787,6 +1804,47 @@ window.copyCmd = function(btn, text) {
     setTimeout(() => { btn.textContent = orig; }, 1800);
   });
 };
+
+// ── Thumbnail hover preview + click-to-open ───────────────────────────────────
+const _thumbPreview    = document.getElementById('thumb-preview');
+const _thumbPreviewImg = document.getElementById('thumb-preview-img');
+
+function _positionThumbPreview(e) {
+  const pad = 12;
+  const pw  = 208; // 200px img + 4px padding each side
+  let left  = e.clientX + pad;
+  let top   = e.clientY - 60;
+  if (left + pw > window.innerWidth) left = e.clientX - pw - pad;
+  if (top < 8)                        top  = 8;
+  _thumbPreview.style.left = left + 'px';
+  _thumbPreview.style.top  = top  + 'px';
+}
+
+function _thumbHover(e, src) {
+  if (!src) return;
+  _thumbPreviewImg.src = src;
+  _thumbPreview.style.display = 'block';
+  _positionThumbPreview(e);
+}
+
+function _thumbLeave() {
+  _thumbPreview.style.display = 'none';
+}
+
+function _wireThumbEls(container) {
+  container.querySelectorAll('.row-thumb-clickable').forEach(el => {
+    const src = el.dataset.src || '';
+    const url = el.dataset.url || '';
+    if (src) {
+      el.addEventListener('mouseenter', e => _thumbHover(e, src));
+      el.addEventListener('mousemove',  e => _positionThumbPreview(e));
+      el.addEventListener('mouseleave', _thumbLeave);
+    }
+    if (url) el.addEventListener('click', () => window.open(url, '_blank', 'noopener'));
+  });
+}
+
+
 
 // ── Hint info popover ─────────────────────────────────────────────────────────
 window.toggleHintInfo = function(e) {
@@ -2107,6 +2165,7 @@ window.plLoadExamples = async function() {
 
     const shuffled = [...prodData].sort(() => Math.random() - 0.5).slice(0, 10);
     listEl.innerHTML = shuffled.map(r => plExampleHtml({ ...r, staging_id: r.supplement_id, raw_page_text: null, pdf_url: null, status: 'production', _fromProduction: true })).join('');
+    _wireThumbEls(listEl);
     showMsgEl(msgEl, 'info', 'No staging rows available — showing 10 random rows from production.');
     msgEl.classList.remove('hidden');
     return;
@@ -2116,14 +2175,15 @@ window.plLoadExamples = async function() {
   const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 10);
 
   listEl.innerHTML = shuffled.map(plExampleHtml).join('');
+  _wireThumbEls(listEl);
 };
 
 function plExampleHtml(r) {
   const id        = r.staging_id;
   const title     = escHtml(r.title || r.source_url || '');
   const thumbHtml = r.thumbnail_url
-    ? `<div class="row-thumb"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
-    : `<div class="row-thumb">🖼</div>`;
+    ? `<div class="row-thumb row-thumb-clickable" data-src="${escHtml(r.thumbnail_url)}" data-url="${escHtml(r.source_url || '')}"><img src="${escHtml(r.thumbnail_url)}" alt="" onerror="this.parentElement.innerHTML='🖼'" /></div>`
+    : `<div class="row-thumb row-thumb-clickable" data-url="${escHtml(r.source_url || '')}">🖼</div>`;
   const hintText  = r.curriculum_hint
     ? `<span style="font-size:0.7rem;color:var(--text-light);">📚 ${escHtml(r.curriculum_hint)}</span>` : '';
   const currentDesc = r.search_description
