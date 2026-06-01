@@ -246,6 +246,11 @@
     .btn-map-supp:hover { opacity: 0.88; }
     .btn-map-supp:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* ── Mapped badge tooltip ── */
+    .badge-has-tip { position: relative; cursor: default; }
+    .badge-has-tip::after { content: attr(data-tooltip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1A1A1A; color: #fff; font-size: 0.72rem; font-weight: 400; line-height: 1.5; white-space: pre; padding: 6px 10px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.22); pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 300; }
+    .badge-has-tip:hover::after { opacity: 1; }
+
     /* Manage action bar */
     .manage-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1.5px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 10px; z-index: 40; box-shadow: 0 -2px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
     .manage-bar-count { font-size: 0.88rem; color: var(--text-mid); flex: 1; min-width: 120px; }
@@ -1486,6 +1491,7 @@ const mState = {
   loaded:           false,
   unitCache:        {},        // { book_id: [{ unit_id, unit_label, unit_title }] }
   pieceCache:       {},        // { book_id+'|'+unit_label: [{ piece_id, piece_title, page_start }] }
+  mappedDetails:    {},        // { supplement_id: [{ bookName, unitLabel, pieceLabel }] }
 };
 
 // Load fresh when manage tab is activated (called from switchTab)
@@ -1519,29 +1525,45 @@ async function manageLoad() {
   mState.mappedIds        = new Set();
   mState.mappedBookIds    = {};
   mState.mappedUnitLabels = {};
+  mState.mappedDetails    = {};
 
-  // Collect all piece_ids we need to resolve unit_labels
+  // Collect all piece_ids we need to resolve unit_labels and piece labels
   const pieceIds = [...new Set((mapRows || []).map(r => r.earliest_piece_id).filter(Boolean))];
-  const pieceToUnit = {};
+  const pieceToUnit  = {};
+  const pieceToLabel = {};
   if (pieceIds.length > 0) {
     // Chunk at 50 per known pattern
     for (let i = 0; i < pieceIds.length; i += 50) {
       const chunk = pieceIds.slice(i, i + 50);
       const { data: pRows } = await sb
         .from('books_pieces')
-        .select('piece_id, unit_label')
+        .select('piece_id, unit_label, piece_title, page_start')
         .in('piece_id', chunk);
-      (pRows || []).forEach(p => { pieceToUnit[p.piece_id] = p.unit_label; });
+      (pRows || []).forEach(p => {
+        pieceToUnit[p.piece_id]  = p.unit_label;
+        pieceToLabel[p.piece_id] = `p.${p.page_start} — ${p.piece_title}`;
+      });
     }
   }
+
+  // Build book_id → display_name lookup from already-loaded books
+  const bookNameMap = {};
+  (state.books || []).forEach(b => { bookNameMap[b.book_id] = b.display_name; });
 
   (mapRows || []).forEach(r => {
     mState.mappedIds.add(r.supplement_id);
     if (!mState.mappedBookIds[r.supplement_id])    mState.mappedBookIds[r.supplement_id]    = new Set();
     if (!mState.mappedUnitLabels[r.supplement_id]) mState.mappedUnitLabels[r.supplement_id] = new Set();
+    if (!mState.mappedDetails[r.supplement_id])    mState.mappedDetails[r.supplement_id]    = [];
     if (r.book_id) mState.mappedBookIds[r.supplement_id].add(r.book_id);
-    const ul = r.earliest_piece_id ? pieceToUnit[r.earliest_piece_id] : null;
+    const ul = r.earliest_piece_id ? pieceToUnit[r.earliest_piece_id]  : null;
+    const pl = r.earliest_piece_id ? pieceToLabel[r.earliest_piece_id] : null;
     if (ul) mState.mappedUnitLabels[r.supplement_id].add(ul);
+    mState.mappedDetails[r.supplement_id].push({
+      bookName:   bookNameMap[r.book_id] || r.book_id,
+      unitLabel:  ul  || '—',
+      pieceLabel: pl  || '—',
+    });
   });
 
   mState.loaded = true;
@@ -1668,8 +1690,14 @@ function manageBuildRow(s) {
   const levelBadge = s.wk_level ? `<span class="badge badge-hint">Level ${s.wk_level.toUpperCase()}</span>` : '';
   const catBadge = (s.wk_categories || []).length
     ? `<span class="badge badge-cat">${escHtml(s.wk_categories[0])}</span>` : '';
-  const mappedBadge = !mState.mappedIds.has(s.supplement_id)
-    ? `<span class="badge" style="background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;">unmapped</span>` : '';
+  const mappedBadge = (() => {
+    const details = mState.mappedDetails[s.supplement_id];
+    if (!details || !details.length) {
+      return `<span class="badge" style="background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;">unmapped</span>`;
+    }
+    const tip = details.map(d => `${d.bookName} · ${d.unitLabel} · ${d.pieceLabel}`).join('\n');
+    return `<span class="badge badge-mapped badge-has-tip" data-tooltip="${escHtml(tip)}">mapped</span>`;
+  })();
 
   const hintHtml = s.curriculum_hint
     ? `<div class="msupp-hint">hint: ${escHtml(s.curriculum_hint)}</div>` : '';
@@ -1876,23 +1904,37 @@ async function manageCommitMap(s, bookId, unitLabel, targetPieceId, pieces, row,
   mState.mappedIds.add(s.supplement_id);
   if (!mState.mappedBookIds[s.supplement_id])    mState.mappedBookIds[s.supplement_id]    = new Set();
   if (!mState.mappedUnitLabels[s.supplement_id]) mState.mappedUnitLabels[s.supplement_id] = new Set();
+  if (!mState.mappedDetails[s.supplement_id])    mState.mappedDetails[s.supplement_id]    = [];
   mState.mappedBookIds[s.supplement_id].add(bookId);
   mState.mappedUnitLabels[s.supplement_id].add(unitLabel);
 
-  // Update the supplement's own allSupplements entry so the mappedBadge re-renders correctly
-  const supp = mState.allSupplements.find(x => x.supplement_id === s.supplement_id);
+  // Resolve piece label from cache for the tooltip
+  const cacheKey   = bookId + '|' + unitLabel;
+  const cachedPieces = mState.pieceCache[cacheKey] || [];
+  const pieceData  = cachedPieces.find(p => p.piece_id === targetPieceId);
+  const pieceLabel = pieceData ? `p.${pieceData.page_start} — ${pieceData.piece_title}` : '—';
+  const book       = (state.books || []).find(b => b.book_id === bookId);
+  const bookName   = book?.display_name || bookId;
 
-  // Visual confirmation on the row — flash green border, update mapped badge
+  // Remove any existing entry for this book (move replaces it), then push new one
+  mState.mappedDetails[s.supplement_id] = mState.mappedDetails[s.supplement_id]
+    .filter(d => d.bookName !== bookName);
+  mState.mappedDetails[s.supplement_id].push({ bookName, unitLabel, pieceLabel });
+
+  // Visual confirmation on the row — flash green border, update mapped badge with tooltip
   row.style.borderColor = 'var(--success)';
   row.style.background  = 'var(--success-light)';
   const metaEl = row.querySelector('.msupp-meta');
   if (metaEl) {
-    // Remove unmapped badge if present and add mapped badge
+    // Remove unmapped or old mapped badge
     metaEl.querySelectorAll('span').forEach(sp => {
-      if (sp.textContent === 'unmapped') sp.remove();
+      if (sp.textContent === 'unmapped' || sp.classList.contains('badge-mapped')) sp.remove();
     });
+    const tip = mState.mappedDetails[s.supplement_id]
+      .map(d => `${d.bookName} · ${d.unitLabel} · ${d.pieceLabel}`).join('\n');
     const mb = document.createElement('span');
-    mb.className = 'badge badge-mapped';
+    mb.className = 'badge badge-mapped badge-has-tip';
+    mb.dataset.tooltip = tip;
     mb.textContent = 'mapped';
     metaEl.appendChild(mb);
   }
