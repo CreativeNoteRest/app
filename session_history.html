@@ -170,8 +170,12 @@
     .supp-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .supp-item:last-child { border-bottom: none; padding-bottom: 0; }
     .supp-item:first-child { padding-top: 0; }
-    .supp-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--brand-light); }
-    .supp-thumb-placeholder { background: var(--brand-light); }
+    .supp-thumb { width: 44px; height: 56px; border-radius: 0; object-fit: cover; flex-shrink: 0; background: var(--brand-light); cursor: pointer; transition: opacity 0.15s; }
+    .supp-thumb:hover { opacity: 0.82; }
+    .supp-thumb-placeholder { width: 44px; height: 56px; background: var(--brand-light); }
+    /* ── Supplement thumbnail hover preview ── */
+    .supp-thumb-preview { position: fixed; z-index: 200; pointer-events: none; display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); padding: 4px; }
+    .supp-thumb-preview img { display: block; width: 200px; height: auto; border-radius: 0; }
     .supp-info { flex: 1; min-width: 0; }
     .supp-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .supp-title { font-size: 14px; font-weight: 600; color: var(--text); }
@@ -500,7 +504,7 @@
     }
     const cards = items.map(s => {
       const thumb = s.thumbnail_url
-        ? '<img class="supp-thumb" src="' + escHtml(s.thumbnail_url) + '" alt="" loading="lazy">'
+        ? '<img class="supp-thumb" src="' + escHtml(s.thumbnail_url) + '" alt="" loading="lazy" data-url="' + escHtml(s.source_url || '') + '">'
         : '<div class="supp-thumb supp-thumb-placeholder"></div>';
       const badge = s.is_free === true
         ? '<span class="supp-badge supp-badge-free">Free</span>'
@@ -589,6 +593,37 @@
   }
 
   loadStudents();
+
+  // ── Supplement thumbnail hover preview & click ────────────────────
+  (function() {
+    const preview = document.createElement('div');
+    preview.className = 'supp-thumb-preview';
+    const previewImg = document.createElement('img');
+    preview.appendChild(previewImg);
+    document.body.appendChild(preview);
+
+    document.addEventListener('mouseover', function(e) {
+      const thumb = e.target.closest('img.supp-thumb');
+      if (!thumb || !thumb.src) return;
+      previewImg.src = thumb.src;
+      preview.style.display = 'block';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (preview.style.display === 'none') return;
+      preview.style.left = (e.clientX + 14) + 'px';
+      preview.style.top  = (e.clientY - 10) + 'px';
+    });
+    document.addEventListener('mouseout', function(e) {
+      if (!e.target.closest('img.supp-thumb')) return;
+      preview.style.display = 'none';
+    });
+    document.addEventListener('click', function(e) {
+      const thumb = e.target.closest('img.supp-thumb');
+      if (!thumb) return;
+      const url = thumb.dataset.url;
+      if (url) window.open(url, '_blank', 'noopener');
+    });
+  })();
 </script>
 
 </body>
