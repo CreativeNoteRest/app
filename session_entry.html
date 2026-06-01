@@ -734,10 +734,9 @@
   document.getElementById('hdr-student').textContent = studentName || 'Student';
   document.getElementById('hdr-meta').textContent    = today;
 
-  const seriesLabel = document.body.dataset.seriesName
-    || sessionStorage.getItem('series_slug')?.replace(/-/g, ' ')
-    || 'Creative Note';
-  document.getElementById('hdr-series').innerHTML = 'Creative Note <span style="font-weight:900;text-transform:none;font-size:14px;letter-spacing:0.04em">REST</span>';
+  const nameMap = { wunderkeys: 'Creative Note REST' };
+  const seriesEl = document.getElementById('hdr-series');
+  if (nameMap[SERIES_SLUG]) seriesEl.textContent = nameMap[SERIES_SLUG];
 
   document.getElementById('auth-loading').style.display = 'none';
   document.getElementById('app-shell').style.display    = 'flex';
