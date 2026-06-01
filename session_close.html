@@ -176,16 +176,21 @@
       border-radius: 10px;
     }
     .supplement-thumb {
-      width: 48px; height: 48px; border-radius: 8px;
+      width: 44px; height: 56px; border-radius: 0;
       object-fit: cover; flex-shrink: 0;
       background: var(--brand-light);
+      cursor: pointer; transition: opacity 0.15s;
     }
+    .supplement-thumb:hover { opacity: 0.82; }
     .supplement-thumb-placeholder {
-      width: 48px; height: 48px; border-radius: 8px;
+      width: 44px; height: 56px; border-radius: 0;
       background: var(--brand-light);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
+    /* ── Supplement thumbnail hover preview ── */
+    .supp-thumb-preview { position: fixed; z-index: 200; pointer-events: none; display: none; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); padding: 4px; }
+    .supp-thumb-preview img { display: block; width: 200px; height: auto; border-radius: 0; }
     .supplement-thumb-placeholder svg { width: 20px; height: 20px; fill: var(--brand); opacity: 0.6; }
     .supplement-info { flex: 1; min-width: 0; }
     .supplement-title {
@@ -901,7 +906,8 @@
     let thumbHtml;
     if (s.thumbnail_url) {
       thumbHtml = `<img class="supplement-thumb" src="${escHtml(s.thumbnail_url)}"
-        alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        alt="" loading="lazy" data-url="${escHtml(s.source_url || '')}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="supplement-thumb-placeholder" style="display:none">
           ${bookIconSvg()}
         </div>`;
@@ -942,6 +948,39 @@
   function bookIconSvg() {
     return `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>`;
   }
+
+  // ── Supplement thumbnail hover preview & click ────────────────────
+  (function() {
+    const preview = document.createElement('div');
+    preview.className = 'supp-thumb-preview';
+    const previewImg = document.createElement('img');
+    preview.appendChild(previewImg);
+    document.body.appendChild(preview);
+
+    document.addEventListener('mouseover', function(e) {
+      const thumb = e.target.closest('img.supplement-thumb');
+      if (!thumb || !thumb.src) return;
+      previewImg.src = thumb.src;
+      preview.style.display = 'block';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (preview.style.display === 'none') return;
+      const x = e.clientX + 14;
+      const y = e.clientY - 10;
+      preview.style.left = x + 'px';
+      preview.style.top  = y + 'px';
+    });
+    document.addEventListener('mouseout', function(e) {
+      if (!e.target.closest('img.supplement-thumb')) return;
+      preview.style.display = 'none';
+    });
+    document.addEventListener('click', function(e) {
+      const thumb = e.target.closest('img.supplement-thumb');
+      if (!thumb) return;
+      const url = thumb.dataset.url;
+      if (url) window.open(url, '_blank', 'noopener');
+    });
+  })();
 
   window.showMoreSupplements = function() {
     initialCount = allSupplements.length; // reveal all
