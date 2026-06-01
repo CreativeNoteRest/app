@@ -645,7 +645,7 @@ function setP1View(mode) {
     elP1Textarea.classList.remove('resolved');
     elP1Textarea.disabled         = !studentRow; // re-apply enabled state
     updateCC(elP1Textarea, elP1CharCount);
-    renderChips(elP1VarsRow, prompts[1]?.required_variables || [], elP1Textarea.value);
+    renderChips(elP1VarsRow, prompts[1]?.required_variables || [], elP1Textarea.value, elP1Textarea);
     elP1EditActions.classList.remove('hidden');
   } else {
     elP1PromptLabel.textContent   = 'Resolved prompt (read-only)';
@@ -654,7 +654,7 @@ function setP1View(mode) {
     elP1Textarea.classList.add('resolved');
     elP1Textarea.disabled         = false;
     updateCC(elP1Textarea, elP1CharCount);
-    renderChips(elP1VarsRow, prompts[1]?.required_variables || [], p1OrigText); // chips reflect template
+    renderChips(elP1VarsRow, prompts[1]?.required_variables || [], p1OrigText); // chips reflect template — no insert in resolved view
     elP1EditActions.classList.add('hidden');
   }
 }
@@ -716,7 +716,7 @@ function setDsView(mode) {
     elDsTextarea.readOnly         = false;
     elDsTextarea.classList.remove('resolved');
     updateCC(elDsTextarea, elDsCharCount);
-    if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value); }
+    if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value, elDsTextarea); }
     elDsEditActions.classList.remove('hidden');
   } else {
     elDsPromptLabel.textContent   = 'Resolved prompt (as sent to AI — read-only)';
@@ -853,7 +853,7 @@ async function loadPrompts() {
     p1OrigText         = prompts[1].prompt_text || '';
     elP1Textarea.value = p1OrigText;
     updateCC(elP1Textarea, elP1CharCount);
-    renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value);
+    renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value, elP1Textarea);
   }
 }
 
@@ -951,7 +951,7 @@ elP1Textarea.addEventListener('input', () => {
   if (p1ViewMode !== 'template') { return; }
   p1OrigText = elP1Textarea.value; // track live edits for discard comparison
   updateCC(elP1Textarea, elP1CharCount);
-  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value); }
+  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value, elP1Textarea); }
   elP1MsgSuccess.classList.add('hidden');
   setP1Dirty(elP1Textarea.value !== (prompts[1]?.prompt_text || ''));
 });
@@ -983,7 +983,7 @@ elP1BtnRestore.addEventListener('click', () => {
   p1OrigText         = prompts[1].prompt_text_previous;
   elP1Textarea.value = p1OrigText;
   updateCC(elP1Textarea, elP1CharCount);
-  renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value);
+  renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value, elP1Textarea);
   elP1MsgError.classList.add('hidden'); elP1MsgSuccess.classList.add('hidden');
   setP1Dirty(elP1Textarea.value !== (prompts[1]?.prompt_text || ''));
 });
@@ -995,7 +995,7 @@ elP1BtnDiscard.addEventListener('click', () => {
   p1OrigText         = orig;
   elP1Textarea.value = p1OrigText;
   updateCC(elP1Textarea, elP1CharCount);
-  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value); }
+  if (prompts[1]) { renderChips(elP1VarsRow, prompts[1].required_variables || [], elP1Textarea.value, elP1Textarea); }
   elP1MsgError.classList.add('hidden'); elP1MsgSuccess.classList.add('hidden');
   setP1Dirty(false);
 });
@@ -1137,7 +1137,7 @@ function resetDownstream() {
 elDsTextarea.addEventListener('input', () => {
   if (dsViewMode !== 'template') { return; }
   updateCC(elDsTextarea, elDsCharCount);
-  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value); }
+  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value, elDsTextarea); }
   elDsMsgSuccess.classList.add('hidden');
   setDsDirty(dsPhase ? elDsTextarea.value !== (prompts[dsPhase]?.prompt_text || '') : false);
 });
@@ -1170,7 +1170,7 @@ elDsBtnRestore.addEventListener('click', () => {
   dsOrigText         = prompts[dsPhase].prompt_text_previous;
   elDsTextarea.value = dsOrigText;
   updateCC(elDsTextarea, elDsCharCount);
-  renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value);
+  renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value, elDsTextarea);
   elDsMsgError.classList.add('hidden'); elDsMsgSuccess.classList.add('hidden');
   setDsDirty(elDsTextarea.value !== (prompts[dsPhase]?.prompt_text || ''));
 });
@@ -1182,7 +1182,7 @@ elDsBtnDiscard.addEventListener('click', () => {
   dsOrigText         = orig;
   elDsTextarea.value = dsOrigText;
   updateCC(elDsTextarea, elDsCharCount);
-  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value); }
+  if (dsPhase && prompts[dsPhase]) { renderChips(elDsVarsRow, prompts[dsPhase].required_variables || [], elDsTextarea.value, elDsTextarea); }
   elDsMsgError.classList.add('hidden'); elDsMsgSuccess.classList.add('hidden');
   setDsDirty(false);
 });
@@ -1305,7 +1305,7 @@ function validatePrompt(text, vars) {
   return errs;
 }
 
-function renderChips(container, vars, currentText) {
+function renderChips(container, vars, currentText, pairedTextarea) {
   container.innerHTML = '';
   if (!vars?.length) { container.innerHTML = '<span class="vars-none">No required variables defined.</span>'; return; }
   vars.forEach(v => {
@@ -1314,7 +1314,19 @@ function renderChips(container, vars, currentText) {
     const chip = document.createElement('span');
     chip.className   = 'var-chip' + (ok ? '' : ' missing');
     chip.textContent = ph;
-    chip.title       = ok ? 'Present in prompt' : 'MISSING from prompt text';
+    chip.title       = ok ? 'Click to insert — already present in prompt' : 'Click to insert — MISSING from prompt text';
+    if (pairedTextarea) {
+      chip.addEventListener('click', () => {
+        const ta    = pairedTextarea;
+        const start = ta.selectionStart ?? ta.value.length;
+        const end   = ta.selectionEnd   ?? ta.value.length;
+        ta.value    = ta.value.slice(0, start) + ph + ta.value.slice(end);
+        const cur   = start + ph.length;
+        ta.setSelectionRange(cur, cur);
+        ta.focus();
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
     container.appendChild(chip);
   });
 }
