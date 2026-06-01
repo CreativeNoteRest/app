@@ -182,7 +182,6 @@
     }
 
     .entry-counter span {
-      color: var(--brand);
       font-weight: 600;
     }
 
@@ -466,9 +465,7 @@
     /* ── History button ───────────────────────────────────────────── */
     .btn-history {
       flex-shrink: 0;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
+      border-radius: 6px;
       border: 1.5px solid var(--border);
       background: var(--surface);
       color: var(--text-mid);
@@ -476,6 +473,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
       margin-top: 2px;
       transition: all 0.15s;
       -webkit-tap-highlight-color: transparent;
@@ -628,7 +628,13 @@
         <span class="book-change-link" id="book-change-link" role="button" tabindex="0">Change</span>
       </div>
     </div>
-    <button class="btn-history" id="btn-history" title="View past lessons" aria-label="View past lessons">Past Lessons</button>
+    <button class="btn-history" id="btn-history" title="View past lessons" aria-label="View past lessons">
+      <!-- Clock/history icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </button>
   </header>
 
   <!-- Status bar (errors / feedback) -->
@@ -736,7 +742,7 @@
   const seriesLabel = document.body.dataset.seriesName
     || sessionStorage.getItem('series_slug')?.replace(/-/g, ' ')
     || 'Creative Note';
-  document.getElementById('hdr-series').innerHTML = 'Creative Note <span style="font-weight:900 !important; text-transform:none !important">REST</span>';
+  document.getElementById('hdr-series').innerHTML = 'Creative Note <span style="font-weight:900;text-transform:none;font-size:14px;letter-spacing:0.04em">REST</span>';
 
   document.getElementById('auth-loading').style.display = 'none';
   document.getElementById('app-shell').style.display    = 'flex';
