@@ -282,9 +282,10 @@ Deno.serve(async (req: Request) => {
         const effectiveLessonPage = deriveEffectiveLessonPage(validatedPhase1, booksPieces, prevLessonPage);
         validatedPhase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
 
+        const pieceBlock = assemblePieceBlock(validatedPhase1, booksPieces, entries, false);
+        const pieceBlockWithBook = assemblePieceBlock(validatedPhase1, booksPieces, entries, true);
+
         if (phase === 4) {
-          const pieceBlock = assemblePieceBlock(validatedPhase1, booksPieces, entries, false);
-          const pieceBlockWithBook = assemblePieceBlock(validatedPhase1, booksPieces, entries, true);
           const promptText = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText);
           if (prompt_only) return jsonResponse({ success: true, phase: 4, assembled_prompt_used: promptText });
           const aiConfig = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
