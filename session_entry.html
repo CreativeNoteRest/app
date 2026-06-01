@@ -742,7 +742,7 @@
   const seriesLabel = document.body.dataset.seriesName
     || sessionStorage.getItem('series_slug')?.replace(/-/g, ' ')
     || 'Creative Note';
-  document.getElementById('hdr-series').textContent = 'Creative Note REST';
+  document.getElementById('hdr-series').innerHTML = 'Creative Note <strong>REST</strong>';
 
   document.getElementById('auth-loading').style.display = 'none';
   document.getElementById('app-shell').style.display    = 'flex';
