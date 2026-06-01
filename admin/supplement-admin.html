@@ -224,8 +224,8 @@
     .msupp-row.checked { border-color: var(--brand); background: #FFFAF6; }
     .msupp-row.retired-row { opacity: 0.65; }
     .msupp-row-check { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
-    .msupp-thumb { width: 40px; height: 50px; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1rem; overflow: hidden; }
-    .msupp-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .msupp-thumb { width: 40px; height: 50px; border-radius: 0; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1rem; overflow: hidden; }
+    .msupp-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
     .msupp-body { flex: 1; min-width: 0; }
     .msupp-title { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
     .msupp-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
@@ -1641,8 +1641,10 @@ function manageBuildRow(s) {
   row.dataset.suppId = s.supplement_id;
 
   const thumbHtml = s.thumbnail_url
-    ? `<div class="msupp-thumb"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
-    : `<div class="msupp-thumb">🎵</div>`;
+    ? `<div class="msupp-thumb supp-thumb-clickable" data-src="${escHtml(s.thumbnail_url)}" data-url="${escHtml(s.source_url || '')}"><img src="${escHtml(s.thumbnail_url)}" alt="" loading="lazy" /></div>`
+    : s.source_url
+      ? `<div class="msupp-thumb supp-thumb-clickable" data-url="${escHtml(s.source_url)}">🎵</div>`
+      : `<div class="msupp-thumb">🎵</div>`;
 
   const statusBadge = s.is_active
     ? `<span class="badge badge-active">active</span>`
@@ -1672,6 +1674,8 @@ function manageBuildRow(s) {
       ${hintHtml}
       ${linkHtml}
     </div>`;
+
+  wireThumb(row, s.thumbnail_url, s.source_url);
 
   row.querySelector(`#mchk-${s.supplement_id}`).addEventListener('change', e => {
     if (e.target.checked) mState.selected.add(s.supplement_id);
