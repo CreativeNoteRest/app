@@ -283,8 +283,9 @@ Deno.serve(async (req: Request) => {
         validatedPhase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
 
         if (phase === 4) {
-          const pieceBlock4 = assemblePieceBlock(validatedPhase1, booksPieces, entries, 'phase4');
-          const promptText = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock4, entries, activeSuppsText);
+          const pieceBlock = assemblePieceBlock(validatedPhase1, booksPieces, entries, false);
+          const pieceBlockWithBook = assemblePieceBlock(validatedPhase1, booksPieces, entries, true);
+          const promptText = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText);
           if (prompt_only) return jsonResponse({ success: true, phase: 4, assembled_prompt_used: promptText });
           const aiConfig = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
           const raw = await callAI(promptText, aiConfig);
@@ -292,8 +293,7 @@ Deno.serve(async (req: Request) => {
         }
 
         if (phase === 5) {
-          const pieceBlock5 = assemblePieceBlock(validatedPhase1, booksPieces, entries, 'phase5');
-          const promptText = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock5, entries, activeSuppsText, studentAge);
+          const promptText = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText, studentAge);
           if (prompt_only) return jsonResponse({ success: true, phase: 5, assembled_prompt_used: promptText });
           const aiConfig = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
           const raw = await callAI(promptText, aiConfig);
@@ -356,14 +356,14 @@ Deno.serve(async (req: Request) => {
     const supplementText = 'See supplement recommendations below.';
 
     // --- Phase 4 ---
-    const pieceBlock4 = assemblePieceBlock(phase1, booksPieces, entries, 'phase4');
-    const phase4Prompt = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock4, entries, activeSuppsText);
+    const pieceBlock = assemblePieceBlock(phase1, booksPieces, entries, false);
+    const pieceBlockWithBook = assemblePieceBlock(phase1, booksPieces, entries, true);
+    const phase4Prompt = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText);
     const phase4Config = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
     const phase4Result = await callAI(phase4Prompt, phase4Config);
 
     // --- Phase 5 ---
-    const pieceBlock5 = assemblePieceBlock(phase1, booksPieces, entries, 'phase5');
-    const phase5Prompt = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock5, entries, activeSuppsText, studentAge);
+    const phase5Prompt = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText, studentAge);
     const phase5Config = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
     const phase5Result = await callAI(phase5Prompt, phase5Config);
 
@@ -1040,7 +1040,7 @@ function assemblePieceBlock(
   phase1: Phase1Output,
   booksPieces: BookPiece[],
   entries: string,
-  variant: 'phase4' | 'phase5',
+  includeBookLines: boolean,
 ): string {
   const pieceMap = new Map(booksPieces.map(p => [p.piece_id, p]));
   const lines: string[] = [];
@@ -1059,7 +1059,7 @@ function assemblePieceBlock(
     for (const note of ref.teacher_notes ?? []) {
       lines.push(`Teacher: ${note}`);
     }
-    if (variant === 'phase5' && piece?.student_instructions) {
+    if (includeBookLines && piece?.student_instructions) {
       const raw = piece.student_instructions;
       const instructions: string[] = Array.isArray(raw)
         ? raw
@@ -1143,6 +1143,7 @@ function assemblePhase4Prompt(
   bookName: string,
   effectiveLessonPage: number | null,
   pieceReferences: string,
+  pieceReferencesWithBook: string,
   entries: string,
   activeSupplements: string,
 ): string {
@@ -1153,6 +1154,7 @@ function assemblePhase4Prompt(
     .replace('{{book_name}}', bookName)
     .replace('{{lesson_page}}', lessonPageStr)
     .replace('{{piece_references}}', pieceReferences)
+    .replace('{{piece_references_with_book}}', pieceReferencesWithBook)
     .replace('{{entries}}', entries)
     .replace('{{active_supplements}}', activeSupplements);
 }
@@ -1164,6 +1166,7 @@ function assemblePhase5Prompt(
   bookName: string,
   effectiveLessonPage: number | null,
   pieceReferences: string,
+  pieceReferencesWithBook: string,
   entries: string,
   activeSupplements: string,
   studentAge: number | null,
@@ -1176,6 +1179,7 @@ function assemblePhase5Prompt(
     .replace('{{book_name}}', bookName)
     .replace('{{lesson_page}}', lessonPageStr)
     .replace('{{piece_references}}', pieceReferences)
+    .replace('{{piece_references_with_book}}', pieceReferencesWithBook)
     .replace('{{entries}}', entries)
     .replace('{{active_supplements}}', activeSupplements)
     .replace('{{student_age}}', ageStr);
