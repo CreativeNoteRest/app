@@ -237,6 +237,15 @@
     .badge-free     { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
     .badge-paid     { background: #F8FAFC; color: #64748B; border: 1px solid #CBD5E1; }
 
+    /* ── Manage tab: per-row mapping controls ── */
+    .msupp-map-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .msupp-map-sel { height: 32px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--text); background: var(--surface); outline: none; cursor: pointer; transition: border-color 0.15s; min-width: 130px; flex: 1; }
+    .msupp-map-sel:focus { border-color: var(--brand); }
+    .msupp-map-sel:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-map-supp { height: 32px; padding: 0 14px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s; }
+    .btn-map-supp:hover { opacity: 0.88; }
+    .btn-map-supp:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* Manage action bar */
     .manage-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1.5px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 10px; z-index: 40; box-shadow: 0 -2px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
     .manage-bar-count { font-size: 0.88rem; color: var(--text-mid); flex: 1; min-width: 120px; }
@@ -1475,6 +1484,8 @@ const mState = {
   mappedUnitLabels: {},        // { supplement_id: Set<unit_label> }
   selected:         new Set(), // supplement_ids currently checked
   loaded:           false,
+  unitCache:        {},        // { book_id: [{ unit_id, unit_label, unit_title }] }
+  pieceCache:       {},        // { book_id+'|'+unit_label: [{ piece_id, piece_title, page_start }] }
 };
 
 // Load fresh when manage tab is activated (called from switchTab)
@@ -1662,8 +1673,12 @@ function manageBuildRow(s) {
 
   const hintHtml = s.curriculum_hint
     ? `<div class="msupp-hint">hint: ${escHtml(s.curriculum_hint)}</div>` : '';
-  const linkHtml = s.source_url
-    ? `<a class="msupp-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener">↗ Open</a>` : '';
+
+  // Build book options from globally-loaded books list
+  let bookOpts = '<option value="">— book —</option>';
+  (state.books || []).forEach(b => {
+    bookOpts += `<option value="${escHtml(b.book_id)}">${escHtml(b.display_name)}</option>`;
+  });
 
   row.innerHTML = `
     <input type="checkbox" class="msupp-row-check" id="mchk-${s.supplement_id}" ${isChecked ? 'checked' : ''} />
@@ -1672,11 +1687,23 @@ function manageBuildRow(s) {
       <div class="msupp-title">${escHtml(s.title)}</div>
       <div class="msupp-meta">${statusBadge}${freeBadge}${multiBadge}${levelBadge}${catBadge}${mappedBadge}</div>
       ${hintHtml}
-      ${linkHtml}
+      <div class="msupp-map-row">
+        <select class="msupp-map-sel" id="mmap-book-${s.supplement_id}" title="Workbook">
+          ${bookOpts}
+        </select>
+        <select class="msupp-map-sel" id="mmap-unit-${s.supplement_id}" disabled title="Unit">
+          <option value="">— unit —</option>
+        </select>
+        <select class="msupp-map-sel" id="mmap-piece-${s.supplement_id}" disabled title="Piece (optional)">
+          <option value="">— first piece —</option>
+        </select>
+        <button class="btn-map-supp" id="mmap-btn-${s.supplement_id}" disabled>Map</button>
+      </div>
     </div>`;
 
   wireThumb(row, s.thumbnail_url, s.source_url);
 
+  // ── Checkbox: bulk-select behaviour (unchanged) ──
   row.querySelector(`#mchk-${s.supplement_id}`).addEventListener('change', e => {
     if (e.target.checked) mState.selected.add(s.supplement_id);
     else                  mState.selected.delete(s.supplement_id);
@@ -1685,7 +1712,199 @@ function manageBuildRow(s) {
     manageUpdateBar();
   });
 
+  // ── Cascading selectors ──
+  const bookSel  = row.querySelector(`#mmap-book-${s.supplement_id}`);
+  const unitSel  = row.querySelector(`#mmap-unit-${s.supplement_id}`);
+  const pieceSel = row.querySelector(`#mmap-piece-${s.supplement_id}`);
+  const mapBtn   = row.querySelector(`#mmap-btn-${s.supplement_id}`);
+
+  bookSel.addEventListener('change', async () => {
+    const bookId = bookSel.value;
+    unitSel.innerHTML = '<option value="">— unit —</option>';
+    pieceSel.innerHTML = '<option value="">— first piece —</option>';
+    unitSel.disabled  = true;
+    pieceSel.disabled = true;
+    mapBtn.disabled   = true;
+    if (!bookId) return;
+
+    // Load units (cached)
+    if (!mState.unitCache[bookId]) {
+      unitSel.innerHTML = '<option value="">Loading…</option>';
+      const { data } = await sb
+        .from('books_units')
+        .select('unit_id, unit_label, unit_title')
+        .eq('book_id', bookId)
+        .order('unit_label');
+      mState.unitCache[bookId] = data || [];
+      unitSel.innerHTML = '<option value="">— unit —</option>';
+    }
+    mState.unitCache[bookId].forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.unit_label;
+      o.textContent = `${u.unit_label} — ${u.unit_title}`;
+      unitSel.appendChild(o);
+    });
+    unitSel.disabled = false;
+  });
+
+  unitSel.addEventListener('change', async () => {
+    const bookId    = bookSel.value;
+    const unitLabel = unitSel.value;
+    pieceSel.innerHTML = '<option value="">— first piece —</option>';
+    pieceSel.disabled  = true;
+    mapBtn.disabled    = !unitLabel;
+    if (!unitLabel) return;
+
+    // Load pieces (cached)
+    const cacheKey = bookId + '|' + unitLabel;
+    if (!mState.pieceCache[cacheKey]) {
+      pieceSel.innerHTML = '<option value="">Loading…</option>';
+      const { data } = await sb
+        .from('books_pieces')
+        .select('piece_id, piece_title, page_start')
+        .eq('book_id', bookId)
+        .eq('unit_label', unitLabel)
+        .order('page_start');
+      mState.pieceCache[cacheKey] = data || [];
+      pieceSel.innerHTML = '<option value="">— first piece —</option>';
+    }
+    mState.pieceCache[cacheKey].forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.piece_id;
+      o.textContent = `p.${p.page_start} — ${escHtml(p.piece_title)}`;
+      pieceSel.appendChild(o);
+    });
+    pieceSel.disabled = false;
+  });
+
+  mapBtn.addEventListener('click', () => {
+    manageMapSupplement(s, row, bookSel, unitSel, pieceSel, mapBtn);
+  });
+
   return row;
+}
+
+// ── Per-row mapping action ─────────────────────────────────────────
+async function manageMapSupplement(s, row, bookSel, unitSel, pieceSel, mapBtn) {
+  const bookId    = bookSel.value;
+  const unitLabel = unitSel.value;
+  if (!bookId || !unitLabel) return;
+
+  const cacheKey = bookId + '|' + unitLabel;
+  const pieces   = mState.pieceCache[cacheKey] || [];
+
+  // Resolve target piece: user selection or first piece in unit
+  let targetPieceId = pieceSel.value || null;
+  if (!targetPieceId) {
+    if (pieces.length > 0) {
+      targetPieceId = pieces[0].piece_id;
+    } else {
+      // Fallback DB fetch if cache missed (shouldn't happen in normal flow)
+      const { data: fp } = await sb
+        .from('books_pieces')
+        .select('piece_id')
+        .eq('book_id', bookId)
+        .eq('unit_label', unitLabel)
+        .order('page_start')
+        .limit(1);
+      targetPieceId = fp?.[0]?.piece_id || null;
+    }
+  }
+
+  if (!targetPieceId) {
+    alert('No pieces found for this unit. Ensure the unit has pieces defined.');
+    return;
+  }
+
+  // Check for an existing mapping to this book
+  const alreadyMappedToBook = mState.mappedBookIds[s.supplement_id]?.has(bookId);
+
+  if (alreadyMappedToBook) {
+    // Show move-confirm dialog — reuse the shared overlay
+    const book     = (state.books || []).find(b => b.book_id === bookId);
+    const bookName = book?.display_name || bookId;
+    const unitUnits = mState.unitCache[bookId] || [];
+    const unit     = unitUnits.find(u => u.unit_label === unitLabel);
+    const unitName = unit ? `${unit.unit_label} — ${unit.unit_title}` : unitLabel;
+
+    manageShowMoveConfirm(s, bookId, bookName, unitLabel, unitName, targetPieceId, pieces, row, mapBtn);
+  } else {
+    // No conflict — insert directly
+    await manageCommitMap(s, bookId, unitLabel, targetPieceId, pieces, row, mapBtn);
+  }
+}
+
+function manageShowMoveConfirm(s, bookId, bookName, unitLabel, unitName, targetPieceId, pieces, row, mapBtn) {
+  document.getElementById('move-confirm-body').innerHTML =
+    `<strong>${escHtml(s.title)}</strong> is already mapped to a position in <strong>${escHtml(bookName)}</strong>.<br><br>` +
+    `Move it to <strong>${escHtml(unitName)}</strong>? The existing mapping will be replaced.`;
+
+  _moveConfirmCallback = async () => {
+    const btn = document.getElementById('btn-move-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Moving…';
+    closeMoveConfirm();
+    await manageCommitMap(s, bookId, unitLabel, targetPieceId, pieces, row, mapBtn);
+    btn.disabled = false;
+    btn.textContent = 'Move here';
+  };
+
+  document.getElementById('move-confirm-overlay').classList.remove('hidden');
+}
+
+async function manageCommitMap(s, bookId, unitLabel, targetPieceId, pieces, row, mapBtn) {
+  mapBtn.disabled = true;
+  mapBtn.textContent = 'Saving…';
+
+  const { error } = await sb
+    .from('supplement_eligibility_map')
+    .upsert({
+      supplement_id:     s.supplement_id,
+      book_id:           bookId,
+      series_id:         SERIES_ID,
+      earliest_piece_id: targetPieceId,
+    }, { onConflict: 'supplement_id,book_id,series_id' });
+
+  if (error) {
+    mapBtn.disabled = false;
+    mapBtn.textContent = 'Map';
+    alert('Map failed: ' + error.message);
+    return;
+  }
+
+  // Update local mState so filters and badges reflect immediately
+  mState.mappedIds.add(s.supplement_id);
+  if (!mState.mappedBookIds[s.supplement_id])    mState.mappedBookIds[s.supplement_id]    = new Set();
+  if (!mState.mappedUnitLabels[s.supplement_id]) mState.mappedUnitLabels[s.supplement_id] = new Set();
+  mState.mappedBookIds[s.supplement_id].add(bookId);
+  mState.mappedUnitLabels[s.supplement_id].add(unitLabel);
+
+  // Update the supplement's own allSupplements entry so the mappedBadge re-renders correctly
+  const supp = mState.allSupplements.find(x => x.supplement_id === s.supplement_id);
+
+  // Visual confirmation on the row — flash green border, update mapped badge
+  row.style.borderColor = 'var(--success)';
+  row.style.background  = 'var(--success-light)';
+  const metaEl = row.querySelector('.msupp-meta');
+  if (metaEl) {
+    // Remove unmapped badge if present and add mapped badge
+    metaEl.querySelectorAll('span').forEach(sp => {
+      if (sp.textContent === 'unmapped') sp.remove();
+    });
+    const mb = document.createElement('span');
+    mb.className = 'badge badge-mapped';
+    mb.textContent = 'mapped';
+    metaEl.appendChild(mb);
+  }
+
+  // Reset selectors and button
+  mapBtn.textContent = '✓ Mapped';
+  setTimeout(() => {
+    row.style.borderColor = '';
+    row.style.background  = '';
+    mapBtn.textContent = 'Map';
+    mapBtn.disabled = false;
+  }, 2500);
 }
 
 // ── Selection helpers ──────────────────────────────────────────────
