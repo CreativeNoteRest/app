@@ -735,8 +735,9 @@
   document.getElementById('hdr-meta').textContent    = today;
 
   const nameMap = { wunderkeys: 'Creative Note REST' };
+  const seriesSlug = sessionStorage.getItem('series_slug') || '';
   const seriesEl = document.getElementById('hdr-series');
-  if (nameMap[SERIES_SLUG]) seriesEl.textContent = nameMap[SERIES_SLUG];
+  seriesEl.textContent = nameMap[seriesSlug] || 'Creative Note REST';
 
   document.getElementById('auth-loading').style.display = 'none';
   document.getElementById('app-shell').style.display    = 'flex';
