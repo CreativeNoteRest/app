@@ -1898,6 +1898,7 @@
     const bookSvg = '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>';
     const thumb = s.thumbnail_url
       ? '<img class="history-supp-thumb" src="' + escapeHtml(s.thumbnail_url) + '" alt="" loading="lazy"' +
+        ' data-url="' + escapeHtml(s.source_url || '') + '"' +
         ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
         '<div class="history-supp-thumb-placeholder" style="display:none">' + bookSvg + '</div>'
       : '<div class="history-supp-thumb-placeholder">' + bookSvg + '</div>';
@@ -1955,6 +1956,43 @@
 
   const _atp    = document.getElementById('assign-thumb-preview');
   const _atpImg = document.getElementById('assign-thumb-preview-img');
+
+  // ── History modal supplement tile hover preview & click ───────────────────
+  // Delegated on #history-modal-body -- reuses the assign-thumb-preview overlay
+  // since history and assign modals are never open simultaneously.
+  (function() {
+    const body = document.getElementById('history-modal-body');
+
+    body.addEventListener('mouseover', function(e) {
+      const thumb = e.target.closest('img.history-supp-thumb');
+      if (!thumb || !thumb.src) return;
+      _atpImg.src = thumb.src;
+      _atp.style.display = 'block';
+    });
+
+    body.addEventListener('mousemove', function(e) {
+      if (_atp.style.display === 'none') return;
+      const pad = 12, pw = 208;
+      let left = e.clientX + pad;
+      let top  = e.clientY - 60;
+      if (left + pw > window.innerWidth) left = e.clientX - pw - pad;
+      if (top < 8) top = 8;
+      _atp.style.left = left + 'px';
+      _atp.style.top  = top  + 'px';
+    });
+
+    body.addEventListener('mouseout', function(e) {
+      if (!e.target.closest('img.history-supp-thumb')) return;
+      _atp.style.display = 'none';
+    });
+
+    body.addEventListener('click', function(e) {
+      const thumb = e.target.closest('img.history-supp-thumb');
+      if (!thumb) return;
+      const url = thumb.dataset.url;
+      if (url) window.open(url, '_blank', 'noopener');
+    });
+  })();
 
   function assignThumbHover(e, src) {
     if (!src) return;
