@@ -2086,6 +2086,7 @@
       cb.checked = _assignChecked.has(suppId);
 
       row.addEventListener('click', function(e) {
+        if (e.target === cb) return; // let checkbox handle its own click natively
         if (e.target.classList.contains('assign-supp-thumb') ||
             e.target.closest('.assign-supp-thumb.clickable')) return;
         cb.checked = !cb.checked;
