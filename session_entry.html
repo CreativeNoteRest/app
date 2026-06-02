@@ -114,7 +114,6 @@
     .entry-timestamp {
       font-size: 11px;
       color: var(--text-light);
-      margin-bottom: 4px;
       font-weight: 500;
     }
 
@@ -129,24 +128,47 @@
       user-select: none;
     }
 
-    .entry-item:active {
-      opacity: 0.75;
+    /* ── Entry header row (timestamp + action zone) ───────────── */
+    .entry-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
     }
 
-    .entry-ignored {
-      background: #F2F2F0;
-      border-color: #D8D4CF;
-      opacity: 0.6;
+    .entry-actions {
+      display: flex;
+      gap: 5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s;
     }
 
-    .entry-ignored .entry-text {
-      text-decoration: line-through;
-      color: var(--text-light);
+    .entry-item.revealed .entry-actions {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    .entry-ignored .entry-timestamp {
-      color: #C0BAB4;
+    .btn-entry-action {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-mid);
+      cursor: pointer;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.12s;
     }
+
+    .btn-entry-action:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-entry-action.danger { border-color: #FECACA; color: var(--danger); background: var(--danger-light); }
+    .btn-entry-action.danger:hover { border-color: var(--danger); }
+    .btn-entry-action.primary { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .btn-entry-action.primary:hover { background: #F5DECA; }
 
     /* ── Inline edit state ────────────────────────────────────── */
     .entry-item.editing {
@@ -1298,13 +1320,18 @@
     const seqLabel = sequence ? '#' + sequence + '    ' : '';
 
     const item = document.createElement('div');
-    item.className = 'entry-item' + (isIgnored ? ' entry-ignored' : '');
+    item.className = 'entry-item';
     item.dataset.entryId   = entryId || '';
     item.dataset.sequence  = sequence || '';
-    item.dataset.ignored   = isIgnored ? 'true' : 'false';
     item.dataset.cleanText = displayText;
     item.innerHTML = `
-      <div class="entry-timestamp">${seqLabel}${time}</div>
+      <div class="entry-header">
+        <div class="entry-timestamp">${seqLabel}${time}</div>
+        <div class="entry-actions">
+          <button class="btn-entry-action btn-edit-entry" type="button">Edit</button>
+          <button class="btn-entry-action danger btn-delete-entry" type="button">Delete</button>
+        </div>
+      </div>
       <div class="entry-text">${escapeHtml(displayText)}</div>
     `;
     if (entryId) {
@@ -1315,45 +1342,77 @@
     updateCounter();
   }
 
-  // Long-press + tap listeners
-  function attachEntryListeners(item) {
-    let pressTimer   = null;
-    let didLongPress = false;
+  // Tap-to-reveal listeners
+  let _revealedItem = null;
 
-    function startPress() {
-      didLongPress = false;
-      pressTimer = setTimeout(() => {
-        didLongPress = true;
-        enterEditMode(item);
-      }, 500);
+  function collapseRevealed() {
+    if (_revealedItem) {
+      _revealedItem.classList.remove('revealed');
+      _revealedItem = null;
     }
-
-    function cancelPress() { clearTimeout(pressTimer); }
-
-    function endPress() {
-      clearTimeout(pressTimer);
-      if (!didLongPress && !item.classList.contains('editing')) {
-        toggleIgnore(item);
-      }
-      didLongPress = false;
-    }
-
-    item.addEventListener('mousedown',  startPress);
-    item.addEventListener('touchstart', startPress,  { passive: true });
-    item.addEventListener('mouseleave', cancelPress);
-    item.addEventListener('touchmove',  cancelPress, { passive: true });
-    item.addEventListener('mouseup',    endPress);
-    item.addEventListener('touchend',   endPress);
   }
+
+  function attachEntryListeners(item) {
+    const actionsEl  = item.querySelector('.entry-actions');
+    const editBtn    = item.querySelector('.btn-edit-entry');
+    const deleteBtn  = item.querySelector('.btn-delete-entry');
+
+    // Tap card body to reveal/collapse actions
+    item.addEventListener('click', function(e) {
+      // Ignore clicks on the action buttons themselves
+      if (e.target.closest('.entry-actions')) return;
+      // Ignore clicks inside textarea (editing state)
+      if (item.classList.contains('editing')) return;
+
+      if (item.classList.contains('revealed')) {
+        collapseRevealed();
+      } else {
+        collapseRevealed();
+        item.classList.add('revealed');
+        _revealedItem = item;
+      }
+    });
+
+    editBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      collapseRevealed();
+      enterEditMode(item);
+    });
+
+    deleteBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (deleteBtn.dataset.confirm === 'true') {
+        deleteEntry(item);
+      } else {
+        deleteBtn.dataset.confirm = 'true';
+        deleteBtn.textContent = 'Sure?';
+        setTimeout(() => {
+          if (deleteBtn.dataset.confirm === 'true') {
+            deleteBtn.dataset.confirm = '';
+            deleteBtn.textContent = 'Delete';
+          }
+        }, 2500);
+      }
+    });
+  }
+
+  // Collapse revealed card when tapping outside all entry items
+  document.addEventListener('click', function(e) {
+    if (_revealedItem && !e.target.closest('.entry-item')) {
+      collapseRevealed();
+    }
+  });
 
   // Inline edit mode
   function enterEditMode(item) {
     if (item.classList.contains('editing')) return;
     const cleanText = item.dataset.cleanText;
     const textEl    = item.querySelector('.entry-text');
+    const editBtn   = item.querySelector('.btn-edit-entry');
+    const deleteBtn = item.querySelector('.btn-delete-entry');
 
-    item.classList.remove('entry-ignored');
-    item.classList.add('editing');
+    item.classList.add('editing', 'revealed');
+    _revealedItem = item;
 
     const editArea = document.createElement('textarea');
     editArea.className = 'entry-edit-textarea';
@@ -1369,7 +1428,28 @@
       editArea.style.height = editArea.scrollHeight + 'px';
     });
 
-    editArea.addEventListener('blur', () => saveEdit(item, editArea));
+    // Swap action buttons to Save / Cancel
+    editBtn.textContent = 'Save';
+    editBtn.classList.add('primary');
+    deleteBtn.textContent = 'Cancel';
+    deleteBtn.classList.remove('danger');
+    deleteBtn.dataset.confirm = '';
+
+    // Replace listeners with save/cancel (clone to drop old listeners)
+    const newSave   = editBtn.cloneNode(true);
+    const newCancel = deleteBtn.cloneNode(true);
+    editBtn.replaceWith(newSave);
+    deleteBtn.replaceWith(newCancel);
+
+    newSave.addEventListener('click', function(e) {
+      e.stopPropagation();
+      saveEdit(item, editArea);
+    });
+
+    newCancel.addEventListener('click', function(e) {
+      e.stopPropagation();
+      cancelEdit(item, editArea, cleanText);
+    });
   }
 
   async function saveEdit(item, editArea) {
@@ -1381,9 +1461,8 @@
     displayDiv.textContent = newText;
     editArea.replaceWith(displayDiv);
 
-    item.classList.remove('editing', 'entry-ignored');
-    item.dataset.ignored   = 'false';
     item.dataset.cleanText = newText;
+    exitEditMode(item);
 
     const { error } = await supabase
       .from('session_entries')
@@ -1395,32 +1474,68 @@
     }
   }
 
-  // Toggle ignore (short tap)
-  async function toggleIgnore(item) {
-    const entryId  = item.dataset.entryId;
-    if (!entryId) return;
+  function cancelEdit(item, editArea, originalText) {
+    const displayDiv = document.createElement('div');
+    displayDiv.className = 'entry-text';
+    displayDiv.textContent = originalText;
+    editArea.replaceWith(displayDiv);
+    exitEditMode(item);
+  }
 
-    const isIgnored = item.dataset.ignored === 'true';
-    const cleanText = item.dataset.cleanText;
-    const newText   = isIgnored ? cleanText : '[IGNORE] ' + cleanText;
+  function exitEditMode(item) {
+    item.classList.remove('editing', 'revealed');
+    _revealedItem = null;
+
+    // Restore Edit / Delete buttons (re-attach listeners via clone)
+    const actionsEl = item.querySelector('.entry-actions');
+    actionsEl.innerHTML = `
+      <button class="btn-entry-action btn-edit-entry" type="button">Edit</button>
+      <button class="btn-entry-action danger btn-delete-entry" type="button">Delete</button>
+    `;
+    // Re-wire the new buttons
+    const editBtn   = actionsEl.querySelector('.btn-edit-entry');
+    const deleteBtn = actionsEl.querySelector('.btn-delete-entry');
+
+    editBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      collapseRevealed();
+      enterEditMode(item);
+    });
+
+    deleteBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (deleteBtn.dataset.confirm === 'true') {
+        deleteEntry(item);
+      } else {
+        deleteBtn.dataset.confirm = 'true';
+        deleteBtn.textContent = 'Sure?';
+        setTimeout(() => {
+          if (deleteBtn.dataset.confirm === 'true') {
+            deleteBtn.dataset.confirm = '';
+            deleteBtn.textContent = 'Delete';
+          }
+        }, 2500);
+      }
+    });
+  }
+
+  async function deleteEntry(item) {
+    const entryId = item.dataset.entryId;
+    if (!entryId) return;
 
     const { error } = await supabase
       .from('session_entries')
-      .update({ entry_text: newText })
+      .delete()
       .eq('entry_id', entryId);
 
     if (error) {
-      showStatus('Could not update entry. Please try again.', 'error', true);
+      showStatus('Could not delete entry. Please try again.', 'error', true);
       return;
     }
 
-    if (isIgnored) {
-      item.classList.remove('entry-ignored');
-      item.dataset.ignored = 'false';
-    } else {
-      item.classList.add('entry-ignored');
-      item.dataset.ignored = 'true';
-    }
+    item.remove();
+    _revealedItem = null;
+    updateCounter();
   }
 
   function escapeHtml(str) {
