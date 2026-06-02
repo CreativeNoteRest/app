@@ -1837,7 +1837,7 @@
     body.innerHTML =
       selectorHtml +
       '<div style="font-size:12px;color:var(--text-light);margin-bottom:14px;">' + escapeHtml(s.bookName) + ' · ' + escapeHtml(pageStr) + '</div>' +
-      historyContentBlock('Teacher Summary', s.ai_summ_teacher, false) +
+      historyContentBlockWithActive('Teacher Summary', s.ai_summ_teacher, s.active_assignments_data) +
       historyContentBlockWithActive('Student Practice Plan', s.ai_summ_student, s.active_assignments_data) +
       historySupplementBlock('Recommended Supplements', s.ai_summ_supplement_data);
 
