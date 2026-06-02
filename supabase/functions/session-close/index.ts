@@ -374,6 +374,7 @@ Deno.serve(async (req: Request) => {
       ai_summ_student: phase5Result,
       ai_summ_supplement: supplementText,
       ai_summ_supplement_data: supplementData,
+      active_assignments_data: activeAssignments,
       max_lesson_page: phase1.max_lesson_page,
       book_transition_suspected: phase1.book_transition_suspected,
       next_book_id: null,
@@ -472,7 +473,7 @@ async function fetchSessionData(params: {
 
     supabase
       .from('student_assignments')
-      .select('supplement_id, supplements(title)')
+      .select('supplement_id, supplements(title, thumbnail_url, source_url)')
       .eq('student_id', student_id)
       .eq('is_active', true),
 
@@ -536,6 +537,8 @@ async function fetchSessionData(params: {
   const activeAssignments: ActiveAssignment[] = (assignmentsResult.data ?? []).map((r: any) => ({
     supplement_id: r.supplement_id,
     title: r.supplements?.title ?? '',
+    thumbnail_url: r.supplements?.thumbnail_url ?? null,
+    source_url: r.supplements?.source_url ?? null,
   }));
 
   return {
@@ -580,6 +583,8 @@ interface BookPiece {
 interface ActiveAssignment {
   supplement_id: string;
   title: string;
+  thumbnail_url: string | null;
+  source_url: string | null;
 }
 
 interface SupplementCandidate {
