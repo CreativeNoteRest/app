@@ -192,20 +192,6 @@
       overflow: hidden;
     }
 
-    /* ── Entry counter ────────────────────────────────────────── */
-    .entry-counter {
-      flex-shrink: 0;
-      text-align: center;
-      padding: 6px;
-      font-size: 12px;
-      color: var(--text-light);
-      font-weight: 500;
-    }
-
-    .entry-counter span {
-      font-weight: 600;
-    }
-
     /* ── Input area ───────────────────────────────────────────── */
     .input-area {
       flex-shrink: 0;
@@ -1073,11 +1059,6 @@
   <!-- Scrolling entry log -->
   <div class="entry-log" id="entry-log" role="log" aria-live="polite" aria-label="Lesson notes"></div>
 
-  <!-- Entry counter -->
-  <div class="entry-counter" id="entry-counter" style="display:none;">
-    <span id="count-num">0</span> note<span id="count-plural">s</span> this lesson
-  </div>
-
   <!-- Input area -->
   <div class="input-area">
     <div class="input-row">
@@ -1339,7 +1320,6 @@
     }
     entryLog.appendChild(item);
     entryLog.scrollTop = entryLog.scrollHeight;
-    updateCounter();
   }
 
   // Tap-to-reveal listeners
@@ -1535,7 +1515,6 @@
 
     item.remove();
     _revealedItem = null;
-    updateCounter();
   }
 
   function escapeHtml(str) {
@@ -1544,14 +1523,6 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function updateCounter() {
-    const count = entryLog.querySelectorAll('.entry-item').length;
-    const counterEl = document.getElementById('entry-counter');
-    counterEl.style.display = count > 0 ? 'block' : 'none';
-    document.getElementById('count-num').textContent    = count;
-    document.getElementById('count-plural').textContent = count === 1 ? '' : 's';
   }
 
   // 8. Status messaging
