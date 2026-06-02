@@ -436,7 +436,6 @@ async function fetchSessionData(params: {
       .select('entry_text, entry_sequence')
       .eq('session_id', session_id)
       .eq('entry_source', 'teacher')
-      .not('entry_text', 'like', '[IGNORE]%')
       .order('entry_sequence', { ascending: true }),
 
     supabase
