@@ -125,7 +125,9 @@
       -webkit-tap-highlight-color: transparent;
       transition: box-shadow 0.15s;
       min-height: 52px;
-      position: relative;
+      display: none;                        /* overridden to flex by JS when messages exist */
+      flex-direction: column;
+      justify-content: center;             /* vertical centre */
     }
     .msg-banner.has-cta { cursor: pointer; }
     .msg-banner.has-cta:hover { box-shadow: var(--shadow); }
@@ -964,7 +966,7 @@
 
       // Initial render
       showMessage(0, false);
-      banner.style.display = 'block';
+      banner.style.display = 'flex';
 
       // Cycle if multiple messages (8 second interval)
       if (qualifying.length > 1) {
