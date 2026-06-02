@@ -224,6 +224,13 @@
     .supplement-link:hover { border-color: var(--brand); color: var(--brand); }
     .supplement-link svg { width: 14px; height: 14px; }
 
+    .active-supp-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--brand);
+      margin-top: 18px; margin-bottom: 10px;
+    }
+    .active-supp-list { display: flex; flex-direction: column; gap: 8px; }
+
     .show-more-btn {
       width: 100%; padding: 10px;
       background: none; border: 1px dashed var(--border);
@@ -532,6 +539,7 @@
         </div>
         <div class="card-body">
           <div class="summary-text" id="teacher-summary-text"></div>
+          <div id="active-supp-teacher"></div>
         </div>
       </div>
 
@@ -547,6 +555,7 @@
         </div>
         <div class="card-body">
           <div class="practice-text" id="student-summary-text"></div>
+          <div id="active-supp-student"></div>
         </div>
       </div>
 
@@ -857,6 +866,9 @@
     initialCount   = data.supplement_initial_display || 3;
     renderSupplements();
 
+    // Active assignments -- tile blocks inside teacher and student cards
+    renderActiveSupplements(data.active_assignments_data || []);
+
     // Book transition question
     if (data.book_transition_suspected && data.book_transition_book_name) {
       const transCard = document.getElementById('transition-card');
@@ -896,6 +908,53 @@
     } else {
       showMoreBtn.classList.add('hidden');
     }
+  }
+
+  function renderActiveSupplements(assignments) {
+    const teacherEl = document.getElementById('active-supp-teacher');
+    const studentEl = document.getElementById('active-supp-student');
+    if (!teacherEl || !studentEl) return;
+
+    if (!assignments || assignments.length === 0) {
+      teacherEl.innerHTML = '';
+      studentEl.innerHTML = '';
+      return;
+    }
+
+    const html = '<div class="active-supp-label">Active Supplements</div>' +
+      '<div class="active-supp-list">' +
+      assignments.map(a => buildActiveSupplementItem(a)).join('') +
+      '</div>';
+
+    teacherEl.innerHTML = html;
+    studentEl.innerHTML = html;
+  }
+
+  function buildActiveSupplementItem(a) {
+    let thumbHtml;
+    if (a.thumbnail_url) {
+      thumbHtml = '<img class="supplement-thumb" src="' + escHtml(a.thumbnail_url) + '"' +
+        ' alt="" loading="lazy" data-url="' + escHtml(a.source_url || '') + '"' +
+        ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+        '<div class="supplement-thumb-placeholder" style="display:none">' + bookIconSvg() + '</div>';
+    } else {
+      thumbHtml = '<div class="supplement-thumb-placeholder">' + bookIconSvg() + '</div>';
+    }
+
+    const titleEl = a.source_url
+      ? '<a class="supplement-link" href="' + escHtml(a.source_url) + '" target="_blank" rel="noopener" aria-label="Open ' + escHtml(a.title) + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>' +
+        '</svg></a>'
+      : '';
+
+    return '<div class="supplement-item">' +
+      thumbHtml +
+      '<div class="supplement-info">' +
+        '<div class="supplement-title">' + escHtml(a.title || 'Untitled') + '</div>' +
+      '</div>' +
+      titleEl +
+      '</div>';
   }
 
   function buildSupplementItem(s) {
@@ -1044,6 +1103,7 @@
           ai_summ_student:          efResponse.ai_summ_student          || '',
           ai_summ_supplement:       (efResponse.ai_summ_supplement_data || []).map(s => s.title).filter(Boolean).join('\n') || '',
           ai_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
+          active_assignments_data:  efResponse.active_assignments_data  || [],
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
           summary_approved_at:      new Date().toISOString()

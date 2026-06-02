@@ -420,7 +420,7 @@
     // Fetch full session record -- content fields not loaded in list view
     const { data: session, error } = await supabase
       .from('sessions')
-      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, pdf_sent_at, pdf_sent_to')
+      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, active_assignments_data, pdf_sent_at, pdf_sent_to')
       .eq('session_id', sessionId)
       .single();
 
@@ -465,10 +465,10 @@
       '</div>' +
 
       // Teacher Summary
-      contentBlock('Teacher Summary', s.ai_summ_teacher, false) +
+      contentBlockWithActiveSupps('Teacher Summary', s.ai_summ_teacher, s.active_assignments_data) +
 
       // Student Practice Plan
-      contentBlock('Student Practice Plan', s.ai_summ_student, false) +
+      contentBlockWithActiveSupps('Student Practice Plan', s.ai_summ_student, s.active_assignments_data) +
 
       // Recommended Supplements -- top 3 rich cards from ai_summ_supplement_data
       supplementBlock(s.ai_summ_supplement_data) +
@@ -490,6 +490,39 @@
     return '<div class="content-block">' +
       '<div class="content-block-label">' + label + '</div>' +
       body +
+      '</div>';
+  }
+
+  function contentBlockWithActiveSupps(label, text, assignments) {
+    const isEmpty = !text || text.trim() === '';
+    const body = isEmpty
+      ? '<div class="content-block-empty">Not recorded.</div>'
+      : '<div class="content-block-body">' + escHtml(text) + '</div>';
+
+    const activeItems = (assignments || []);
+    let activeHtml = '';
+    if (activeItems.length > 0) {
+      const cards = activeItems.map(a => {
+        const thumb = a.thumbnail_url
+          ? '<img class="supp-thumb" src="' + escHtml(a.thumbnail_url) + '" alt="" loading="lazy" data-url="' + escHtml(a.source_url || '') + '">'
+          : '<div class="supp-thumb supp-thumb-placeholder"></div>';
+        const titleEl = a.source_url
+          ? '<a class="supp-title supp-link" href="' + escHtml(a.source_url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(a.title || 'Untitled') + '</a>'
+          : '<span class="supp-title">' + escHtml(a.title || 'Untitled') + '</span>';
+        return '<div class="supp-item">' + thumb +
+          '<div class="supp-info">' +
+            '<div class="supp-title-row">' + titleEl + '</div>' +
+          '</div></div>';
+      }).join('');
+      activeHtml =
+        '<div class="content-block-label" style="margin-top:16px;">Active Supplements</div>' +
+        cards;
+    }
+
+    return '<div class="content-block">' +
+      '<div class="content-block-label">' + label + '</div>' +
+      body +
+      activeHtml +
       '</div>';
   }
 
