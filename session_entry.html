@@ -606,6 +606,340 @@
     }
 
     .hidden { display: none !important; }
+
+    /* ── Assign button (matches btn-history style) ────────────────── */
+    .btn-assign {
+      flex-shrink: 0;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-mid);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 2px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-assign:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+
+    /* ── Active assignment strip ──────────────────────────────────── */
+    .assign-list-frame {
+      flex-shrink: 0;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+    }
+
+    .assign-list-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--brand);
+      margin-bottom: 6px;
+    }
+
+    .assign-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .assign-list-item:last-child { border-bottom: none; }
+
+    .assign-thumb {
+      width: 28px;
+      height: 36px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .assign-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .assign-thumb.has-url { cursor: pointer; }
+    .assign-thumb.has-url:hover { opacity: 0.82; }
+
+    .assign-item-title {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-assign-remove {
+      flex-shrink: 0;
+      padding: 3px 10px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-light);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-assign-remove:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Assign supplement modal ──────────────────────────────────── */
+    .assign-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .assign-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%; max-width: 680px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+
+    .assign-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .assign-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      color: var(--text);
+    }
+
+    .btn-assign-modal-close {
+      width: 32px; height: 32px;
+      border: none; background: none;
+      color: var(--text-light);
+      font-size: 16px; cursor: pointer;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-assign-modal-close:hover { background: var(--border); color: var(--text); }
+
+    .assign-modal-search-wrap {
+      flex-shrink: 0;
+      padding: 12px 20px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .assign-modal-search {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--surface);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .assign-modal-search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(219,110,43,0.12); }
+    .assign-modal-search::placeholder { color: var(--text-light); }
+
+    .assign-modal-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 0;
+    }
+
+    .assign-modal-loading {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .assign-modal-empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-light);
+      font-size: 14px;
+      font-style: italic;
+    }
+
+    /* Section divider within list */
+    .assign-modal-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      padding: 10px 20px 4px;
+    }
+
+    /* Supplement row in modal */
+    .assign-supp-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .assign-supp-row:last-child { border-bottom: none; }
+    .assign-supp-row:hover { background: var(--surface); }
+    .assign-supp-row.already-assigned { opacity: 0.45; cursor: default; }
+    .assign-supp-row.already-assigned:hover { background: transparent; }
+
+    .assign-supp-check {
+      flex-shrink: 0;
+      width: 18px; height: 18px;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    /* Thumbnail in modal rows — portrait music-book proportions (44×56) */
+    .assign-supp-thumb {
+      width: 44px;
+      height: 56px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--text-light);
+    }
+
+    .assign-supp-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .assign-supp-thumb.clickable { cursor: pointer; }
+    .assign-supp-thumb.clickable:hover { opacity: 0.82; }
+
+    .assign-supp-body { flex: 1; min-width: 0; }
+
+    .assign-supp-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+
+    .assign-supp-meta {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Badges — ported from supplement-admin */
+    .asgn-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+
+    .asgn-badge-free { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
+    .asgn-badge-paid { background: #F8FAFC; color: #64748B; border: 1px solid #CBD5E1; }
+    .asgn-badge-mapped { background: var(--success-light); color: var(--success); border: 1px solid #BBF7D0; }
+    .asgn-badge-assigned { background: var(--brand-light); color: var(--brand); border: 1px solid #F0C8A0; }
+
+    /* Modal footer actions */
+    .assign-modal-footer {
+      flex-shrink: 0;
+      padding: 12px 20px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-assign-accept {
+      flex: 2; height: 48px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(219,110,43,0.28);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+
+    .btn-assign-accept:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(219,110,43,0.36); }
+    .btn-assign-accept:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-assign-cancel {
+      flex: 1; height: 48px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-assign-cancel:hover { border-color: var(--text-mid); color: var(--text); }
+
+    .assign-modal-error {
+      font-size: 0.82rem; color: var(--danger);
+      padding: 0 20px 8px; display: none; line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    /* ── Thumbnail hover preview (shared by strip + modal) ───────── */
+    .assign-thumb-preview {
+      position: fixed; z-index: 300;
+      pointer-events: none; display: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      padding: 4px;
+    }
+
+    .assign-thumb-preview img { display: block; width: 200px; height: auto; border-radius: 5px; }
   </style>
 </head>
 <body>
@@ -626,10 +960,26 @@
         <span class="book-change-link" id="book-change-link" role="button" tabindex="0">Change</span>
       </div>
     </div>
-    <button class="btn-history" id="btn-history" title="View past lessons" aria-label="View past lessons">
-      Past Lessons
-    </button>
+    <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+      <button class="btn-history" id="btn-history" title="View past lessons" aria-label="View past lessons">
+        Past Lessons
+      </button>
+      <button class="btn-assign" id="btn-assign" title="Assign a supplement" aria-label="Assign a supplement">
+        Assign
+      </button>
+    </div>
   </header>
+
+  <!-- Thumbnail hover preview overlay (assignment strip + modal) -->
+  <div id="assign-thumb-preview" class="assign-thumb-preview">
+    <img id="assign-thumb-preview-img" src="" alt="" />
+  </div>
+
+  <!-- Active assignments strip (hidden when empty) -->
+  <div class="assign-list-frame hidden" id="assign-list-frame">
+    <div class="assign-list-label">Assigned Supplements</div>
+    <div id="assign-list-items"></div>
+  </div>
 
   <!-- Status bar (errors / feedback) -->
   <div class="status-bar">
@@ -700,6 +1050,33 @@
       </div>
       <div id="history-modal-body">
         <div class="history-loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+  <!-- Assign supplement modal -->
+  <div id="assign-modal" class="assign-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="assign-modal-heading">
+    <div class="assign-modal">
+      <div class="assign-modal-header">
+        <div class="assign-modal-heading" id="assign-modal-heading">Assign Supplement</div>
+        <button class="btn-assign-modal-close" id="btn-assign-modal-close" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="assign-modal-search-wrap">
+        <input
+          class="assign-modal-search"
+          id="assign-modal-search"
+          type="search"
+          placeholder="Search supplements…"
+          aria-label="Search supplements"
+          autocomplete="off"
+        />
+      </div>
+      <div class="assign-modal-list" id="assign-modal-list">
+        <div class="assign-modal-loading">Loading…</div>
+      </div>
+      <div class="assign-modal-error" id="assign-modal-error"></div>
+      <div class="assign-modal-footer">
+        <button class="btn-assign-accept" id="btn-assign-accept">Assign Selected</button>
+        <button class="btn-assign-cancel" id="btn-assign-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -1445,6 +1822,405 @@
   document.getElementById('history-modal').addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
   });
+
+  // ── Thumb preview helpers (assignment strip + modal) ──────────────────────
+
+  const _atp    = document.getElementById('assign-thumb-preview');
+  const _atpImg = document.getElementById('assign-thumb-preview-img');
+
+  function assignThumbHover(e, src) {
+    if (!src) return;
+    _atpImg.src = src;
+    _atp.style.display = 'block';
+    _assignPositionPreview(e);
+  }
+
+  function _assignPositionPreview(e) {
+    const pad = 12, pw = 208;
+    let left = e.clientX + pad;
+    let top  = e.clientY - 60;
+    if (left + pw > window.innerWidth) left = e.clientX - pw - pad;
+    if (top < 8) top = 8;
+    _atp.style.left = left + 'px';
+    _atp.style.top  = top  + 'px';
+  }
+
+  function assignThumbLeave() { _atp.style.display = 'none'; }
+
+  function attachAssignThumbEvents(el, src, url) {
+    if (src) {
+      el.addEventListener('mouseenter', e => assignThumbHover(e, src));
+      el.addEventListener('mousemove',  e => _assignPositionPreview(e));
+      el.addEventListener('mouseleave', assignThumbLeave);
+    }
+    if (url) el.addEventListener('click', () => window.open(url, '_blank', 'noopener'));
+  }
+
+  // ── Active assignment strip ───────────────────────────────────────────────
+
+  let _activeAssignments = []; // cache: full rows from student_assignments
+
+  async function loadAssignments() {
+    const { data, error } = await supabase
+      .from('student_assignments')
+      .select('student_assignment_id, supplement_id, assigned_at')
+      .eq('student_id', studentId)
+      .eq('teacher_id', teacherId)
+      .eq('is_active', true)
+      .order('assigned_at', { ascending: true });
+
+    if (error) {
+      console.warn('Could not load assignments:', error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      _activeAssignments = [];
+      renderAssignmentStrip();
+      return;
+    }
+
+    // Fetch supplement details for each assigned supplement_id
+    const suppIds = data.map(r => r.supplement_id);
+    const { data: supps, error: sErr } = await supabase
+      .from('supplements')
+      .select('supplement_id, title, source_url, thumbnail_url')
+      .in('supplement_id', suppIds);
+
+    if (sErr) {
+      console.warn('Could not load supplement details for assignments:', sErr);
+      _activeAssignments = [];
+      renderAssignmentStrip();
+      return;
+    }
+
+    const suppMap = {};
+    (supps || []).forEach(s => { suppMap[s.supplement_id] = s; });
+
+    _activeAssignments = data.map(row => ({
+      student_assignment_id: row.student_assignment_id,
+      supplement_id:         row.supplement_id,
+      title:       suppMap[row.supplement_id]?.title       || 'Unknown supplement',
+      source_url:  suppMap[row.supplement_id]?.source_url  || null,
+      thumbnail_url: suppMap[row.supplement_id]?.thumbnail_url || null,
+    }));
+
+    renderAssignmentStrip();
+  }
+
+  function renderAssignmentStrip() {
+    const frame     = document.getElementById('assign-list-frame');
+    const container = document.getElementById('assign-list-items');
+
+    if (_activeAssignments.length === 0) {
+      frame.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+
+    frame.classList.remove('hidden');
+
+    container.innerHTML = _activeAssignments.map(a => {
+      const thumbInner = a.thumbnail_url
+        ? `<img src="${escapeHtml(a.thumbnail_url)}" alt="" loading="lazy" />`
+        : '🎵';
+      const hasUrl = !!a.source_url;
+      return `<div class="assign-list-item" data-assignment-id="${escapeHtml(a.student_assignment_id)}">
+        <div class="assign-thumb${hasUrl ? ' has-url' : ''}"
+             data-src="${escapeHtml(a.thumbnail_url || '')}"
+             data-url="${escapeHtml(a.source_url || '')}"
+        >${thumbInner}</div>
+        <div class="assign-item-title" title="${escapeHtml(a.title)}">${escapeHtml(a.title)}</div>
+        <button class="btn-assign-remove" data-assignment-id="${escapeHtml(a.student_assignment_id)}" aria-label="Remove assignment">Remove</button>
+      </div>`;
+    }).join('');
+
+    // Wire thumb events and remove buttons
+    container.querySelectorAll('.assign-list-item').forEach(item => {
+      const thumbEl = item.querySelector('.assign-thumb');
+      const src     = thumbEl.dataset.src;
+      const url     = thumbEl.dataset.url;
+      attachAssignThumbEvents(thumbEl, src || null, url || null);
+
+      item.querySelector('.btn-assign-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        const assignmentId = this.dataset.assignmentId;
+        confirmRemoveAssignment(assignmentId);
+      });
+    });
+  }
+
+  async function confirmRemoveAssignment(assignmentId) {
+    const rec = _activeAssignments.find(a => a.student_assignment_id === assignmentId);
+    const title = rec ? rec.title : 'this supplement';
+    const ok = window.confirm('Remove \u201c' + title + '\u201d from ' + (studentName || 'this student') + '\u2019s assignments?');
+    if (!ok) return;
+
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('student_assignments')
+      .update({ is_active: false, deactivated_at: now })
+      .eq('student_assignment_id', assignmentId);
+
+    if (error) {
+      showStatus('Could not remove assignment. Please try again.', 'error', true);
+      return;
+    }
+
+    _activeAssignments = _activeAssignments.filter(a => a.student_assignment_id !== assignmentId);
+    renderAssignmentStrip();
+  }
+
+  // ── Assign supplement modal ───────────────────────────────────────────────
+
+  let _assignSupplements = [];  // all active supplements for the series
+  let _assignMappedIds   = new Set(); // supplement_ids mapped to currentBookId
+  let _assignChecked     = new Set(); // supplement_ids checked in the modal
+  let _assignModalReady  = false;
+
+  async function openAssignModal() {
+    _assignChecked = new Set();
+    document.getElementById('assign-modal-search').value = '';
+    document.getElementById('assign-modal-error').style.display = 'none';
+    document.getElementById('assign-modal').classList.remove('hidden');
+
+    if (_assignModalReady) {
+      renderAssignModalList();
+      return;
+    }
+
+    document.getElementById('assign-modal-list').innerHTML =
+      '<div class="assign-modal-loading">Loading\u2026</div>';
+
+    try {
+      // Fetch all active supplements + eligibility map for current book in parallel
+      const [suppResult, mapResult] = await Promise.all([
+        supabase
+          .from('supplements')
+          .select('supplement_id, title, source_url, thumbnail_url, is_free')
+          .eq('series_id', seriesId)
+          .eq('is_active', true)
+          .order('title', { ascending: true }),
+
+        currentBookId
+          ? supabase
+              .from('supplement_eligibility_map')
+              .select('supplement_id')
+              .eq('book_id', currentBookId)
+              .eq('series_id', seriesId)
+          : Promise.resolve({ data: [], error: null })
+      ]);
+
+      if (suppResult.error) throw suppResult.error;
+
+      _assignSupplements = suppResult.data || [];
+
+      _assignMappedIds = new Set(
+        (mapResult.data || []).map(r => r.supplement_id)
+      );
+
+      _assignModalReady = true;
+      renderAssignModalList();
+
+    } catch (e) {
+      console.warn('Assign modal load error:', e);
+      document.getElementById('assign-modal-list').innerHTML =
+        '<div class="assign-modal-empty">Could not load supplements. Please close and try again.</div>';
+    }
+  }
+
+  function renderAssignModalList() {
+    const query  = (document.getElementById('assign-modal-search').value || '').trim().toLowerCase();
+    const listEl = document.getElementById('assign-modal-list');
+
+    // Active assignment supplement_ids — skip duplicates
+    const activeIds = new Set(_activeAssignments.map(a => a.supplement_id));
+
+    // Filter by search
+    let filtered = _assignSupplements;
+    if (query) {
+      filtered = filtered.filter(s =>
+        s.title.toLowerCase().includes(query) ||
+        (s.curriculum_hint && s.curriculum_hint.toLowerCase().includes(query))
+      );
+    }
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div class="assign-modal-empty">No supplements match your search.</div>';
+      return;
+    }
+
+    // Sort into three buckets
+    const mappedPaid = filtered.filter(s => _assignMappedIds.has(s.supplement_id) && s.is_free !== true);
+    const mappedFree = filtered.filter(s => _assignMappedIds.has(s.supplement_id) && s.is_free === true);
+    const rest       = filtered.filter(s => !_assignMappedIds.has(s.supplement_id));
+
+    let html = '';
+
+    if (mappedPaid.length > 0) {
+      html += '<div class="assign-modal-section-label">Mapped to this workbook</div>';
+      html += mappedPaid.map(s => buildAssignSuppRow(s, activeIds)).join('');
+    }
+
+    if (mappedFree.length > 0) {
+      if (mappedPaid.length > 0) html += '<div class="assign-modal-section-label">Free — mapped to this workbook</div>';
+      else html += '<div class="assign-modal-section-label">Mapped to this workbook</div>';
+      html += mappedFree.map(s => buildAssignSuppRow(s, activeIds)).join('');
+    }
+
+    if (rest.length > 0) {
+      if (mappedPaid.length > 0 || mappedFree.length > 0) {
+        html += '<div class="assign-modal-section-label">Other supplements</div>';
+      }
+      html += rest.map(s => buildAssignSuppRow(s, activeIds)).join('');
+    }
+
+    listEl.innerHTML = html;
+
+    // Wire checkboxes and thumb events
+    listEl.querySelectorAll('.assign-supp-row').forEach(row => {
+      const suppId = row.dataset.suppId;
+      if (!suppId || row.classList.contains('already-assigned')) return;
+
+      const cb = row.querySelector('.assign-supp-check');
+      cb.checked = _assignChecked.has(suppId);
+
+      row.addEventListener('click', function(e) {
+        if (e.target.classList.contains('assign-supp-thumb') ||
+            e.target.closest('.assign-supp-thumb.clickable')) return;
+        cb.checked = !cb.checked;
+        if (cb.checked) _assignChecked.add(suppId);
+        else _assignChecked.delete(suppId);
+      });
+
+      cb.addEventListener('change', function() {
+        if (this.checked) _assignChecked.add(suppId);
+        else _assignChecked.delete(suppId);
+      });
+
+      const thumbEl = row.querySelector('.assign-supp-thumb');
+      if (thumbEl) {
+        const src = thumbEl.dataset.src || null;
+        const url = thumbEl.dataset.url || null;
+        attachAssignThumbEvents(thumbEl, src, url);
+        if (url) thumbEl.classList.add('clickable');
+      }
+    });
+  }
+
+  function buildAssignSuppRow(s, activeIds) {
+    const alreadyAssigned = activeIds.has(s.supplement_id);
+    const isChecked = _assignChecked.has(s.supplement_id);
+
+    const thumbInner = s.thumbnail_url
+      ? `<img src="${escapeHtml(s.thumbnail_url)}" alt="" loading="lazy" />`
+      : '🎵';
+
+    const freeBadge = s.is_free === true
+      ? `<span class="asgn-badge asgn-badge-free">free</span>`
+      : s.is_free === false
+        ? `<span class="asgn-badge asgn-badge-paid">paid</span>`
+        : '';
+
+    const assignedBadge = alreadyAssigned
+      ? `<span class="asgn-badge asgn-badge-assigned">assigned</span>`
+      : '';
+
+    const mappedBadge = _assignMappedIds.has(s.supplement_id) && !alreadyAssigned
+      ? `<span class="asgn-badge asgn-badge-mapped">mapped</span>`
+      : '';
+
+    return `<div class="assign-supp-row${alreadyAssigned ? ' already-assigned' : ''}"
+                 data-supp-id="${escapeHtml(s.supplement_id)}">
+      <input type="checkbox" class="assign-supp-check"
+             ${isChecked && !alreadyAssigned ? 'checked' : ''}
+             ${alreadyAssigned ? 'disabled' : ''}
+             aria-label="${escapeHtml(s.title)}" />
+      <div class="assign-supp-thumb${s.source_url ? ' clickable' : ''}"
+           data-src="${escapeHtml(s.thumbnail_url || '')}"
+           data-url="${escapeHtml(s.source_url || '')}"
+      >${thumbInner}</div>
+      <div class="assign-supp-body">
+        <div class="assign-supp-title">${escapeHtml(s.title)}</div>
+        <div class="assign-supp-meta">${freeBadge}${mappedBadge}${assignedBadge}</div>
+      </div>
+    </div>`;
+  }
+
+  async function acceptAssignments() {
+    const toAssign = [..._assignChecked].filter(
+      id => !_activeAssignments.find(a => a.supplement_id === id)
+    );
+
+    if (toAssign.length === 0) {
+      document.getElementById('assign-modal').classList.add('hidden');
+      return;
+    }
+
+    const acceptBtn  = document.getElementById('btn-assign-accept');
+    const cancelBtn  = document.getElementById('btn-assign-cancel');
+    const errEl      = document.getElementById('assign-modal-error');
+    acceptBtn.disabled = true;
+    cancelBtn.disabled = true;
+    acceptBtn.textContent = 'Saving\u2026';
+    errEl.style.display   = 'none';
+
+    // Build supplement lookup for the rows we're about to insert
+    const suppLookup = {};
+    _assignSupplements.forEach(s => { suppLookup[s.supplement_id] = s; });
+
+    const rows = toAssign.map(suppId => {
+      const s = suppLookup[suppId] || {};
+      return {
+        series_id:    seriesId,
+        teacher_id:   teacherId,
+        student_id:   studentId,
+        supplement_id: suppId,
+        source_url:   s.source_url || null,
+        is_active:    true,
+      };
+    });
+
+    const { error } = await supabase
+      .from('student_assignments')
+      .insert(rows);
+
+    acceptBtn.disabled    = false;
+    cancelBtn.disabled    = false;
+    acceptBtn.textContent = 'Assign Selected';
+
+    if (error) {
+      errEl.textContent   = 'Could not save assignments. Please try again.';
+      errEl.style.display = 'block';
+      console.warn('Assignment insert error:', error);
+      return;
+    }
+
+    document.getElementById('assign-modal').classList.add('hidden');
+    _assignChecked = new Set();
+    // Reload assignments strip — rebuilds from DB to pick up new rows
+    _assignModalReady = false; // force modal list rebuild on next open (active badge refresh)
+    await loadAssignments();
+  }
+
+  // Wire assign modal buttons
+  document.getElementById('btn-assign').addEventListener('click', openAssignModal);
+  document.getElementById('btn-assign-modal-close').addEventListener('click', function() {
+    document.getElementById('assign-modal').classList.add('hidden');
+  });
+  document.getElementById('btn-assign-cancel').addEventListener('click', function() {
+    document.getElementById('assign-modal').classList.add('hidden');
+  });
+  document.getElementById('btn-assign-accept').addEventListener('click', acceptAssignments);
+  document.getElementById('assign-modal-search').addEventListener('input', renderAssignModalList);
+
+  // Close assign modal on backdrop tap
+  document.getElementById('assign-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+
+  // Load active assignments on page load
+  await loadAssignments();
 
 </script>
 
