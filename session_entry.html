@@ -598,6 +598,66 @@
       font-size: 14px;
     }
 
+    /* ── Supplement tiles inside history modal ────────────────────── */
+    .history-supp-list { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+    .history-supp-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .history-supp-thumb {
+      width: 44px; height: 56px; border-radius: 0;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--brand-light);
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .history-supp-thumb:hover { opacity: 0.82; }
+    .history-supp-thumb-placeholder {
+      width: 44px; height: 56px; border-radius: 0;
+      background: var(--brand-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .history-supp-thumb-placeholder svg { width: 20px; height: 20px; fill: var(--brand); opacity: 0.6; }
+    .history-supp-info { flex: 1; min-width: 0; }
+    .history-supp-title {
+      font-size: 0.88rem; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .history-supp-meta {
+      font-size: 0.72rem; color: var(--text-light); margin-top: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .history-badge-free {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--success-light); color: var(--success);
+      border-radius: 4px; padding: 1px 5px;
+    }
+    .history-badge-paid {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--brand-light); color: var(--brand);
+      border-radius: 4px; padding: 1px 5px;
+    }
+    .history-supp-link {
+      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-light); text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .history-supp-link:hover { border-color: var(--brand); color: var(--brand); }
+    .history-supp-link svg { width: 14px; height: 14px; }
+    .history-active-supp-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--brand);
+      margin-top: 18px; margin-bottom: 10px;
+    }
+
     .history-loading {
       text-align: center;
       padding: 32px 16px;
@@ -1709,7 +1769,7 @@
       // Fetch up to 3 most recent approved sessions for this student
       const { data: sessions, error: sessErr } = await supabase
         .from('sessions')
-        .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement')
+        .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, active_assignments_data')
         .eq('teacher_id', teacherId)
         .eq('student_id', studentId)
         .eq('session_status', 'approved')
@@ -1778,8 +1838,8 @@
       selectorHtml +
       '<div style="font-size:12px;color:var(--text-light);margin-bottom:14px;">' + escapeHtml(s.bookName) + ' · ' + escapeHtml(pageStr) + '</div>' +
       historyContentBlock('Teacher Summary', s.ai_summ_teacher, false) +
-      historyContentBlock('Student Practice Plan', s.ai_summ_student, false) +
-      historyContentBlock('Recommended Supplements', historyTopThree(s.ai_summ_supplement), true);
+      historyContentBlockWithActive('Student Practice Plan', s.ai_summ_student, s.active_assignments_data) +
+      historySupplementBlock('Recommended Supplements', s.ai_summ_supplement_data);
 
     // Wire selector change
     const sel = document.getElementById('history-date-select');
@@ -1798,6 +1858,74 @@
     return '<div class="history-content-block">' +
       '<div class="history-content-label">' + label + '</div>' +
       body + '</div>';
+  }
+
+  function historyContentBlockWithActive(label, text, assignments) {
+    const isEmpty = !text || text.trim() === '';
+    const body = isEmpty
+      ? '<div class="history-content-empty">Not recorded.</div>'
+      : '<div class="history-content-body">' + escapeHtml(text) + '</div>';
+
+    const activeItems = (assignments || []);
+    let activeHtml = '';
+    if (activeItems.length > 0) {
+      activeHtml =
+        '<div class="history-active-supp-label">Active Supplements</div>' +
+        '<div class="history-supp-list">' +
+        activeItems.map(a => buildHistorySuppItem(a, false)).join('') +
+        '</div>';
+    }
+
+    return '<div class="history-content-block">' +
+      '<div class="history-content-label">' + label + '</div>' +
+      body + activeHtml + '</div>';
+  }
+
+  function historySupplementBlock(label, data) {
+    const items = (data || []).slice(0, 3);
+    const isEmpty = items.length === 0;
+    const body = isEmpty
+      ? '<div class="history-content-empty">Not recorded.</div>'
+      : '<div class="history-supp-list">' +
+        items.map(s => buildHistorySuppItem(s, true)).join('') +
+        '</div>';
+    return '<div class="history-content-block">' +
+      '<div class="history-content-label">' + label + '</div>' +
+      body + '</div>';
+  }
+
+  function buildHistorySuppItem(s, showBadge) {
+    const bookSvg = '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>';
+    const thumb = s.thumbnail_url
+      ? '<img class="history-supp-thumb" src="' + escapeHtml(s.thumbnail_url) + '" alt="" loading="lazy"' +
+        ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+        '<div class="history-supp-thumb-placeholder" style="display:none">' + bookSvg + '</div>'
+      : '<div class="history-supp-thumb-placeholder">' + bookSvg + '</div>';
+
+    let badge = '';
+    if (showBadge) {
+      badge = s.is_free === true
+        ? '<span class="history-badge-free">Free</span>'
+        : s.is_free === false
+          ? '<span class="history-badge-paid">Resource</span>'
+          : '';
+    }
+    const pool = (showBadge && s.pool === 'fallback') ? '<span>General resource</span>' : '';
+
+    const link = s.source_url
+      ? '<a class="history-supp-link" href="' + escapeHtml(s.source_url) + '" target="_blank" rel="noopener" aria-label="Open ' + escapeHtml(s.title || '') + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>' +
+        '</svg></a>'
+      : '';
+
+    return '<div class="history-supp-item">' +
+      thumb +
+      '<div class="history-supp-info">' +
+        '<div class="history-supp-title">' + escapeHtml(s.title || 'Untitled') + '</div>' +
+        ((badge || pool) ? '<div class="history-supp-meta">' + badge + pool + '</div>' : '') +
+      '</div>' +
+      link + '</div>';
   }
 
   function historyTopThree(text) {
