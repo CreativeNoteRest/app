@@ -111,10 +111,60 @@
     .action-secondary-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
     .stub-badge { display: inline-block; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; background: var(--brand-light); color: var(--brand); border-radius: 4px; padding: 2px 6px; margin-top: 2px; }
 
-    /* ── Status strip ───────────────────────────────────────────────── */
-    .status-strip { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; flex-shrink: 0; }
-    .status-text { font-size: 0.8rem; color: var(--text-mid); }
+    /* ── Message banner ─────────────────────────────────────────────── */
+    .msg-banner {
+      display: none;                        /* hidden until messages load */
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left-width: 4px;              /* coloured left indicator */
+      border-left-color: var(--border);    /* default: neutral; overridden per message type */
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: default;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 0.15s;
+      min-height: 52px;
+      position: relative;
+    }
+    .msg-banner.has-cta { cursor: pointer; }
+    .msg-banner.has-cta:hover { box-shadow: var(--shadow); }
+    .msg-banner.type-alert        { border-left-color: var(--danger); }
+    .msg-banner.type-announcement { border-left-color: var(--brand); }
+    .msg-banner.type-promo        { border-left-color: var(--success); }
+
+    /* Fade container: two stacked text layers, only one visible at a time */
+    .msg-text-wrap { position: relative; min-height: 1.4em; }
+    .msg-text {
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      line-height: 1.5;
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    .msg-text.visible {
+      opacity: 1;
+      position: relative;
+      pointer-events: auto;
+    }
+
+    /* Dots indicator — shown only when >1 message */
+    .msg-dots {
+      display: flex;
+      gap: 5px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .msg-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .msg-dot.active { background: var(--text-light); }
 
     /* ── Bridging overlay ───────────────────────────────────────────── */
     .bridge-overlay { display: none; position: fixed; inset: 0; background: var(--brand); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
@@ -366,9 +416,12 @@
       </div>
     </button>
 
-    <div class="status-strip">
-      <div class="status-dot"></div>
-      <div class="status-text">Ready</div>
+    <!-- Message banner — hidden until platform_messages are fetched.
+         Rendered as <a> when cta_url is present, <div> otherwise.
+         JS sets the correct tag, type classes, and content. -->
+    <div class="msg-banner" id="msg-banner" role="status" aria-live="polite">
+      <div class="msg-text-wrap" id="msg-text-wrap"></div>
+      <div class="msg-dots" id="msg-dots"></div>
     </div>
 
   </main>
@@ -784,6 +837,144 @@
     window.goStudents = () => { window.location.href = '/manage_students.html'; };
     window.goHistory  = () => { window.location.href = '/session_history.html'; };
     window.goAccount  = () => { window.location.href = '/account.html'; };
+
+    // ── Platform message banner ──────────────────────────────────────
+    // Fetches active platform_messages for this teacher on page load.
+    // Two targeting modes:
+    //   broadcast — target = 'broadcast', teacher_id NULL. Shows to all.
+    //   targeted  — target = 'targeted',  teacher_id set. Shows to that
+    //               teacher only.
+    // Audience enum is Tier B (future). All active messages currently
+    // pass the audience check — store 'all' when inserting for now.
+    // message_text supports inline HTML — platform-authored only,
+    // never user content. Safe to render with innerHTML.
+    // Banner is hidden entirely when no qualifying messages exist.
+
+    (async function initMessageBanner() {
+      if (!TEACHER_ID || !SERIES_ID) return;
+
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
+
+      const baseFilter = (q) => q
+        .eq('is_active', true)
+        .or(`series_id.eq.${SERIES_ID},series_id.is.null`)
+        .or(`active_from.is.null,active_from.lte.${today}`)
+        .or(`active_to.is.null,active_to.gte.${today}`);
+
+      const cols = 'message_id, message_type, message_text, cta_url, priority';
+
+      // Fetch 1: broadcast messages (target = 'broadcast', no teacher filter)
+      const { data: broadcasts, error: bErr } = await baseFilter(
+        supabase.from('platform_messages').select(cols).eq('target', 'broadcast')
+      );
+
+      // Fetch 2: messages targeted to this specific teacher
+      const { data: targeted, error: tErr } = await baseFilter(
+        supabase.from('platform_messages').select(cols)
+          .eq('target', 'targeted')
+          .eq('teacher_id', TEACHER_ID)
+      );
+
+      if (bErr) console.warn('platform_messages broadcast fetch failed:', bErr.message);
+      if (tErr) console.warn('platform_messages targeted fetch failed:', tErr.message);
+
+      // Merge and sort by priority (lower = first)
+      const qualifying = [
+        ...(broadcasts || []),
+        ...(targeted  || [])
+      ].sort((a, b) => a.priority - b.priority);
+
+      if (qualifying.length === 0) return;
+
+      // ── Border colour lookup by message_type ─────────────────────
+      const typeClass = {
+        alert:        'type-alert',
+        announcement: 'type-announcement',
+        promo:        'type-promo'
+      };
+
+      // ── Build banner ─────────────────────────────────────────────
+      const banner   = document.getElementById('msg-banner');
+      const textWrap = document.getElementById('msg-text-wrap');
+      const dotsEl   = document.getElementById('msg-dots');
+
+      let currentIdx = 0;
+
+      function applyMessage(idx) {
+        const msg = qualifying[idx];
+
+        // Swap type class
+        banner.classList.remove('type-alert', 'type-announcement', 'type-promo');
+        if (typeClass[msg.message_type]) banner.classList.add(typeClass[msg.message_type]);
+
+        // CTA behaviour — make banner tappable if cta_url present
+        if (msg.cta_url) {
+          banner.classList.add('has-cta');
+          banner.style.cursor = 'pointer';
+          banner.onclick = () => { window.location.href = msg.cta_url; };
+        } else {
+          banner.classList.remove('has-cta');
+          banner.style.cursor = 'default';
+          banner.onclick = null;
+        }
+
+        // Update dots
+        dotsEl.querySelectorAll('.msg-dot').forEach((d, i) => {
+          d.classList.toggle('active', i === idx);
+        });
+      }
+
+      function showMessage(idx, animate) {
+        if (!animate) {
+          // First render — no fade, just show
+          textWrap.innerHTML = '';
+          const el = document.createElement('div');
+          el.className = 'msg-text visible';
+          el.innerHTML = qualifying[idx].message_text;
+          textWrap.appendChild(el);
+          applyMessage(idx);
+          return;
+        }
+
+        // Fade: fade out current, swap content, fade in
+        const current = textWrap.querySelector('.msg-text.visible');
+        if (current) {
+          current.classList.remove('visible'); // triggers CSS opacity 0 transition
+          setTimeout(() => {
+            textWrap.innerHTML = '';
+            const el = document.createElement('div');
+            el.className = 'msg-text visible';
+            el.innerHTML = qualifying[idx].message_text;
+            textWrap.appendChild(el);
+            applyMessage(idx);
+          }, 520); // slightly past the 0.5s CSS transition
+        } else {
+          showMessage(idx, false);
+        }
+      }
+
+      // Build dot indicators (only shown when >1 message)
+      if (qualifying.length > 1) {
+        qualifying.forEach((_, i) => {
+          const dot = document.createElement('div');
+          dot.className = 'msg-dot' + (i === 0 ? ' active' : '');
+          dotsEl.appendChild(dot);
+        });
+      }
+
+      // Initial render
+      showMessage(0, false);
+      banner.style.display = 'block';
+
+      // Cycle if multiple messages (8 second interval)
+      if (qualifying.length > 1) {
+        setInterval(() => {
+          currentIdx = (currentIdx + 1) % qualifying.length;
+          showMessage(currentIdx, true);
+        }, 8000);
+      }
+
+    })(); // end initMessageBanner
 
   </script>
 
