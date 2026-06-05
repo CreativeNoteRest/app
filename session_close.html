@@ -683,6 +683,9 @@
     window.location.href = '/main_menu.html';
   }
 
+  // ── Edge Function shared secret ───────────────────────────────────
+  const FUNCTION_SECRET = 'bafac011-c0ca-4f40-be8d-64f7d62bcd82';
+
   // ── 3. Apply series name to header ────────────────────────────────
   const nameMap = { wunderkeys: 'Creative Note REST' };
   const seriesEl = document.getElementById('header-series-name');
@@ -850,7 +853,8 @@
 
     try {
       const { data, error } = await supabase.functions.invoke('session-close', {
-        body
+        body,
+        headers: { 'x-function-secret': FUNCTION_SECRET }
       });
 
       finishPips();

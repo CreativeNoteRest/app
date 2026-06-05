@@ -51,6 +51,16 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders() });
   }
 
+  // Shared secret guard — reject unauthenticated callers before any AI work
+  const functionSecret = Deno.env.get('CN_FUNCTION_SECRET');
+  const incomingSecret = req.headers.get('x-function-secret');
+  if (!functionSecret || incomingSecret !== functionSecret) {
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
   try {
     const body = await req.json();
     const {
@@ -1258,7 +1268,7 @@ function delay(ms: number): Promise<void> {
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-function-secret',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
