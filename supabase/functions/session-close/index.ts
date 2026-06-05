@@ -1,8 +1,9 @@
 // session-close Edge Function
 // May 2026 — Phase 2 replaced: vector similarity ranking replaces tag-based AI call
 // Phase 3 retired — supplement selection now pure JS passthrough
+// June 2026 — Phase 2 extraction prompt added: focus query distilled from entries before embedding
 // Read-only. All writes occur in the browser on teacher approval.
-// Phases: 1 (Piece Correlation), 2 (Vector Supplement Ranking),
+// Phases: 1 (Piece Correlation), 2 (Focus Extraction + Vector Supplement Ranking),
 //         4 (Teacher Summary), 5 (Student Practice Plan)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -191,7 +192,8 @@ Deno.serve(async (req: Request) => {
       };
 
       const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
-      const phase2PromptDry = '[Phase 2 now uses vector similarity — no prompt template]';
+      const phase2PromptDry = (promptMap.get('session_close_phase2') ?? '[session_close_phase2 prompt not found]')
+        .replace('{{entries}}', entries);
       const phase4PromptDry = promptMap.get('session_close_phase4')!
         .replace('{{student_name}}', student_name)
         .replace('{{session_date}}', sessionDate)
@@ -324,10 +326,15 @@ Deno.serve(async (req: Request) => {
       if (equivData) allSupplementCandidates = equivData;
     }
 
-    // --- Phase 1 ---
+    // --- Phase 1 + Phase 2 extraction — run in parallel ---
+    // extractFocusQuery has no dependencies; Phase 1 has no dependencies.
+    // Both need only entries and promptMap, which are resolved before this point.
     const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
     const phase1Config = resolvePhaseAIConfig(configMap, 1, resolvedModelOverride, thinking_budget_override);
-    const phase1Raw = await callAIWithJSONRetry(phase1Prompt, phase1Config, 1);
+    const [phase1Raw, focusQuery] = await Promise.all([
+      callAIWithJSONRetry(phase1Prompt, phase1Config, 1),
+      extractFocusQuery(entries, promptMap),
+    ]);
     if (!phase1Raw.success) {
       return jsonResponse({ success: false, failed_phase: 1, error: phase1Raw.error });
     }
@@ -340,8 +347,10 @@ Deno.serve(async (req: Request) => {
     const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
     phase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
 
-    // --- Phase 2: Vector similarity ranking ---
-    // Graceful fallback to position order — never fails the pipeline
+    // --- Phase 2: Focus extraction + vector similarity ranking ---
+    // focusQuery is the distilled skill/difficulty signal from Phase 2 extraction.
+    // Falls back to raw entries if extraction returned empty or failed.
+    // Graceful fallback to position order — never fails the pipeline.
     // No display cap applied here — full ranked list returned to browser.
     // Teacher selects which supplements to include at approval time.
     const ranked = await rankSupplementsByVector(
@@ -350,6 +359,7 @@ Deno.serve(async (req: Request) => {
       entries,
       effectiveLessonPage,
       Infinity,
+      focusQuery,
     );
 
     // --- Phase 3 retired: JS passthrough ---
@@ -381,6 +391,7 @@ Deno.serve(async (req: Request) => {
       book_transition_suspected: phase1.book_transition_suspected,
       next_book_id: null,
       min_entry_character_count: parseInt(configMap.get('min_entry_character_count') ?? '20'),
+      debug_focus_query: focusQuery || null,
     });
 
   } catch (err) {
@@ -830,6 +841,40 @@ async function embedText(text: string): Promise<number[]> {
 }
 
 // ---------------------------------------------------------------------------
+// extractFocusQuery
+// ---------------------------------------------------------------------------
+
+// Calls the session_close_phase2 prompt to distill the teacher's entries into
+// skill/difficulty signals only, stripping praise and positive comments.
+// Returns the trimmed extraction result, or '' on any failure (caller falls back to raw entries).
+// thinkingBudget: 0 — pure extraction task, no reasoning required.
+// maxOutputTokens: 500 — output is a few sentences at most.
+
+async function extractFocusQuery(
+  entries: string,
+  promptMap: Map<string, string>,
+): Promise<string> {
+  const template = promptMap.get('session_close_phase2');
+  if (!template || !template.trim()) return '';
+  if (!entries || !entries.trim()) return '';
+
+  const prompt = template.replace('{{entries}}', entries);
+  const config: PhaseAIConfig = {
+    model: GEMINI_MODEL,
+    thinkingBudget: 0,
+    maxOutputTokens: 500,
+  };
+
+  try {
+    const result = await callAI(prompt, config);
+    return result.trim();
+  } catch (err) {
+    console.warn('extractFocusQuery failed — will use raw entries for embedding:', err);
+    return '';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // rankSupplementsByVector
 // ---------------------------------------------------------------------------
 
@@ -839,6 +884,7 @@ async function rankSupplementsByVector(
   entries: string,
   effectiveLessonPage: number | null,
   maxDisplay: number,
+  focusQuery?: string,
 ): Promise<RankedResult> {
 
   // Step 1: Position filter — same gate as before
@@ -850,15 +896,16 @@ async function rankSupplementsByVector(
 
   if (filtered.length === 0) return { fullList: [] };
 
-  // Step 2: Embed teacher entries and rank via pgvector
-  // Guard: empty entries cannot be embedded — fall back to position order
-  if (!entries || !entries.trim()) {
+  // Step 2: Embed focus query (distilled skill/difficulty signal) or fall back to raw entries.
+  // Guard: empty string cannot be embedded — fall back to position order.
+  const queryText = (focusQuery && focusQuery.trim()) ? focusQuery : entries;
+  if (!queryText || !queryText.trim()) {
     const fallback = [...filtered].sort((a, b) => (a.page_start ?? 0) - (b.page_start ?? 0));
     return { fullList: fallback.slice(0, maxDisplay) };
   }
 
   try {
-    const queryVector = await embedText(entries);
+    const queryVector = await embedText(queryText);
     const candidateIds = filtered.map(c => c.supplement_id);
 
     const { data: ranked } = await supabase.rpc('rank_supplement_candidates_by_vector', {
