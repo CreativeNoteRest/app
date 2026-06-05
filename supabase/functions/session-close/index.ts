@@ -342,12 +342,14 @@ Deno.serve(async (req: Request) => {
 
     // --- Phase 2: Vector similarity ranking ---
     // Graceful fallback to position order — never fails the pipeline
+    // No display cap applied here — full ranked list returned to browser.
+    // Teacher selects which supplements to include at approval time.
     const ranked = await rankSupplementsByVector(
       supabase,
       allSupplementCandidates,
       entries,
       effectiveLessonPage,
-      supplementMaxDisplay,
+      Infinity,
     );
 
     // --- Phase 3 retired: JS passthrough ---
