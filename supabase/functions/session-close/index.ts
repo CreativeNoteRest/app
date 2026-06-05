@@ -250,6 +250,13 @@ Deno.serve(async (req: Request) => {
       }
 
       if (phase === 2) {
+        // prompt_only: assemble and return the resolved prompt without running the embedding
+        if (prompt_only) {
+          const assembled = (promptMap.get('session_close_phase2') ?? '')
+            .replace('{{entries}}', entries);
+          return jsonResponse({ success: true, phase: 2, assembled_prompt_used: assembled });
+        }
+
         let allCandidates = supplementCandidates;
         if (equivalentBooks && equivalentBooks.length > 0) {
           const { data: equivData } = await supabase.rpc('get_supplement_candidates', {
