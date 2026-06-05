@@ -231,15 +231,59 @@
     }
     .active-supp-list { display: flex; flex-direction: column; gap: 8px; }
 
-    .show-more-btn {
-      width: 100%; padding: 10px;
-      background: none; border: 1px dashed var(--border);
-      border-radius: 10px; cursor: pointer;
-      font-size: 0.82rem; font-weight: 600; color: var(--text-light);
-      transition: border-color 0.15s, color 0.15s;
-      margin-top: 4px;
+    /* ── Supplement selector — search + counter ──────────────────── */
+    .supp-search-wrap {
+      margin-bottom: 12px;
     }
-    .show-more-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .supp-search {
+      width: 100%;
+      padding: 9px 12px 9px 36px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9A9A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 11px center;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+    }
+    .supp-search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(219,110,43,0.12); }
+    .supp-search::placeholder { color: var(--text-light); }
+
+    .supp-counter {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-light); margin-bottom: 10px;
+    }
+    .supp-counter span { color: var(--brand); }
+
+    .supp-empty {
+      font-size: 0.85rem; color: var(--text-light);
+      padding: 10px 0; text-align: center;
+    }
+
+    /* ── Supplement item — with checkbox ─────────────────────────── */
+    .supplement-item {
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+      user-select: none;
+    }
+    .supplement-item.supp-selected {
+      border-color: var(--brand);
+      background: var(--brand-light);
+    }
+    .supplement-item:hover { border-color: var(--brand); }
+
+    .supp-checkbox-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 20px; flex-shrink: 0;
+    }
+    .supp-checkbox {
+      width: 17px; height: 17px;
+      accent-color: var(--brand);
+      cursor: pointer; flex-shrink: 0;
+      pointer-events: none; /* row click handles it */
+    }
 
     .no-supplements {
       font-size: 0.85rem; color: var(--text-light); line-height: 1.6;
@@ -570,10 +614,18 @@
           </div>
         </div>
         <div class="card-body">
+          <div class="supp-search-wrap">
+            <input
+              type="search"
+              class="supp-search"
+              id="supp-search"
+              placeholder="Search supplements…"
+              autocomplete="off"
+              oninput="renderSupplements()"
+            />
+          </div>
+          <div class="supp-counter" id="supp-counter"></div>
           <div class="supplement-list" id="supplement-list"></div>
-          <button class="show-more-btn hidden" id="show-more-btn" onclick="showMoreSupplements()">
-            Show more recommendations
-          </button>
         </div>
       </div>
 
@@ -646,7 +698,7 @@
   let bookTransition   = false;  // has teacher confirmed a book transition?
   let transitionBookId = null;   // new book_id if transition confirmed
   let allSupplements   = [];     // full supplement list from response
-  let initialCount     = 3;      // how many to show before show-more
+  let selectedSupplementIds = new Set(); // supplement_ids chosen by teacher
 
   // PDF popup context (loaded at init)
   let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
@@ -861,9 +913,9 @@
     document.getElementById('student-summary-text').textContent =
       data.ai_summ_student || '(No student summary generated.)';
 
-    // Supplements
+    // Supplements — reset selection, then render
     allSupplements = data.ai_summ_supplement_data || [];
-    initialCount   = data.supplement_initial_display || 3;
+    selectedSupplementIds = new Set();
     renderSupplements();
 
     // Active assignments -- tile blocks inside teacher and student cards
@@ -885,29 +937,142 @@
   }
 
   // ── 11. Render supplements ────────────────────────────────────────
-  function renderSupplements() {
-    const list = document.getElementById('supplement-list');
-    const showMoreBtn = document.getElementById('show-more-btn');
+  // Called on initial render and on every search input event.
+  // Selection state (selectedSupplementIds) is preserved across re-renders.
+  window.renderSupplements = function renderSupplements() {
+    const list      = document.getElementById('supplement-list');
+    const counterEl = document.getElementById('supp-counter');
+    const searchEl  = document.getElementById('supp-search');
+    const query     = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
     list.innerHTML = '';
 
     if (!allSupplements || allSupplements.length === 0) {
       list.innerHTML = `<div class="no-supplements">
         Supplement recommendations will build as ${STUDENT_NAME} progresses through the book.
       </div>`;
-      showMoreBtn.classList.add('hidden');
+      if (counterEl) counterEl.textContent = '';
       return;
     }
 
-    const toShow = allSupplements.slice(0, initialCount);
-    toShow.forEach(s => list.appendChild(buildSupplementItem(s)));
+    // Filter by search — title or search_description
+    const filtered = query
+      ? allSupplements.filter(s =>
+          (s.title || '').toLowerCase().includes(query) ||
+          (s.search_description || '').toLowerCase().includes(query)
+        )
+      : allSupplements;
 
-    if (allSupplements.length > initialCount) {
-      const remaining = allSupplements.length - initialCount;
-      showMoreBtn.textContent = `Show ${remaining} more recommendation${remaining > 1 ? 's' : ''}`;
-      showMoreBtn.classList.remove('hidden');
-    } else {
-      showMoreBtn.classList.add('hidden');
+    // Update counter
+    if (counterEl) {
+      const selCount = selectedSupplementIds.size;
+      const total    = allSupplements.length;
+      counterEl.innerHTML = filtered.length < total
+        ? `Showing <span>${filtered.length}</span> of ${total} · <span>${selCount}</span> selected`
+        : `${total} recommendation${total !== 1 ? 's' : ''} · <span>${selCount}</span> selected`;
     }
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="supp-empty">No supplements match your search.</div>`;
+      return;
+    }
+
+    filtered.forEach(s => list.appendChild(buildSupplementItem(s)));
+  };
+
+  function buildSupplementItem(s) {
+    const div = document.createElement('div');
+    const isSelected = selectedSupplementIds.has(s.supplement_id);
+    div.className = 'supplement-item' + (isSelected ? ' supp-selected' : '');
+    div.dataset.suppId = s.supplement_id;
+
+    // Checkbox
+    const checkboxHtml = `
+      <div class="supp-checkbox-wrap">
+        <input type="checkbox" class="supp-checkbox" ${isSelected ? 'checked' : ''} tabindex="-1" />
+      </div>`;
+
+    // Thumbnail
+    let thumbHtml;
+    if (s.thumbnail_url) {
+      thumbHtml = `<img class="supplement-thumb" src="${escHtml(s.thumbnail_url)}"
+        alt="" loading="lazy" data-url="${escHtml(s.source_url || '')}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="supplement-thumb-placeholder" style="display:none">
+          ${bookIconSvg()}
+        </div>`;
+    } else {
+      thumbHtml = `<div class="supplement-thumb-placeholder">${bookIconSvg()}</div>`;
+    }
+
+    // Free/paid badge
+    const badge = s.is_free === true
+      ? `<span class="badge-free">Free</span>`
+      : s.is_free === false
+        ? `<span class="badge-paid">Resource</span>`
+        : '';
+
+    // Pool label
+    const poolLabel = s.pool === 'fallback' ? 'General resource' : '';
+
+    div.innerHTML = `
+      ${checkboxHtml}
+      ${thumbHtml}
+      <div class="supplement-info">
+        <div class="supplement-title">${escHtml(s.title || 'Untitled')}</div>
+        <div class="supplement-meta">
+          ${badge}
+          ${poolLabel ? `<span>${escHtml(poolLabel)}</span>` : ''}
+        </div>
+      </div>
+      ${s.source_url
+        ? `<a class="supplement-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener" aria-label="Open ${escHtml(s.title)}" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
+            </svg>
+          </a>`
+        : ''}
+    `;
+
+    // Row click toggles selection
+    // External link and thumbnail open clicks are stopped via their own handlers
+    div.addEventListener('click', function(e) {
+      if (e.target.closest('a.supplement-link')) return;
+      if (e.target.classList.contains('supplement-thumb')) return;
+
+      const suppId = div.dataset.suppId;
+      if (!suppId) return;
+
+      if (selectedSupplementIds.has(suppId)) {
+        selectedSupplementIds.delete(suppId);
+        div.classList.remove('supp-selected');
+        div.querySelector('.supp-checkbox').checked = false;
+      } else {
+        selectedSupplementIds.add(suppId);
+        div.classList.add('supp-selected');
+        div.querySelector('.supp-checkbox').checked = true;
+      }
+
+      // Refresh counter without re-rendering the list
+      const counterEl = document.getElementById('supp-counter');
+      if (counterEl) {
+        const selCount = selectedSupplementIds.size;
+        const total    = allSupplements.length;
+        const searchEl = document.getElementById('supp-search');
+        const q        = searchEl ? searchEl.value.trim().toLowerCase() : '';
+        const filteredCount = q
+          ? allSupplements.filter(s2 =>
+              (s2.title || '').toLowerCase().includes(q) ||
+              (s2.search_description || '').toLowerCase().includes(q)
+            ).length
+          : total;
+        counterEl.innerHTML = filteredCount < total
+          ? `Showing <span>${filteredCount}</span> of ${total} · <span>${selCount}</span> selected`
+          : `${total} recommendation${total !== 1 ? 's' : ''} · <span>${selCount}</span> selected`;
+      }
+    });
+
+    return div;
   }
 
   function renderActiveSupplements(assignments) {
@@ -957,53 +1122,6 @@
       '</div>';
   }
 
-  function buildSupplementItem(s) {
-    const div = document.createElement('div');
-    div.className = 'supplement-item';
-
-    // Thumbnail
-    let thumbHtml;
-    if (s.thumbnail_url) {
-      thumbHtml = `<img class="supplement-thumb" src="${escHtml(s.thumbnail_url)}"
-        alt="" loading="lazy" data-url="${escHtml(s.source_url || '')}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="supplement-thumb-placeholder" style="display:none">
-          ${bookIconSvg()}
-        </div>`;
-    } else {
-      thumbHtml = `<div class="supplement-thumb-placeholder">${bookIconSvg()}</div>`;
-    }
-
-    // Free/paid badge
-    const badge = s.is_free === true
-      ? `<span class="badge-free">Free</span>`
-      : s.is_free === false
-        ? `<span class="badge-paid">Resource</span>`
-        : '';
-
-    // Pool label
-    const poolLabel = s.pool === 'fallback' ? 'General resource' : '';
-
-    div.innerHTML = `
-      ${thumbHtml}
-      <div class="supplement-info">
-        <div class="supplement-title">${escHtml(s.title || 'Untitled')}</div>
-        <div class="supplement-meta">
-          ${badge}
-          ${poolLabel ? `<span>${escHtml(poolLabel)}</span>` : ''}
-        </div>
-      </div>
-      ${s.source_url
-        ? `<a class="supplement-link" href="${escHtml(s.source_url)}" target="_blank" rel="noopener" aria-label="Open ${escHtml(s.title)}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
-            </svg>
-          </a>`
-        : ''}
-    `;
-    return div;
-  }
-
   function bookIconSvg() {
     return `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>`;
   }
@@ -1040,11 +1158,6 @@
       if (url) window.open(url, '_blank', 'noopener');
     });
   })();
-
-  window.showMoreSupplements = function() {
-    initialCount = allSupplements.length; // reveal all
-    renderSupplements();
-  };
 
   // ── 12. Book transition confirmation ─────────────────────────────
   window.confirmTransition = function(confirmed) {
@@ -1096,13 +1209,18 @@
           `\n\nNote: Book transition to ${efResponse.book_transition_book_name} confirmed this session.`;
       }
 
+      // Filter supplement data to teacher's selections only
+      const selectedSupplements = allSupplements.filter(
+        s => selectedSupplementIds.has(s.supplement_id)
+      );
+
       const { error: w1Err } = await supabase
         .from('sessions')
         .update({
           ai_summ_teacher:          teacherSummary,
           ai_summ_student:          efResponse.ai_summ_student          || '',
-          ai_summ_supplement:       (efResponse.ai_summ_supplement_data || []).map(s => s.title).filter(Boolean).join('\n') || '',
-          ai_summ_supplement_data:  efResponse.ai_summ_supplement_data  || [],
+          ai_summ_supplement:       selectedSupplements.map(s => s.title).filter(Boolean).join('\n') || '',
+          ai_summ_supplement_data:  selectedSupplements,
           active_assignments_data:  efResponse.active_assignments_data  || [],
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
@@ -1142,9 +1260,9 @@
       }
 
       // ── Write 3: Verify AI fields written ──────────────────────
-      // Re-read the Sessions row. All four AI fields must be non-null
-      // before we proceed to delete session_entries. Hard stop if any
-      // field is missing -- entries are preserved and teacher can retry.
+      // Re-read the Sessions row. Core AI fields must be non-null.
+      // ai_summ_supplement may be an empty string (teacher selected zero
+      // supplements) — that is valid. Check for null/undefined only.
       const { data: verifyRow, error: verifyErr } = await supabase
         .from('sessions')
         .select('ai_summ_teacher, ai_summ_student, ai_summ_supplement, ai_summ_supplement_data')
@@ -1154,7 +1272,7 @@
       if (verifyErr) throw new Error(`Write 3 failed (verify read): ${verifyErr.message}`);
 
       const missing = ['ai_summ_teacher','ai_summ_student','ai_summ_supplement','ai_summ_supplement_data']
-        .filter(f => !verifyRow[f]);
+        .filter(f => verifyRow[f] === null || verifyRow[f] === undefined);
 
       if (missing.length > 0) {
         throw new Error(
