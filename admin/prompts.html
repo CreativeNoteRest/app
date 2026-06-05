@@ -419,6 +419,10 @@
           <!-- Phase 2 supplement ranking preview -->
           <div id="ds-supplement-preview" class="result-section hidden">
              <div class="result-label">Supplement Matching — Ranked by Similarity</div>
+             <div id="ds-focus-query" style="display:none; font-size:0.82rem; padding:12px 16px; border:1.5px solid var(--success-border); border-radius:10px; background:var(--success-light); line-height:1.6; margin-bottom:10px;">
+               <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--success); margin-bottom:6px;">Focus Query — sent to embedding</div>
+               <div id="ds-focus-query-text" style="white-space:pre-wrap; color:var(--text);"></div>
+             </div>
              <div id="ds-supplement-list" style="font-size:0.85rem; padding:14px 16px; border:1.5px solid var(--success-border); border-radius:10px; background:var(--success-light); line-height:1.65;"></div>
           </div>
         </div><!-- /ds-phase-content -->
@@ -1107,6 +1111,8 @@ function clearDsResults() {
   elDsBtnDlPrompt.classList.add('hidden');
   elDsBtnDlResp.classList.add('hidden');
   elDsRunError.classList.add('hidden');
+  const elFq = document.getElementById('ds-focus-query');
+  if (elFq) { elFq.style.display = 'none'; }
   // Reset cached resolved text -- tab stays enabled if phase1Output is in memory
   dsResolvedText = null;
   if (dsPhase !== null && phase1Output) {
@@ -1226,10 +1232,22 @@ elDsBtnRun.addEventListener('click', async () => {
     const elSupList    = document.getElementById('ds-supplement-list');
 
     if (isPhase2) {
-      // Phase 2: render similarity-ranked supplement list — no raw AI output
+      // Phase 2: render focus query + similarity-ranked supplement list — no raw AI output
       elDsResult.classList.add('hidden');
       elDsRerunNotice.classList.add('hidden');
       if (result.ranked_supplements && elSupPreview && elSupList) {
+        // Focus query — show what the extraction returned (or fallback notice)
+        const elFocusQuery     = document.getElementById('ds-focus-query');
+        const elFocusQueryText = document.getElementById('ds-focus-query-text');
+        if (elFocusQuery && elFocusQueryText) {
+          if (result.debug_focus_query) {
+            elFocusQueryText.textContent = result.debug_focus_query;
+            elFocusQuery.style.display   = 'block';
+          } else {
+            elFocusQueryText.textContent = '(extraction returned empty — raw entries used for embedding)';
+            elFocusQuery.style.display   = 'block';
+          }
+        }
         elSupList.innerHTML = result.ranked_supplements.length
           ? result.ranked_supplements.map((s, i) => {
               const sim = s.similarity != null ? (s.similarity * 100).toFixed(1) + '%' : '—';

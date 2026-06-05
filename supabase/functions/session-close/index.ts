@@ -277,9 +277,10 @@ Deno.serve(async (req: Request) => {
           booksPieces,
           prevLessonPage,
         );
-        const ranked2 = await rankSupplementsByVector(supabase, allCandidates, entries, effectiveLessonPage, supplementMaxDisplay);
+        const focusQuery2 = await extractFocusQuery(entries, promptMap);
+        const ranked2 = await rankSupplementsByVector(supabase, allCandidates, entries, effectiveLessonPage, supplementMaxDisplay, focusQuery2);
         const rankedWithScore = ranked2.fullList.map(s => ({ title: s.title, similarity: (s as any).similarity ?? null, pool: s.pool }));
-        return jsonResponse({ success: true, phase: 2, ranked_supplements: rankedWithScore, debug_candidate_count: allCandidates.length });
+        return jsonResponse({ success: true, phase: 2, ranked_supplements: rankedWithScore, debug_candidate_count: allCandidates.length, debug_focus_query: focusQuery2 || null });
       }
 
       if ([4, 5].includes(phase)) {
