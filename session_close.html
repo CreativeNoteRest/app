@@ -703,10 +703,6 @@
   let allSupplements   = [];     // full supplement list from response
   let selectedSupplementIds = new Set(); // supplement_ids chosen by teacher
 
-  // Token accumulators — reset on page load, accumulate across multiple close runs
-  // before approval (e.g. teacher closes, cancels, closes again).
-  let accumulatedTokens = 0;
-  let accumulatedCalls  = 0;
 
   // PDF popup context (loaded at init)
   let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
@@ -888,15 +884,27 @@
         minEntryCharCount = data.min_entry_character_count;
       }
 
-      // Accumulate token usage across multiple close runs before approval
-      accumulatedTokens += data.token_usage  || 0;
-      accumulatedCalls  += data.call_count   || 0;
-
       // Store full response for use at approve time
       efResponse = data;
 
       // Render full results
       renderResults(data);
+
+      // Fire-and-forget: additively write token usage to Sessions row immediately.
+      // Runs after render so the teacher is never blocked. Failures are logged only.
+      // Uses a Postgres RPC to increment rather than overwrite, so repeated close
+      // runs accumulate correctly even if the teacher cancels and reruns.
+      (async () => {
+        try {
+          await supabase.rpc('increment_session_ai_usage', {
+            p_session_id: SESSION_ID,
+            p_tokens:     data.token_usage || 0,
+            p_calls:      data.call_count  || 0,
+          });
+        } catch (e) {
+          console.warn('Token usage write failed (non-blocking):', e);
+        }
+      })();
 
     } catch (err) {
       finishPips();
@@ -1238,8 +1246,6 @@
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
           summary_approved_at:      new Date().toISOString(),
-          token_usage:              accumulatedTokens,
-          ai_call_count:            accumulatedCalls,
         })
         .eq('session_id', SESSION_ID);
 
