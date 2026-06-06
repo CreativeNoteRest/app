@@ -376,7 +376,7 @@
         <!-- Exclusion filter notice — shown when filter rules are active -->
         <div class="map-filter-notice hidden" id="map-filter-notice">
           <input type="checkbox" id="map-filter-apply" checked onchange="renderList()" />
-          <label for="map-filter-apply">Exclusion filter active — some supplements are hidden. Uncheck to show all.</label>
+          <label for="map-filter-apply">Exclusion filter active — <span onclick="switchTab('filter')" style="text-decoration:underline;cursor:pointer;">some supplements are hidden</span>. Uncheck to show all.</label>
         </div>
 
         <div class="list-controls">
@@ -499,8 +499,16 @@
   <div id="tab-filter" class="hidden">
 
     <div class="card">
-      <div class="card-tag">Recommendation Filter</div>
-      <div class="card-title" style="margin-bottom:6px;">Supplement Filter Rules</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px;">
+        <div>
+          <div class="card-tag">Recommendation Filter</div>
+          <div class="card-title" style="margin-bottom:0;">Supplement Filter Rules</div>
+        </div>
+        <div id="filter-save-area" class="hidden" style="flex-shrink:0;display:flex;align-items:center;gap:10px;">
+          <span class="filter-save-msg hidden" id="filter-save-msg"></span>
+          <button class="btn-primary" onclick="filterSave()">Save rules</button>
+        </div>
+      </div>
       <p style="font-size:0.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:16px;">
         Select topics and categories to exclude from lesson recommendations. Supplements matching
         any excluded value will not surface at session close. Override topics take priority —
@@ -525,11 +533,6 @@
       <div id="filter-msg" class="hidden"></div>
 
       <div id="filter-content" class="hidden">
-
-        <div class="filter-save-row" style="margin-bottom:16px;">
-          <button class="btn-primary" onclick="filterSave()">Save rules</button>
-          <span class="filter-save-msg hidden" id="filter-save-msg"></span>
-        </div>
 
         <div class="filter-section">
           <div class="filter-section-title">Categories — Exclude</div>
@@ -2311,6 +2314,7 @@ async function filterLoad() {
   loadEl.classList.add('hidden');
   filterRender();
   contentEl.classList.remove('hidden');
+  document.getElementById('filter-save-area').classList.remove('hidden');
 }
 
 // ── Compute visible topics given current category exclusions ──────
