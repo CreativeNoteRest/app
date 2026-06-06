@@ -386,6 +386,26 @@
 
     <hr class="section-divider" />
 
+    <!-- Tertiary Email -->
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Additional Email</span>
+        <span class="field-optional">optional</span>
+      </div>
+      <input type="email" class="field-input" id="field-email-tertiary"
+             placeholder="optional@example.com" autocomplete="new-password" />
+      <div class="tooltip-panel" id="tip-unsub-tertiary">
+        Unsubscribing this email will stop all communications to this additional address.
+      </div>
+      <div class="inline-unsub-row">
+        <input type="checkbox" id="field-unsub-tertiary" />
+        <label for="field-unsub-tertiary">Unsubscribe</label>
+        <button class="tooltip-btn" data-tooltip="tip-unsub-tertiary">?</button>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
     <!-- Phone -->
     <div class="field-group">
       <div class="field-label-row">
@@ -518,6 +538,8 @@
   const fUnsubPrimary       = document.getElementById('field-unsub-primary');
   const fEmailSecondary     = document.getElementById('field-email-secondary');
   const fUnsubSecondary     = document.getElementById('field-unsub-secondary');
+  const fEmailTertiary      = document.getElementById('field-email-tertiary');
+  const fUnsubTertiary      = document.getElementById('field-unsub-tertiary');
   const fPhone              = document.getElementById('field-phone');
   const fBirthYear          = document.getElementById('field-birth-year');
   const ageDisplay          = document.getElementById('age-display');
@@ -576,12 +598,15 @@
   function checkContactWarning() {
     const unsubbed    = fUnsubPrimary.checked;
     const hasSecondary = fEmailSecondary.value.trim().length > 0 && !fUnsubSecondary.checked;
+    const hasTertiary  = fEmailTertiary.value.trim().length > 0 && !fUnsubTertiary.checked;
     const hasPhone     = fPhone.value.trim().length > 0;
-    contactWarning.style.display = (unsubbed && !hasSecondary && !hasPhone) ? 'block' : 'none';
+    contactWarning.style.display = (unsubbed && !hasSecondary && !hasTertiary && !hasPhone) ? 'block' : 'none';
   }
   fUnsubPrimary.addEventListener('change', checkContactWarning);
   fEmailSecondary.addEventListener('input', checkContactWarning);
   fUnsubSecondary.addEventListener('change', checkContactWarning);
+  fEmailTertiary.addEventListener('input', checkContactWarning);
+  fUnsubTertiary.addEventListener('change', checkContactWarning);
   fPhone.addEventListener('input', checkContactWarning);
 
   // ── Birth year -- live age display ───────────────────────────────────
@@ -627,14 +652,16 @@
     contactWarning.style.display = 'none';
 
     // Populate fields
-    fSafename.value         = student?.safe_name                     || '';
-    fEmailPrimary.value     = student?.email_primary                 || '';
-    fConsent.checked        = student?.parental_consent_given        || false;
-    fUnsubPrimary.checked   = student?.email_primary_unsubscribed    || false;
-    fEmailSecondary.value   = student?.email_secondary               || '';
-    fUnsubSecondary.checked = student?.email_secondary_unsubscribed  || false;
-    fPhone.value            = student?.phone_primary                 || '';
-    fBirthYear.value        = student?.birth_year                    || '';
+    fSafename.value          = student?.safe_name                      || '';
+    fEmailPrimary.value      = student?.email_primary                  || '';
+    fConsent.checked         = student?.parental_consent_given         || false;
+    fUnsubPrimary.checked    = student?.email_primary_unsubscribed     || false;
+    fEmailSecondary.value    = student?.email_secondary                || '';
+    fUnsubSecondary.checked  = student?.email_secondary_unsubscribed   || false;
+    fEmailTertiary.value     = student?.email_tertiary                 || '';
+    fUnsubTertiary.checked   = student?.email_tertiary_unsubscribed    || false;
+    fPhone.value             = student?.phone_primary                  || '';
+    fBirthYear.value         = student?.birth_year                     || '';
     fBook.value             = student?.current_book                  || '';
     updateAgeDisplay();
 
@@ -750,7 +777,7 @@
 
     const { data, error } = await supabase
       .from('students')
-      .select('student_id, safe_name, student_status, retired_date, archived_date, current_book, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, phone_primary, birth_year, parental_consent_given, parental_consent_date')
+      .select('student_id, safe_name, student_status, retired_date, archived_date, current_book, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, email_tertiary, email_tertiary_unsubscribed, phone_primary, birth_year, parental_consent_given, parental_consent_date')
       .eq('teacher_id', teacherId)
       .order('safe_name', { ascending: true });
 
@@ -827,6 +854,8 @@
       email_primary_unsubscribed:   fUnsubPrimary.checked,
       email_secondary:              fEmailSecondary.value.trim()  || null,
       email_secondary_unsubscribed: fUnsubSecondary.checked,
+      email_tertiary:               fEmailTertiary.value.trim()   || null,
+      email_tertiary_unsubscribed:  fUnsubTertiary.checked,
       phone_primary:                fPhone.value.trim()           || null,
       birth_year:                   fBirthYear.value.trim() ? parseInt(fBirthYear.value.trim(), 10) : null,
       parental_consent_given:       fConsent.checked,
