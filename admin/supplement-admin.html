@@ -506,7 +506,7 @@
         </div>
         <div id="filter-save-area" class="hidden" style="flex-shrink:0;display:flex;align-items:center;gap:10px;">
           <span class="filter-save-msg hidden" id="filter-save-msg"></span>
-          <button class="btn-primary" onclick="filterSave()">Save rules</button>
+          <button class="btn-primary" id="btn-filter-save" onclick="filterSave()" disabled style="opacity:0.45;cursor:not-allowed;">Save rules</button>
         </div>
       </div>
       <p style="font-size:0.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:16px;">
@@ -646,6 +646,7 @@ async function showApp(email) {
   elEmail.textContent = email;
   await loadBooks();
   loadAllSupplements(); // fire and forget — ready before user reaches the list
+  filterLoadRules();    // fire and forget — loads filter rules so map tab notice shows on first visit
 }
 
 function showLoginError(msg) {
@@ -2259,14 +2260,38 @@ window.switchTab = function(tab) {
 
 const fState = {
   loaded:             false,
+  rulesLoaded:        false,  // true once rules are fetched from Config
   rules: {
     exclude_topics:     [],
     exclude_categories: [],
     override_topics:    [],
   },
+  savedRulesJson:  '{"exclude_topics":[],"exclude_categories":[],"override_topics":[]}',
   allTopics:      [], // [{ value, count }] — distinct wk_topics from supplements
   allCategories:  [], // [{ value, count }] — distinct wk_categories from supplements
 };
+
+// ── Load rules from Config (called at showApp; re-used by filterLoad) ──
+async function filterLoadRules() {
+  if (fState.rulesLoaded) return;
+  const { data: cfgRows } = await sb
+    .from('config')
+    .select('config_value')
+    .eq('series_id', SERIES_ID)
+    .eq('config_key', 'supplement_filter_rules')
+    .single();
+  if (cfgRows?.config_value) {
+    try {
+      const parsed = JSON.parse(cfgRows.config_value);
+      fState.rules.exclude_topics     = parsed.exclude_topics     || [];
+      fState.rules.exclude_categories = parsed.exclude_categories || [];
+      fState.rules.override_topics    = parsed.override_topics    || [];
+      fState.savedRulesJson           = cfgRows.config_value;
+    } catch (_) { /* malformed — leave as empty */ }
+  }
+  fState.rulesLoaded = true;
+  filterUpdateMapNotice();
+}
 
 // ── Load filter tab ────────────────────────────────────────────────
 async function filterLoad() {
@@ -2277,22 +2302,8 @@ async function filterLoad() {
   contentEl.classList.add('hidden');
   msgEl.classList.add('hidden');
 
-  // Load current rules from Config
-  const { data: cfgRows } = await sb
-    .from('config')
-    .select('config_value')
-    .eq('series_id', SERIES_ID)
-    .eq('config_key', 'supplement_filter_rules')
-    .single();
-
-  if (cfgRows?.config_value) {
-    try {
-      const parsed = JSON.parse(cfgRows.config_value);
-      fState.rules.exclude_topics     = parsed.exclude_topics     || [];
-      fState.rules.exclude_categories = parsed.exclude_categories || [];
-      fState.rules.override_topics    = parsed.override_topics    || [];
-    } catch (_) { /* malformed — treat as empty */ }
-  }
+  // Rules already fetched at showApp time — no second DB call needed
+  await filterLoadRules();
 
   // Derive distinct topic values from already-loaded allSupplements
   const topicMap = {};
@@ -2315,6 +2326,7 @@ async function filterLoad() {
   filterRender();
   contentEl.classList.remove('hidden');
   document.getElementById('filter-save-area').classList.remove('hidden');
+  filterCheckDirty();
 }
 
 // ── Compute visible topics given current category exclusions ──────
@@ -2364,6 +2376,7 @@ function filterRender() {
         filterOnTopicOverrideToggle
       );
       filterUpdateMapNotice();
+      filterCheckDirty();
     }
   );
 
@@ -2388,12 +2401,14 @@ function filterOnTopicExcludeToggle(value, selected) {
   if (selected) fState.rules.exclude_topics.push(value);
   else fState.rules.exclude_topics = fState.rules.exclude_topics.filter(v => v !== value);
   filterUpdateMapNotice();
+  filterCheckDirty();
 }
 
 function filterOnTopicOverrideToggle(value, selected) {
   if (selected) fState.rules.override_topics.push(value);
   else fState.rules.override_topics = fState.rules.override_topics.filter(v => v !== value);
   filterUpdateMapNotice();
+  filterCheckDirty();
 }
 
 function filterRenderChips(container, items, selectedValues, chipClass, onToggle) {
@@ -2448,8 +2463,10 @@ window.filterSave = async function() {
   msgEl.textContent = 'Rules saved ✓';
   setTimeout(() => msgEl.classList.add('hidden'), 3000);
 
-  // Refresh map tab filter notice
+  // Update saved snapshot so dirty check resets to clean
+  fState.savedRulesJson = payload;
   filterUpdateMapNotice();
+  filterCheckDirty();
 };
 
 // ── Map tab filter notice helper ───────────────────────────────────
@@ -2458,6 +2475,31 @@ function filterUpdateMapNotice() {
   if (!notice) return;
   const hasRules = fState.rules.exclude_topics.length > 0 || fState.rules.exclude_categories.length > 0;
   notice.classList.toggle('hidden', !hasRules);
+}
+
+// ── Dirty state — enable Save only when rules differ from last save ──
+function filterCheckDirty() {
+  const btn = document.getElementById('btn-filter-save');
+  if (!btn) return;
+  const current = JSON.stringify({
+    exclude_topics:     [...fState.rules.exclude_topics].sort(),
+    exclude_categories: [...fState.rules.exclude_categories].sort(),
+    override_topics:    [...fState.rules.override_topics].sort(),
+  });
+  const saved = (() => {
+    try {
+      const p = JSON.parse(fState.savedRulesJson);
+      return JSON.stringify({
+        exclude_topics:     [...(p.exclude_topics || [])].sort(),
+        exclude_categories: [...(p.exclude_categories || [])].sort(),
+        override_topics:    [...(p.override_topics || [])].sort(),
+      });
+    } catch (_) { return ''; }
+  })();
+  const isDirty = current !== saved;
+  btn.disabled = !isDirty;
+  btn.style.opacity = isDirty ? '' : '0.45';
+  btn.style.cursor  = isDirty ? '' : 'not-allowed';
 }
 
 // ── applyMapFilterRules — used by renderUnmappedList and renderMappedList ──
