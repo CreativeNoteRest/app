@@ -376,7 +376,7 @@
         <!-- Exclusion filter notice — shown when filter rules are active -->
         <div class="map-filter-notice hidden" id="map-filter-notice">
           <input type="checkbox" id="map-filter-apply" checked onchange="renderList()" />
-          <label for="map-filter-apply">Exclusion filter active — <span onclick="switchTab('filter')" style="text-decoration:underline;cursor:pointer;">some supplements are hidden</span>. Uncheck to show all.</label>
+          <label for="map-filter-apply">Exclusion filter active — <span onclick="event.preventDefault();event.stopPropagation();switchTab('filter');" style="text-decoration:underline;cursor:pointer;">some supplements are hidden</span>. Uncheck to show all.</label>
         </div>
 
         <div class="list-controls">
