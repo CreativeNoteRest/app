@@ -389,10 +389,20 @@ Deno.serve(async (req: Request) => {
     // Both need only entries and promptMap, which are resolved before this point.
     const phase1Prompt = assemblePhase1Prompt(promptMap, student_name, bookName, entries, pieceListText, priorLessonPageStr);
     const phase1Config = resolvePhaseAIConfig(configMap, 1, resolvedModelOverride, thinking_budget_override);
-    const [phase1Raw, focusQuery] = await Promise.all([
-      callAIWithJSONRetry(phase1Prompt, phase1Config, 1),
-      extractFocusQuery(entries, promptMap),
+
+    // Token accumulator — production path only.
+    let totalTokenUsage = 0;
+    let totalCallCount  = 0;
+
+    const [phase1Raw, focusQueryResult] = await Promise.all([
+      callAIWithJSONRetryWithUsage(phase1Prompt, phase1Config, 1),
+      extractFocusQueryWithUsage(entries, promptMap),
     ]);
+    totalTokenUsage += phase1Raw.tokens;
+    totalCallCount  += phase1Raw.success ? 1 : 1; // count the attempt regardless
+    totalTokenUsage += focusQueryResult.tokens;
+    totalCallCount  += 1;
+
     if (!phase1Raw.success) {
       return jsonResponse({ success: false, failed_phase: 1, error: phase1Raw.error });
     }
@@ -401,6 +411,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ success: false, failed_phase: 1, error: 'Phase 1 JSON parse failed after retry.' });
     }
     const phase1 = validatePhase1Output(phase1Parsed, booksPieces, booksUnits, pieceKeyMap);
+    const focusQuery = focusQueryResult.text;
 
     const effectiveLessonPage = deriveEffectiveLessonPage(phase1, booksPieces, prevLessonPage);
     phase1.book_transition_suspected = deriveBookTransition(entries, effectiveLessonPage, bookThreshold);
@@ -419,6 +430,8 @@ Deno.serve(async (req: Request) => {
       Infinity,
       focusQuery,
     );
+    totalTokenUsage += ranked.embedTokens;
+    totalCallCount  += 1;
 
     // --- Phase 3 retired: JS passthrough ---
     // ranked.fullList already contains thumbnail_url, title, source_url, is_free, pool.
@@ -431,17 +444,21 @@ Deno.serve(async (req: Request) => {
     const pieceBlockWithBook = assemblePieceBlock(phase1, booksPieces, entries, true);
     const phase4Prompt = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText);
     const phase4Config = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
-    const phase4Result = await callAI(phase4Prompt, phase4Config);
+    const phase4Result = await callGeminiWithUsage(phase4Prompt, phase4Config);
+    totalTokenUsage += phase4Result.tokens;
+    totalCallCount  += 1;
 
     // --- Phase 5 ---
     const phase5Prompt = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText, studentAge);
     const phase5Config = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
-    const phase5Result = await callAI(phase5Prompt, phase5Config);
+    const phase5Result = await callGeminiWithUsage(phase5Prompt, phase5Config);
+    totalTokenUsage += phase5Result.tokens;
+    totalCallCount  += 1;
 
     return jsonResponse({
       success: true,
-      ai_summ_teacher: phase4Result,
-      ai_summ_student: phase5Result,
+      ai_summ_teacher: phase4Result.text,
+      ai_summ_student: phase5Result.text,
       ai_summ_supplement: supplementText,
       ai_summ_supplement_data: supplementData,
       active_assignments_data: activeAssignments,
@@ -450,6 +467,8 @@ Deno.serve(async (req: Request) => {
       next_book_id: null,
       min_entry_character_count: parseInt(configMap.get('min_entry_character_count') ?? '20'),
       debug_focus_query: focusQuery || null,
+      token_usage: totalTokenUsage,
+      call_count: totalCallCount,
     });
 
   } catch (err) {
@@ -713,6 +732,7 @@ interface PhaseAIConfig {
 
 interface RankedResult {
   fullList: SupplementCandidate[];
+  embedTokens: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -800,6 +820,66 @@ async function callGemini(prompt: string, config: PhaseAIConfig): Promise<string
   throw new Error(`Gemini call failed after retries: ${lastError}`);
 }
 
+// Like callGemini but returns { text, tokens } for token tracking.
+// Used only in the production path — debug paths use callAI/callGemini unchanged.
+async function callGeminiWithUsage(prompt: string, config: PhaseAIConfig): Promise<{ text: string; tokens: number }> {
+  const url = `${GEMINI_BASE_URL}/${config.model}:generateContent?key=${geminiApiKey}`;
+
+  const body: Record<string, unknown> = {
+    system_instruction: {
+      parts: [{ text: 'You are a data extraction tool. You extract information only from the text provided to you. You never use outside knowledge, memory, or training data. If the information is not in the provided text, you do not include it.' }]
+    },
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      maxOutputTokens: config.maxOutputTokens,
+    },
+  };
+
+  if (config.thinkingBudget > 0) {
+    body.generationConfig = {
+      ...body.generationConfig as object,
+      thinkingConfig: { thinkingBudget: config.thinkingBudget },
+    };
+  }
+
+  const RETRY_DELAYS = [1000, 2000, 4000];
+  let lastError = '';
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+        const tokens = json?.usageMetadata?.totalTokenCount ?? 0;
+        return { text, tokens };
+      }
+
+      if (res.status === 429 || res.status === 503) {
+        lastError = `HTTP ${res.status}`;
+        if (attempt < RETRY_DELAYS.length) {
+          await delay(RETRY_DELAYS[attempt]);
+          continue;
+        }
+      }
+
+      const errText = await res.text();
+      throw new Error(`Gemini HTTP ${res.status}: ${errText}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('Gemini HTTP')) throw err;
+      lastError = String(err);
+      if (attempt < RETRY_DELAYS.length) await delay(RETRY_DELAYS[attempt]);
+    }
+  }
+
+  throw new Error(`Gemini call failed after retries: ${lastError}`);
+}
+
 // ---------------------------------------------------------------------------
 // callAIWithJSONRetry
 // ---------------------------------------------------------------------------
@@ -823,6 +903,34 @@ async function callAIWithJSONRetry(
       return { success: true, text: cleaned };
     } catch (err) {
       return { success: false, error: `Phase ${phase} JSON parse failed after retry: ${String(err)}` };
+    }
+  }
+}
+
+// Like callAIWithJSONRetry but accumulates token counts across attempts.
+// Returns { success, text, tokens, error }. Used only in production path.
+async function callAIWithJSONRetryWithUsage(
+  prompt: string,
+  config: PhaseAIConfig,
+  phase: number,
+): Promise<{ success: boolean; text?: string; tokens: number; error?: string }> {
+  let totalTokens = 0;
+  try {
+    const { text, tokens } = await callGeminiWithUsage(prompt, config);
+    totalTokens += tokens;
+    const cleaned = stripFences(text);
+    JSON.parse(cleaned);
+    return { success: true, text: cleaned, tokens: totalTokens };
+  } catch {
+    const retryPrompt = prompt + '\n\nCRITICAL: Your previous response could not be parsed as JSON. Return ONLY a raw JSON object. No markdown. No code fences. No explanation. Start with { and end with }.';
+    try {
+      const { text, tokens } = await callGeminiWithUsage(retryPrompt, config);
+      totalTokens += tokens;
+      const cleaned = stripFences(text);
+      JSON.parse(cleaned);
+      return { success: true, text: cleaned, tokens: totalTokens };
+    } catch (err) {
+      return { success: false, tokens: totalTokens, error: `Phase ${phase} JSON parse failed after retry: ${String(err)}` };
     }
   }
 }
@@ -901,6 +1009,52 @@ async function embedText(text: string): Promise<number[]> {
   throw new Error('embedText: retries exhausted');
 }
 
+// Like embedText but also returns token count from usageMetadata.
+// Used only in the production path.
+async function embedTextWithUsage(text: string): Promise<{ values: number[]; tokens: number }> {
+  const delays = [3000, 6000];
+
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      const res = await fetch(GEMINI_EMBEDDING_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': geminiApiKey,
+        },
+        body: JSON.stringify({
+          model: 'models/gemini-embedding-001',
+          content: { parts: [{ text }] },
+          outputDimensionality: 768,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const values: number[] = json?.embedding?.values ?? [];
+        if (values.length === 0) throw new Error('Empty embedding returned');
+        const tokens = json?.usageMetadata?.totalTokenCount ?? 0;
+        const magnitude = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
+        return { values: magnitude > 0 ? values.map(v => v / magnitude) : values, tokens };
+      }
+
+      if ((res.status === 429 || res.status === 503) && attempt < delays.length) {
+        await delay(delays[attempt]);
+        continue;
+      }
+
+      const errText = await res.text();
+      throw new Error(`Embedding API HTTP ${res.status}: ${errText}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('Embedding API HTTP')) throw err;
+      if (attempt < delays.length) await delay(delays[attempt]);
+      else throw err;
+    }
+  }
+
+  throw new Error('embedTextWithUsage: retries exhausted');
+}
+
 // ---------------------------------------------------------------------------
 // extractFocusQuery
 // ---------------------------------------------------------------------------
@@ -935,6 +1089,31 @@ async function extractFocusQuery(
   }
 }
 
+// Like extractFocusQuery but returns { text, tokens }. Used only in production path.
+async function extractFocusQueryWithUsage(
+  entries: string,
+  promptMap: Map<string, string>,
+): Promise<{ text: string; tokens: number }> {
+  const template = promptMap.get('session_close_phase2');
+  if (!template || !template.trim()) return { text: '', tokens: 0 };
+  if (!entries || !entries.trim()) return { text: '', tokens: 0 };
+
+  const prompt = template.replace('{{entries}}', entries);
+  const config: PhaseAIConfig = {
+    model: GEMINI_MODEL,
+    thinkingBudget: 0,
+    maxOutputTokens: 500,
+  };
+
+  try {
+    const { text, tokens } = await callGeminiWithUsage(prompt, config);
+    return { text: text.trim(), tokens };
+  } catch (err) {
+    console.warn('extractFocusQueryWithUsage failed — will use raw entries for embedding:', err);
+    return { text: '', tokens: 0 };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // rankSupplementsByVector
 // ---------------------------------------------------------------------------
@@ -955,18 +1134,18 @@ async function rankSupplementsByVector(
     return (c.page_start ?? 0) <= effectiveLessonPage;
   });
 
-  if (filtered.length === 0) return { fullList: [] };
+  if (filtered.length === 0) return { fullList: [], embedTokens: 0 };
 
   // Step 2: Embed focus query (distilled skill/difficulty signal) or fall back to raw entries.
   // Guard: empty string cannot be embedded — fall back to position order.
   const queryText = (focusQuery && focusQuery.trim()) ? focusQuery : entries;
   if (!queryText || !queryText.trim()) {
     const fallback = [...filtered].sort((a, b) => (a.page_start ?? 0) - (b.page_start ?? 0));
-    return { fullList: fallback.slice(0, maxDisplay) };
+    return { fullList: fallback.slice(0, maxDisplay), embedTokens: 0 };
   }
 
   try {
-    const queryVector = await embedText(queryText);
+    const { values: queryVector, tokens: embedTokens } = await embedTextWithUsage(queryText);
     const candidateIds = filtered.map(c => c.supplement_id);
 
     const { data: ranked } = await supabase.rpc('rank_supplement_candidates_by_vector', {
@@ -993,6 +1172,7 @@ async function rankSupplementsByVector(
           ...c,
           similarity: similarityMap.get(c.supplement_id) ?? null,
         })),
+        embedTokens,
       };
     }
   } catch (err) {
@@ -1001,7 +1181,7 @@ async function rankSupplementsByVector(
 
   // Fallback: position order ascending
   const fallback = [...filtered].sort((a, b) => (a.page_start ?? 0) - (b.page_start ?? 0));
-  return { fullList: fallback.slice(0, maxDisplay) };
+  return { fullList: fallback.slice(0, maxDisplay), embedTokens: 0 };
 }
 
 // ---------------------------------------------------------------------------

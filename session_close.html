@@ -703,6 +703,11 @@
   let allSupplements   = [];     // full supplement list from response
   let selectedSupplementIds = new Set(); // supplement_ids chosen by teacher
 
+  // Token accumulators — reset on page load, accumulate across multiple close runs
+  // before approval (e.g. teacher closes, cancels, closes again).
+  let accumulatedTokens = 0;
+  let accumulatedCalls  = 0;
+
   // PDF popup context (loaded at init)
   let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
   let studentEmailPrimary   = '';
@@ -882,6 +887,10 @@
       if (data.min_entry_character_count) {
         minEntryCharCount = data.min_entry_character_count;
       }
+
+      // Accumulate token usage across multiple close runs before approval
+      accumulatedTokens += data.token_usage  || 0;
+      accumulatedCalls  += data.call_count   || 0;
 
       // Store full response for use at approve time
       efResponse = data;
@@ -1228,7 +1237,9 @@
           active_assignments_data:  efResponse.active_assignments_data  || [],
           max_lesson_page:          efResponse.max_lesson_page           ?? null,
           session_status:           'approved',
-          summary_approved_at:      new Date().toISOString()
+          summary_approved_at:      new Date().toISOString(),
+          token_usage:              accumulatedTokens,
+          ai_call_count:            accumulatedCalls,
         })
         .eq('session_id', SESSION_ID);
 
