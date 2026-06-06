@@ -2291,21 +2291,13 @@ async function filterLoad() {
     } catch (_) { /* malformed — treat as empty */ }
   }
 
-  // Load distinct topic values from live supplements (unnested)
-  const { data: topicRows } = await sb.rpc('get_distinct_supplement_topics', { p_series_id: SERIES_ID })
-    .catch(() => ({ data: null }));
-
-  // Fallback: derive from already-loaded allSupplements if RPC not available
-  if (topicRows) {
-    fState.allTopics = topicRows;
-  } else {
-    const topicMap = {};
-    (state.allSupplements || []).forEach(s => {
-      (s.wk_topics || []).forEach(t => { topicMap[t] = (topicMap[t] || 0) + 1; });
-    });
-    fState.allTopics = Object.entries(topicMap).map(([value, count]) => ({ value, count }))
-      .sort((a, b) => b.count - a.count);
-  }
+  // Derive distinct topic values from already-loaded allSupplements
+  const topicMap = {};
+  (state.allSupplements || []).forEach(s => {
+    (s.wk_topics || []).forEach(t => { topicMap[t] = (topicMap[t] || 0) + 1; });
+  });
+  fState.allTopics = Object.entries(topicMap).map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count);
 
   // Load distinct category values
   const catMap = {};
