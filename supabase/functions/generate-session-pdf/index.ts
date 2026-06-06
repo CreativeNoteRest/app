@@ -44,9 +44,12 @@ Deno.serve(async (req) => {
   let body;
   try { body = await req.json(); } catch { return err({ error: "Invalid request body." }); }
 
-  const { session_id, send_type, teacher_id } = body;
+  const { session_id, send_type, teacher_id, to_emails } = body;
   if (!session_id || !send_type || !teacher_id) {
     return err({ error: "Missing required fields: session_id, send_type, teacher_id." });
+  }
+  if (!Array.isArray(to_emails) || to_emails.length === 0) {
+    return err({ error: "to_emails must be a non-empty array of recipient addresses." });
   }
   if (!["auto", "manual"].includes(send_type)) {
     return err({ error: "send_type must be auto or manual." });
@@ -65,16 +68,16 @@ Deno.serve(async (req) => {
   // ── Step 2: Read student ───────────────────────────────────────────
   const { data: student, error: stuErr } = await db
     .from("students")
-    .select("safe_name, email_primary, email_secondary, email_primary_unsubscribed")
+    .select("safe_name, email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, email_tertiary, email_tertiary_unsubscribed")
     .eq("student_id", session.student_id)
     .single();
 
   if (stuErr || !student) return err({ error: "Student record not found." }, 404);
 
-  // ── Step 3: Check unsubscribe ──────────────────────────────────────
-  if (student.email_primary_unsubscribed) {
-    return err({ error: "Student email is unsubscribed. No email sent." });
-  }
+  // ── Step 3: Validate recipient list ───────────────────────────────
+  // Recipient selection is made by the teacher in the UI; to_emails is
+  // already validated as non-empty above. Sanitise to strings only.
+  const recipients = to_emails.filter((e: unknown) => typeof e === "string" && e.trim() !== "");
 
   // ── Step 4: Read book name ─────────────────────────────────────────
   let bookName = "Unknown book";
@@ -87,13 +90,7 @@ Deno.serve(async (req) => {
     if (book) bookName = book.full_display_name;
   }
 
-  // ── Step 5: Build recipient list ───────────────────────────────────
-  const recipients = [student.email_primary];
-  if (student.email_secondary && student.email_secondary.trim() !== "") {
-    recipients.push(student.email_secondary.trim());
-  }
-
-  // ── Step 6: Build supplement arrays ───────────────────────────────
+  // ── Step 5: Build supplement arrays ───────────────────────────────
   const supplements      = (session.ai_summ_supplement_data || []).slice(0, 3);
   const activeAssignments = (session.active_assignments_data || []);
 
