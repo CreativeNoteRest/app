@@ -503,7 +503,7 @@
     // Fetch full session record -- content fields not loaded in list view
     const { data: session, error } = await supabase
       .from('sessions')
-      .select('session_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, active_assignments_data, pdf_sent_at, pdf_sent_to')
+      .select('session_id, student_id, session_date, max_lesson_page, lesson_book_id, ai_summ_teacher, ai_summ_student, ai_summ_supplement_data, active_assignments_data, pdf_sent_at, pdf_sent_to')
       .eq('session_id', sessionId)
       .single();
 
