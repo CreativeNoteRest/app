@@ -527,13 +527,13 @@
       <div id="filter-content" class="hidden">
 
         <div class="filter-section">
-          <div class="filter-section-title">Topics — Exclude</div>
-          <div class="filter-chips" id="filter-chips-exclude-topics"></div>
+          <div class="filter-section-title">Categories — Exclude</div>
+          <div class="filter-chips" id="filter-chips-exclude-categories"></div>
         </div>
 
         <div class="filter-section">
-          <div class="filter-section-title">Categories — Exclude</div>
-          <div class="filter-chips" id="filter-chips-exclude-categories"></div>
+          <div class="filter-section-title">Topics — Exclude</div>
+          <div class="filter-chips" id="filter-chips-exclude-topics"></div>
         </div>
 
         <div class="filter-section">
@@ -2313,18 +2313,28 @@ async function filterLoad() {
   contentEl.classList.remove('hidden');
 }
 
+// ── Compute visible topics given current category exclusions ──────
+// Returns [{ value, count }] for topics that appear on supplements
+// not already excluded by the selected category exclusions.
+function filterComputeVisibleTopics() {
+  const excCats = fState.rules.exclude_categories;
+  const remaining = excCats.length
+    ? (state.allSupplements || []).filter(s =>
+        !(s.wk_categories || []).some(c => excCats.includes(c))
+      )
+    : (state.allSupplements || []);
+  const topicMap = {};
+  remaining.forEach(s => {
+    (s.wk_topics || []).forEach(t => { topicMap[t] = (topicMap[t] || 0) + 1; });
+  });
+  return Object.entries(topicMap)
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // ── Render filter chips ────────────────────────────────────────────
 function filterRender() {
-  filterRenderChips(
-    document.getElementById('filter-chips-exclude-topics'),
-    fState.allTopics,
-    fState.rules.exclude_topics,
-    'chip-exclude',
-    (value, selected) => {
-      if (selected) fState.rules.exclude_topics.push(value);
-      else fState.rules.exclude_topics = fState.rules.exclude_topics.filter(v => v !== value);
-    }
-  );
+  // Categories first — toggling a category triggers topic re-render
   filterRenderChips(
     document.getElementById('filter-chips-exclude-categories'),
     fState.allCategories,
@@ -2333,18 +2343,53 @@ function filterRender() {
     (value, selected) => {
       if (selected) fState.rules.exclude_categories.push(value);
       else fState.rules.exclude_categories = fState.rules.exclude_categories.filter(v => v !== value);
+      // Re-render topic sections to reflect remaining candidates
+      const visibleTopics = filterComputeVisibleTopics();
+      filterRenderChips(
+        document.getElementById('filter-chips-exclude-topics'),
+        visibleTopics,
+        fState.rules.exclude_topics,
+        'chip-exclude',
+        filterOnTopicExcludeToggle
+      );
+      filterRenderChips(
+        document.getElementById('filter-chips-override-topics'),
+        visibleTopics,
+        fState.rules.override_topics,
+        'chip-override',
+        filterOnTopicOverrideToggle
+      );
+      filterUpdateMapNotice();
     }
+  );
+
+  const visibleTopics = filterComputeVisibleTopics();
+  filterRenderChips(
+    document.getElementById('filter-chips-exclude-topics'),
+    visibleTopics,
+    fState.rules.exclude_topics,
+    'chip-exclude',
+    filterOnTopicExcludeToggle
   );
   filterRenderChips(
     document.getElementById('filter-chips-override-topics'),
-    fState.allTopics,
+    visibleTopics,
     fState.rules.override_topics,
     'chip-override',
-    (value, selected) => {
-      if (selected) fState.rules.override_topics.push(value);
-      else fState.rules.override_topics = fState.rules.override_topics.filter(v => v !== value);
-    }
+    filterOnTopicOverrideToggle
   );
+}
+
+function filterOnTopicExcludeToggle(value, selected) {
+  if (selected) fState.rules.exclude_topics.push(value);
+  else fState.rules.exclude_topics = fState.rules.exclude_topics.filter(v => v !== value);
+  filterUpdateMapNotice();
+}
+
+function filterOnTopicOverrideToggle(value, selected) {
+  if (selected) fState.rules.override_topics.push(value);
+  else fState.rules.override_topics = fState.rules.override_topics.filter(v => v !== value);
+  filterUpdateMapNotice();
 }
 
 function filterRenderChips(container, items, selectedValues, chipClass, onToggle) {
