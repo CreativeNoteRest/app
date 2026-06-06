@@ -181,6 +181,24 @@ Deno.serve(async (req: Request) => {
     const bookThreshold = parseInt(configMap.get('book_transition_page_threshold') ?? '10');
     const supplementMaxDisplay = parseInt(configMap.get('supplement_max_display') ?? '10');
 
+    // ── Supplement filter rules ──────────────────────────────────────
+    // Read once from configMap; passed to equivalent-books RPC calls and JS post-filter.
+    // Empty arrays are treated as null (no filter) to match SQL DEFAULT NULL semantics.
+    let filterExcludeTopics: string[] | null = null;
+    let filterExcludeCategories: string[] | null = null;
+    let filterOverrideTopics: string[] | null = null;
+    const filterRulesRaw = configMap.get('supplement_filter_rules');
+    if (filterRulesRaw) {
+      try {
+        const filterRules = JSON.parse(filterRulesRaw);
+        filterExcludeTopics     = filterRules.exclude_topics?.length     ? filterRules.exclude_topics     : null;
+        filterExcludeCategories = filterRules.exclude_categories?.length ? filterRules.exclude_categories : null;
+        filterOverrideTopics    = filterRules.override_topics?.length    ? filterRules.override_topics    : null;
+      } catch (_) {
+        // Malformed config — no filter applied; pipeline continues normally
+      }
+    }
+
     const resolvedModelOverride = (model_override && ALLOWED_MODEL_OVERRIDES.includes(model_override))
       ? model_override
       : null;
@@ -277,6 +295,9 @@ Deno.serve(async (req: Request) => {
             p_student_id: student_id,
             p_session_id: session_id,
             p_session_mmdd: sessionMmdd,
+            p_exclude_topics: filterExcludeTopics,
+            p_exclude_categories: filterExcludeCategories,
+            p_override_topics: filterOverrideTopics,
           });
           if (equivData) allCandidates = equivData;
         }
@@ -330,7 +351,23 @@ Deno.serve(async (req: Request) => {
     // -----------------------------------------------------------------------
 
     // Second RPC for equivalent books
-    let allSupplementCandidates = supplementCandidates;
+    // JS post-filter on initial candidates: the first RPC fires before configMap is read,
+    // so filter params cannot be passed to it. Apply the same logic here in JS instead.
+    function applySupplementFilterRules(candidates: SupplementCandidate[]): SupplementCandidate[] {
+      if (!filterExcludeTopics?.length && !filterExcludeCategories?.length) return candidates;
+      return candidates.filter(s => {
+        const topics = s.wk_topics ?? [];
+        const cats   = s.wk_categories ?? [];
+        const hasOverride = filterOverrideTopics?.length
+          ? topics.some(t => filterOverrideTopics!.includes(t))
+          : false;
+        if (hasOverride) return true;
+        if (filterExcludeTopics?.length && topics.some(t => filterExcludeTopics!.includes(t))) return false;
+        if (filterExcludeCategories?.length && cats.some(c => filterExcludeCategories!.includes(c))) return false;
+        return true;
+      });
+    }
+    let allSupplementCandidates = applySupplementFilterRules(supplementCandidates);
     if (equivalentBooks && equivalentBooks.length > 0) {
       const { data: equivData } = await supabase.rpc('get_supplement_candidates', {
         p_book_id: lesson_book_id,
@@ -340,6 +377,9 @@ Deno.serve(async (req: Request) => {
         p_student_id: student_id,
         p_session_id: session_id,
         p_session_mmdd: sessionMmdd,
+        p_exclude_topics: filterExcludeTopics,
+        p_exclude_categories: filterExcludeCategories,
+        p_override_topics: filterOverrideTopics,
       });
       if (equivData) allSupplementCandidates = equivData;
     }
@@ -530,6 +570,7 @@ async function fetchSessionData(params: {
         'ai_phase1_model', 'ai_phase1_thinking_budget',
         'ai_phase4_model', 'ai_phase4_thinking_budget',
         'ai_phase5_model', 'ai_phase5_thinking_budget',
+        'supplement_filter_rules',
       ]),
 
     supabase
@@ -628,6 +669,8 @@ interface SupplementCandidate {
   match_context: string | null;
   thumbnail_url: string | null;
   search_description: string | null;
+  wk_topics: string[] | null;
+  wk_categories: string[] | null;
   similarity?: number | null;
 }
 

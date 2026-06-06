@@ -237,6 +237,27 @@
     .badge-free     { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
     .badge-paid     { background: #F8FAFC; color: #64748B; border: 1px solid #CBD5E1; }
 
+    /* ── Filter Rules tab ── */
+    .filter-section { margin-bottom: 20px; }
+    .filter-section-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 10px; }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card); font-size: 0.78rem; font-weight: 500; color: var(--text-mid); cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; user-select: none; }
+    .filter-chip input[type="checkbox"] { display: none; }
+    .filter-chip.chip-exclude.selected { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+    .filter-chip.chip-override.selected { background: var(--success-light); border-color: var(--success); color: var(--success); }
+    .filter-chip:hover { border-color: var(--text-mid); }
+    .filter-chip.chip-exclude:hover { border-color: var(--danger); }
+    .filter-chip.chip-override:hover { border-color: var(--success); }
+    .filter-legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-mid); }
+    .filter-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .filter-save-row { display: flex; align-items: center; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border); margin-top: 4px; }
+    .filter-save-msg { font-size: 0.82rem; }
+
+    /* ── Map tab: exclusion filter override checkbox ── */
+    .map-filter-notice { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--warn-light); border: 1px solid var(--warn-border); border-radius: 8px; font-size: 0.8rem; color: #92400E; margin-bottom: 12px; }
+    .map-filter-notice input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
+
     /* ── Manage tab: per-row mapping controls ── */
     .msupp-map-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
     .msupp-map-sel { height: 32px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--text); background: var(--surface); outline: none; cursor: pointer; transition: border-color 0.15s; min-width: 130px; flex: 1; }
@@ -316,6 +337,7 @@
   <div class="page-tabs">
     <button class="page-tab active" id="tab-map-btn" onclick="switchTab('map')">Map supplements</button>
     <button class="page-tab" id="tab-manage-btn" onclick="switchTab('manage')">Manage supplements</button>
+    <button class="page-tab" id="tab-filter-btn" onclick="switchTab('filter')">Filter Rules</button>
   </div>
 
   <!-- ══ TAB: Map supplements ══ -->
@@ -349,6 +371,12 @@
             <div class="card-tag">Step 2</div>
             <div class="card-title" style="margin-bottom:0;" id="supp-panel-title">Supplements</div>
           </div>
+        </div>
+
+        <!-- Exclusion filter notice — shown when filter rules are active -->
+        <div class="map-filter-notice hidden" id="map-filter-notice">
+          <input type="checkbox" id="map-filter-apply" checked onchange="renderList()" />
+          <label for="map-filter-apply">Exclusion filter active — some supplements are hidden. Uncheck to show all.</label>
         </div>
 
         <div class="list-controls">
@@ -466,6 +494,62 @@
     </div>
 
   </div>
+
+  <!-- ══ TAB: Filter Rules ══ -->
+  <div id="tab-filter" class="hidden">
+
+    <div class="card">
+      <div class="card-tag">Recommendation Filter</div>
+      <div class="card-title" style="margin-bottom:6px;">Supplement Filter Rules</div>
+      <p style="font-size:0.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:16px;">
+        Select topics and categories to exclude from lesson recommendations. Supplements matching
+        any excluded value will not surface at session close. Override topics take priority —
+        a supplement with an override topic is always included even if it also has an excluded value.
+        These rules also apply to the Map tab supplement list by default.
+      </p>
+
+      <div class="filter-legend">
+        <div class="filter-legend-item">
+          <div class="filter-legend-dot" style="background:var(--danger);"></div>
+          <span>Excluded — click to toggle</span>
+        </div>
+        <div class="filter-legend-item">
+          <div class="filter-legend-dot" style="background:var(--success);"></div>
+          <span>Override — always include even if excluded</span>
+        </div>
+      </div>
+
+      <div id="filter-loading" class="loading-row">
+        <span class="spinner spinner-dark"></span> Loading topic and category data…
+      </div>
+      <div id="filter-msg" class="hidden"></div>
+
+      <div id="filter-content" class="hidden">
+
+        <div class="filter-section">
+          <div class="filter-section-title">Topics — Exclude</div>
+          <div class="filter-chips" id="filter-chips-exclude-topics"></div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Categories — Exclude</div>
+          <div class="filter-chips" id="filter-chips-exclude-categories"></div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Topics — Override (always include)</div>
+          <div class="filter-chips" id="filter-chips-override-topics"></div>
+        </div>
+
+        <div class="filter-save-row">
+          <button class="btn-primary" onclick="filterSave()">Save rules</button>
+          <span class="filter-save-msg hidden" id="filter-save-msg"></span>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tab-filter -->
 
 </main>
 </div><!-- /view-app -->
@@ -599,8 +683,10 @@ document.getElementById('btn-signout').addEventListener('click', async () => {
 window.switchTab = function(tab) {
   document.getElementById('tab-map').classList.toggle('hidden', tab !== 'map');
   document.getElementById('tab-manage').classList.toggle('hidden', tab !== 'manage');
+  document.getElementById('tab-filter').classList.toggle('hidden', tab !== 'filter');
   document.getElementById('tab-map-btn').classList.toggle('active', tab === 'map');
   document.getElementById('tab-manage-btn').classList.toggle('active', tab === 'manage');
+  document.getElementById('tab-filter-btn').classList.toggle('active', tab === 'filter');
 };
 
 // ── Books ─────────────────────────────────────────────────────────────────────
@@ -770,7 +856,7 @@ window.onUnitSelect = async function(unitId) {
 async function loadAllSupplements() {
   const { data, error } = await sb
     .from('supplements')
-    .select('supplement_id, title, source_url, thumbnail_url, is_multi_lesson, wk_categories, wk_level, curriculum_hint, is_active')
+    .select('supplement_id, title, source_url, thumbnail_url, is_multi_lesson, wk_categories, wk_topics, wk_level, curriculum_hint, is_active')
     .eq('series_id', SERIES_ID)
     .eq('is_active', true)
     .order('title');
@@ -857,6 +943,7 @@ window.renderList = function() {
 
 function renderUnmappedList(listEl, query) {
   let supps = state.allSupplements.filter(s => !state.mappedAnywhere.has(s.supplement_id));
+  supps = applyMapFilterRules(supps);
   if (query) supps = supps.filter(s => s.title.toLowerCase().includes(query));
 
   // Sort: signal score first, then curriculum_hint (groups units naturally), then title
@@ -885,11 +972,11 @@ function renderUnmappedList(listEl, query) {
 
 function renderMappedList(listEl, query) {
   // Category 1 + 2: mapped to this book (any unit)
-  const forBook = state.allSupplements.filter(s => state.mappedForBook.has(s.supplement_id));
+  const forBook = applyMapFilterRules(state.allSupplements.filter(s => state.mappedForBook.has(s.supplement_id)));
   // Category 3: mapped in other books but not this one
-  const elsewhere = state.allSupplements.filter(s =>
+  const elsewhere = applyMapFilterRules(state.allSupplements.filter(s =>
     state.mappedAnywhere.has(s.supplement_id) && !state.mappedForBook.has(s.supplement_id)
-  );
+  ));
 
   // Split forBook into current-unit (Cat 1) and other-unit (Cat 2) for tier ordering
   const currentUnit = forBook.filter(s => {
@@ -2145,11 +2232,15 @@ window.manageOnBookFilter = async function() {
 const _origSwitchTab = window.switchTab;
 window.switchTab = function(tab) {
   _origSwitchTab(tab);
-  // Hide the map apply-bar when switching to manage; hide manage-bar when on map
+  // Hide the map apply-bar when switching to manage or filter
   if (tab === 'manage') {
     document.getElementById('apply-bar').classList.add('hidden');
     if (!mState.loaded) manageLoad();
     else manageRender();
+  } else if (tab === 'filter') {
+    document.getElementById('apply-bar').classList.add('hidden');
+    document.getElementById('manage-bar').classList.add('hidden');
+    if (!fState.loaded) filterLoad();
   } else {
     document.getElementById('manage-bar').classList.add('hidden');
   }
@@ -2157,6 +2248,200 @@ window.switchTab = function(tab) {
 
 // ══════════════════════════════════════════════════════════════════
 // ── END MANAGE TAB ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// ── FILTER RULES TAB ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+
+const fState = {
+  loaded:             false,
+  rules: {
+    exclude_topics:     [],
+    exclude_categories: [],
+    override_topics:    [],
+  },
+  allTopics:      [], // [{ value, count }] — distinct wk_topics from supplements
+  allCategories:  [], // [{ value, count }] — distinct wk_categories from supplements
+};
+
+// ── Load filter tab ────────────────────────────────────────────────
+async function filterLoad() {
+  const loadEl   = document.getElementById('filter-loading');
+  const contentEl = document.getElementById('filter-content');
+  const msgEl    = document.getElementById('filter-msg');
+  loadEl.classList.remove('hidden');
+  contentEl.classList.add('hidden');
+  msgEl.classList.add('hidden');
+
+  // Load current rules from Config
+  const { data: cfgRows } = await sb
+    .from('config')
+    .select('config_value')
+    .eq('series_id', SERIES_ID)
+    .eq('config_key', 'supplement_filter_rules')
+    .single();
+
+  if (cfgRows?.config_value) {
+    try {
+      const parsed = JSON.parse(cfgRows.config_value);
+      fState.rules.exclude_topics     = parsed.exclude_topics     || [];
+      fState.rules.exclude_categories = parsed.exclude_categories || [];
+      fState.rules.override_topics    = parsed.override_topics    || [];
+    } catch (_) { /* malformed — treat as empty */ }
+  }
+
+  // Load distinct topic values from live supplements (unnested)
+  const { data: topicRows } = await sb.rpc('get_distinct_supplement_topics', { p_series_id: SERIES_ID })
+    .catch(() => ({ data: null }));
+
+  // Fallback: derive from already-loaded allSupplements if RPC not available
+  if (topicRows) {
+    fState.allTopics = topicRows;
+  } else {
+    const topicMap = {};
+    (state.allSupplements || []).forEach(s => {
+      (s.wk_topics || []).forEach(t => { topicMap[t] = (topicMap[t] || 0) + 1; });
+    });
+    fState.allTopics = Object.entries(topicMap).map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  // Load distinct category values
+  const catMap = {};
+  (state.allSupplements || []).forEach(s => {
+    (s.wk_categories || []).forEach(c => { catMap[c] = (catMap[c] || 0) + 1; });
+  });
+  fState.allCategories = Object.entries(catMap).map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count);
+
+  fState.loaded = true;
+  loadEl.classList.add('hidden');
+  filterRender();
+  contentEl.classList.remove('hidden');
+}
+
+// ── Render filter chips ────────────────────────────────────────────
+function filterRender() {
+  filterRenderChips(
+    document.getElementById('filter-chips-exclude-topics'),
+    fState.allTopics,
+    fState.rules.exclude_topics,
+    'chip-exclude',
+    (value, selected) => {
+      if (selected) fState.rules.exclude_topics.push(value);
+      else fState.rules.exclude_topics = fState.rules.exclude_topics.filter(v => v !== value);
+    }
+  );
+  filterRenderChips(
+    document.getElementById('filter-chips-exclude-categories'),
+    fState.allCategories,
+    fState.rules.exclude_categories,
+    'chip-exclude',
+    (value, selected) => {
+      if (selected) fState.rules.exclude_categories.push(value);
+      else fState.rules.exclude_categories = fState.rules.exclude_categories.filter(v => v !== value);
+    }
+  );
+  filterRenderChips(
+    document.getElementById('filter-chips-override-topics'),
+    fState.allTopics,
+    fState.rules.override_topics,
+    'chip-override',
+    (value, selected) => {
+      if (selected) fState.rules.override_topics.push(value);
+      else fState.rules.override_topics = fState.rules.override_topics.filter(v => v !== value);
+    }
+  );
+}
+
+function filterRenderChips(container, items, selectedValues, chipClass, onToggle) {
+  container.innerHTML = '';
+  if (!items.length) {
+    container.innerHTML = '<span style="font-size:0.78rem;color:var(--text-light);">No values found.</span>';
+    return;
+  }
+  items.forEach(({ value, count }) => {
+    const isSelected = selectedValues.includes(value);
+    const chip = document.createElement('label');
+    chip.className = `filter-chip ${chipClass}${isSelected ? ' selected' : ''}`;
+    chip.title = `${count} supplement${count !== 1 ? 's' : ''}`;
+    chip.innerHTML = `<input type="checkbox" ${isSelected ? 'checked' : ''} />${escHtml(value)} <span style="opacity:0.55;font-size:0.72rem;">${count}</span>`;
+    chip.querySelector('input').addEventListener('change', e => {
+      chip.classList.toggle('selected', e.target.checked);
+      onToggle(value, e.target.checked);
+      // Update map tab filter notice whenever rules change in memory
+      filterUpdateMapNotice();
+    });
+    container.appendChild(chip);
+  });
+}
+
+// ── Save rules to Config ───────────────────────────────────────────
+window.filterSave = async function() {
+  const msgEl = document.getElementById('filter-save-msg');
+  msgEl.className = 'filter-save-msg msg msg-info';
+  msgEl.textContent = 'Saving…';
+  msgEl.classList.remove('hidden');
+
+  const payload = JSON.stringify({
+    exclude_topics:     fState.rules.exclude_topics,
+    exclude_categories: fState.rules.exclude_categories,
+    override_topics:    fState.rules.override_topics,
+  });
+
+  const { error } = await sb
+    .from('config')
+    .upsert(
+      { series_id: SERIES_ID, config_key: 'supplement_filter_rules', config_value: payload },
+      { onConflict: 'series_id,config_key' }
+    );
+
+  if (error) {
+    msgEl.className = 'filter-save-msg msg msg-error';
+    msgEl.textContent = 'Save failed: ' + error.message;
+    return;
+  }
+
+  msgEl.className = 'filter-save-msg msg msg-success';
+  msgEl.textContent = 'Rules saved ✓';
+  setTimeout(() => msgEl.classList.add('hidden'), 3000);
+
+  // Refresh map tab filter notice
+  filterUpdateMapNotice();
+};
+
+// ── Map tab filter notice helper ───────────────────────────────────
+function filterUpdateMapNotice() {
+  const notice = document.getElementById('map-filter-notice');
+  if (!notice) return;
+  const hasRules = fState.rules.exclude_topics.length > 0 || fState.rules.exclude_categories.length > 0;
+  notice.classList.toggle('hidden', !hasRules);
+}
+
+// ── applyMapFilterRules — used by renderUnmappedList and renderMappedList ──
+// Applies the in-memory fState rules to a supplement array.
+// If the override checkbox is unchecked, returns the array unchanged.
+function applyMapFilterRules(supps) {
+  const applyChk = document.getElementById('map-filter-apply');
+  if (!applyChk || !applyChk.checked) return supps;
+  const excTopics = fState.rules.exclude_topics;
+  const excCats   = fState.rules.exclude_categories;
+  const ovTopics  = fState.rules.override_topics;
+  if (!excTopics.length && !excCats.length) return supps;
+  return supps.filter(s => {
+    const topics = s.wk_topics || [];
+    const cats   = s.wk_categories || [];
+    const hasOverride = ovTopics.length && topics.some(t => ovTopics.includes(t));
+    if (hasOverride) return true;
+    if (excTopics.length && topics.some(t => excTopics.includes(t))) return false;
+    if (excCats.length && cats.some(c => excCats.includes(c))) return false;
+    return true;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ── END FILTER RULES TAB ─────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
 
 // ── Init ──────────────────────────────────────────────────────────────────────
