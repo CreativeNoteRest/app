@@ -526,6 +526,11 @@
 
       <div id="filter-content" class="hidden">
 
+        <div class="filter-save-row" style="margin-bottom:16px;">
+          <button class="btn-primary" onclick="filterSave()">Save rules</button>
+          <span class="filter-save-msg hidden" id="filter-save-msg"></span>
+        </div>
+
         <div class="filter-section">
           <div class="filter-section-title">Categories — Exclude</div>
           <div class="filter-chips" id="filter-chips-exclude-categories"></div>
@@ -539,11 +544,6 @@
         <div class="filter-section">
           <div class="filter-section-title">Topics — Override (always include)</div>
           <div class="filter-chips" id="filter-chips-override-topics"></div>
-        </div>
-
-        <div class="filter-save-row">
-          <button class="btn-primary" onclick="filterSave()">Save rules</button>
-          <span class="filter-save-msg hidden" id="filter-save-msg"></span>
         </div>
 
       </div>
