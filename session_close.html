@@ -491,6 +491,21 @@
       font-size: 0.82rem; color: var(--danger);
       margin-top: 12px; display: none; line-height: 1.5;
     }
+    .pdf-email-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .pdf-email-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .pdf-email-row input[type="checkbox"] {
+      width: 17px; height: 17px; accent-color: var(--brand);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .pdf-email-row label {
+      font-size: 0.85rem; color: var(--text);
+      cursor: pointer; line-height: 1.4; word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -706,8 +721,12 @@
 
   // PDF popup context (loaded at init)
   let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
-  let studentEmailPrimary   = '';
-  let studentEmailSecondary = '';
+  let studentEmailPrimary            = '';
+  let studentEmailSecondary          = '';
+  let studentEmailTertiary           = '';
+  let studentEmailPrimaryUnsub       = false;
+  let studentEmailSecondaryUnsub     = false;
+  let studentEmailTertiaryUnsub      = false;
 
   // ── 5a. Fetch teacher preference + student emails in parallel ─────
   // Non-blocking: if either fetch fails, defaults hold and popup still works.
@@ -716,12 +735,16 @@
     try {
       const [teacherRes, studentRes] = await Promise.all([
         supabase.from('teachers').select('always_offer_pdf').eq('teacher_id', TEACHER_ID).single(),
-        supabase.from('students').select('email_primary, email_secondary').eq('student_id', STUDENT_ID).single()
+        supabase.from('students').select('email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, email_tertiary, email_tertiary_unsubscribed').eq('student_id', STUDENT_ID).single()
       ]);
       if (teacherRes.data) alwaysOfferPdf = teacherRes.data.always_offer_pdf ?? true;
       if (studentRes.data) {
-        studentEmailPrimary   = studentRes.data.email_primary   || '';
-        studentEmailSecondary = studentRes.data.email_secondary || '';
+        studentEmailPrimary        = studentRes.data.email_primary             || '';
+        studentEmailPrimaryUnsub   = studentRes.data.email_primary_unsubscribed   || false;
+        studentEmailSecondary      = studentRes.data.email_secondary           || '';
+        studentEmailSecondaryUnsub = studentRes.data.email_secondary_unsubscribed || false;
+        studentEmailTertiary       = studentRes.data.email_tertiary            || '';
+        studentEmailTertiaryUnsub  = studentRes.data.email_tertiary_unsubscribed  || false;
       }
     } catch (e) {
       console.warn('PDF init fetch failed (non-blocking):', e);
@@ -1342,17 +1365,37 @@
 
   // ── 15a. PDF popup ────────────────────────────────────────────────
   function showPdfPopup() {
-    // Build body text with actual email address(es)
-    let emailDisplay = studentEmailPrimary || 'their email address';
-    if (studentEmailSecondary) emailDisplay += ` and ${studentEmailSecondary}`;
+    // Build checkbox list for each populated email address.
+    // Default checked = inverse of unsubscribed flag.
+    const emailCandidates = [
+      { id: 'pdf-email-primary',   addr: studentEmailPrimary,   unsub: studentEmailPrimaryUnsub },
+      { id: 'pdf-email-secondary', addr: studentEmailSecondary, unsub: studentEmailSecondaryUnsub },
+      { id: 'pdf-email-tertiary',  addr: studentEmailTertiary,  unsub: studentEmailTertiaryUnsub },
+    ].filter(e => e.addr && e.addr.trim() !== '');
+
+    const listHtml = emailCandidates.map(e =>
+      `<div class="pdf-email-row">
+        <input type="checkbox" id="${e.id}" ${e.unsub ? '' : 'checked'} onchange="updatePdfSendBtn()" />
+        <label for="${e.id}">${escHtml(e.addr)}</label>
+      </div>`
+    ).join('');
+
     document.getElementById('pdf-modal-body').innerHTML =
-      `Send <strong>${escHtml(STUDENT_NAME)}</strong>'s practice plan to ${escHtml(emailDisplay)}.`;
+      `<span>Select recipients for <strong>${escHtml(STUDENT_NAME)}</strong>'s practice plan:</span>` +
+      `<div class="pdf-email-list">${listHtml}</div>`;
 
     // Reset checkbox to match current preference
     document.getElementById('pdf-always-offer').checked = true; // always_offer_pdf is true if we're here
 
     document.getElementById('pdf-modal-error').style.display = 'none';
+    updatePdfSendBtn();
     document.getElementById('pdf-modal').classList.remove('hidden');
+  }
+
+  function updatePdfSendBtn() {
+    const anyChecked = ['pdf-email-primary', 'pdf-email-secondary', 'pdf-email-tertiary']
+      .some(id => { const el = document.getElementById(id); return el && el.checked; });
+    document.getElementById('btn-pdf-send').disabled = !anyChecked;
   }
 
   async function navigateAfterPdf() {
@@ -1381,8 +1424,13 @@
     errEl.style.display = 'none';
 
     try {
+      // Collect teacher-selected recipient addresses
+      const toEmails = ['pdf-email-primary', 'pdf-email-secondary', 'pdf-email-tertiary']
+        .map(id => { const el = document.getElementById(id); return (el && el.checked) ? el.nextElementSibling.textContent.trim() : null; })
+        .filter(Boolean);
+
       const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
-        body: { session_id: SESSION_ID, send_type: 'auto', teacher_id: TEACHER_ID }
+        body: { session_id: SESSION_ID, send_type: 'auto', teacher_id: TEACHER_ID, to_emails: toEmails }
       });
 
       if (error || !data?.success) {
