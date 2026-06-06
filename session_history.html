@@ -186,6 +186,73 @@
     .supp-badge-free { background: #F0FDF4; color: #16A34A; }
     .supp-badge-paid { background: var(--brand-light); color: var(--brand); }
     .supp-pool { font-size: 12px; color: var(--text-light); }
+
+    /* ── Email recipient modal ── */
+    .email-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .email-modal-backdrop.hidden { display: none; }
+    .email-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%; max-width: 640px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+    .email-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem; color: var(--text);
+      letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+    .email-modal-body {
+      font-size: 0.88rem; color: var(--text-mid);
+      line-height: 1.6; margin-bottom: 4px;
+    }
+    .email-modal-body strong { color: var(--text); font-weight: 600; }
+    .email-modal-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; margin-bottom: 20px; }
+    .email-modal-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .email-modal-row input[type="checkbox"] {
+      width: 17px; height: 17px; accent-color: var(--brand);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .email-modal-row label {
+      font-size: 0.85rem; color: var(--text);
+      cursor: pointer; line-height: 1.4; word-break: break-all;
+    }
+    .email-modal-actions { display: flex; gap: 10px; }
+    .email-modal-send {
+      flex: 2; height: 50px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(219,110,43,0.28);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    .email-modal-send:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(219,110,43,0.36); }
+    .email-modal-send:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .email-modal-cancel {
+      flex: 1; height: 50px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .email-modal-cancel:hover { border-color: var(--text-mid); color: var(--text); }
+    .email-modal-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+    .email-modal-error {
+      font-size: 0.82rem; color: var(--danger);
+      margin-top: 12px; display: none; line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -226,6 +293,21 @@
 
 </main>
 
+  <!-- Email recipient modal -->
+  <div id="emailModal" class="email-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="email-modal-heading">
+    <div class="email-modal">
+      <div class="email-modal-heading" id="email-modal-heading">Email the practice plan?</div>
+      <div class="email-modal-body" id="email-modal-body">
+        <!-- Populated by JS -->
+      </div>
+      <div class="email-modal-actions">
+        <button class="email-modal-send" id="emailModalSendBtn" onclick="confirmSendPdf()">Yes, Send</button>
+        <button class="email-modal-cancel" id="emailModalCancelBtn" onclick="closeEmailModal()">Cancel</button>
+      </div>
+      <div class="email-modal-error" id="email-modal-error"></div>
+    </div>
+  </div>
+
 <script type="module">
   import { supabase, requireAuth } from '/assets/app.js';
 
@@ -239,6 +321,7 @@
   let sessionRows     = [];             // cached session list for current student
   let currentSession  = null;           // full session record shown in detail view
   let view            = 'students';     // 'students' | 'sessions' | 'detail'
+  let studentEmailData = null;          // cached email/unsub fields for modal
 
   // ── DOM refs ──────────────────────────────────────────────────────────
   const viewStudents    = document.getElementById('viewStudents');
@@ -566,44 +649,126 @@
     const pdfBtn = document.getElementById('pdfBtn');
     if (!pdfBtn || !currentSession) return;
 
-    // Loading state
+    // Disable button while fetching email data
     pdfBtn.disabled = true;
     const originalHTML = pdfBtn.innerHTML;
-    pdfBtn.innerHTML = 'Sending...';
+    pdfBtn.innerHTML = 'Loading...';
+
+    try {
+      const { data: stu, error: stuErr } = await supabase
+        .from('students')
+        .select('email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, email_tertiary, email_tertiary_unsubscribed')
+        .eq('student_id', currentSession.student_id)
+        .single();
+
+      if (stuErr || !stu) throw new Error('Could not load student email information.');
+      studentEmailData = stu;
+    } catch (e) {
+      pdfBtn.innerHTML = originalHTML;
+      pdfBtn.disabled = false;
+      showErr(e.message || 'Could not load student email information.');
+      return;
+    }
+
+    // Restore button -- modal takes over from here
+    pdfBtn.innerHTML = originalHTML;
+    pdfBtn.disabled = false;
+    openEmailModal();
+  }
+
+  // ── Email modal ───────────────────────────────────────────────────────────
+  function openEmailModal() {
+    const d = studentEmailData;
+    const candidates = [
+      { id: 'hist-email-primary',   addr: d.email_primary   || '', unsub: d.email_primary_unsubscribed   || false },
+      { id: 'hist-email-secondary', addr: d.email_secondary || '', unsub: d.email_secondary_unsubscribed || false },
+      { id: 'hist-email-tertiary',  addr: d.email_tertiary  || '', unsub: d.email_tertiary_unsubscribed  || false },
+    ].filter(e => e.addr.trim() !== '');
+
+    const listHtml = candidates.map(e =>
+      '<div class="email-modal-row">' +
+        '<input type="checkbox" id="' + e.id + '" ' + (e.unsub ? '' : 'checked') + ' onchange="updateEmailSendBtn()" />' +
+        '<label for="' + e.id + '">' + escHtml(e.addr) + '</label>' +
+      '</div>'
+    ).join('');
+
+    document.getElementById('email-modal-body').innerHTML =
+      '<span>Select recipients for <strong>' + escHtml(selectedStudent.safe_name) + '</strong>\'s practice plan:</span>' +
+      '<div class="email-modal-list">' + listHtml + '</div>';
+
+    document.getElementById('email-modal-error').style.display = 'none';
+    updateEmailSendBtn();
+    document.getElementById('emailModal').classList.remove('hidden');
+  }
+
+  window.updateEmailSendBtn = function() {
+    const anyChecked = ['hist-email-primary', 'hist-email-secondary', 'hist-email-tertiary']
+      .some(id => { const el = document.getElementById(id); return el && el.checked; });
+    document.getElementById('emailModalSendBtn').disabled = !anyChecked;
+  };
+
+  window.closeEmailModal = function() {
+    document.getElementById('emailModal').classList.add('hidden');
+  };
+
+  window.confirmSendPdf = async function() {
+    const sendBtn   = document.getElementById('emailModalSendBtn');
+    const cancelBtn = document.getElementById('emailModalCancelBtn');
+    const errEl     = document.getElementById('email-modal-error');
+
+    // Collect checked addresses
+    const toEmails = ['hist-email-primary', 'hist-email-secondary', 'hist-email-tertiary']
+      .map(id => {
+        const el = document.getElementById(id);
+        return (el && el.checked) ? el.nextElementSibling.textContent.trim() : null;
+      })
+      .filter(Boolean);
+
+    sendBtn.disabled   = true;
+    cancelBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    errEl.style.display = 'none';
 
     const { data, error } = await supabase.functions.invoke('generate-session-pdf', {
       body: {
-        session_id:  currentSession.session_id,
-        teacher_id:  teacherId,
-        send_type:   'manual',
+        session_id: currentSession.session_id,
+        teacher_id: teacherId,
+        send_type:  'manual',
+        to_emails:  toEmails,
       },
     });
 
     if (error || !data?.success) {
       const msg = data?.error || error?.message || 'Email failed. Please try again.';
-      pdfBtn.innerHTML = originalHTML;
-      pdfBtn.disabled = false;
-      showErr(msg);
+      errEl.textContent   = msg;
+      errEl.style.display = 'block';
+      sendBtn.disabled    = false;
+      cancelBtn.disabled  = false;
+      sendBtn.textContent = 'Yes, Send';
       return;
     }
 
-    // Success -- update button and session state
+    // Success -- close modal, update button and session state
+    closeEmailModal();
+
     const sentTo = (data.sent_to || []).join(', ');
     const nowStr  = new Date().toISOString();
     currentSession.pdf_sent_at = nowStr;
     currentSession.pdf_sent_to = sentTo;
 
-    // Update button to resend state
-    pdfBtn.innerHTML = 'Resend Practice Plan' +
-      '<span class="pdf-btn-sub">Last sent ' + formatDate(nowStr) + ' to ' + escHtml(sentTo) + '</span>';
-    pdfBtn.disabled = false;
+    const pdfBtn = document.getElementById('pdfBtn');
+    if (pdfBtn) {
+      pdfBtn.innerHTML = 'Resend Practice Plan' +
+        '<span class="pdf-btn-sub">Last sent ' + formatDate(nowStr) + ' to ' + escHtml(sentTo) + '</span>';
+      pdfBtn.disabled = false;
+    }
 
     // Update session list row pdf badge so it reflects on back navigation
     const listRow = sessionRows.find(s => s.session_id === currentSession.session_id);
     if (listRow) { listRow.pdf_sent_at = nowStr; listRow.pdf_sent_to = sentTo; }
 
     // Brief sent confirmation
-    const wrap = pdfBtn.closest('.pdf-btn-wrap');
+    const wrap = pdfBtn && pdfBtn.closest('.pdf-btn-wrap');
     if (wrap) {
       const confirm = document.createElement('div');
       confirm.style.cssText = 'text-align:center;color:#2E7D32;font-size:13px;font-weight:600;margin-top:6px;';
@@ -613,7 +778,7 @@
     }
 
     clearErr();
-  }
+  };
 
   // ── Utilities ─────────────────────────────────────────────────────────
   function formatDate(iso) {
