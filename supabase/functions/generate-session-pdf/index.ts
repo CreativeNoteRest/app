@@ -95,6 +95,18 @@ Deno.serve(async (req) => {
   if (sessErr || !session) return err({ error: "Session not found." }, 404);
   if (session.teacher_id !== teacher_id) return err({ error: "Unauthorized." }, 403);
 
+  // ── Step 1.5: Read teacher (for personalised email headers) ────────
+  const { data: teacher, error: teachErr } = await db
+    .from("teachers")
+    .select("email, display_name")
+    .eq("teacher_id", teacher_id)
+    .single();
+
+  if (teachErr || !teacher) return err({ error: "Teacher record not found." }, 404);
+
+  const teacherFromName = teacher.display_name ?? "Your Teacher";
+  const teacherEmail    = teacher.email;
+
   // ── Step 2: Read student ───────────────────────────────────────────
   const { data: student, error: stuErr } = await db
     .from("students")
@@ -255,10 +267,11 @@ Deno.serve(async (req) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Creative Note <noreply@mail.creativenoterest.com>",
+      from: `${teacherFromName} via Creative Note <noreply@mail.creativenoterest.com>`,
+      reply_to: teacherEmail,
       to: recipients,
       subject: `${student.safe_name} -- Practice Plan ${sessionDate}`,
-      text: `Hi,\n\nPlease find ${student.safe_name}'s practice plan attached.\n\nCreative Note`,
+      text: `Hi,\n\nPlease find ${student.safe_name}'s practice plan attached.\n\n${teacherFromName}`,
       attachments: [{ filename: fileName, content: pdfBase64 }],
       headers: { "List-Unsubscribe": "<mailto:unsubscribe@mail.creativenoterest.com>" },
     }),

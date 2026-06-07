@@ -93,35 +93,24 @@ Deno.serve(async (req) => {
 
   const db = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  // ── Resolve supplement -- get source_url, series_id, book_id ─────
-  // Primary path: lookup by supplement_id (UUID).
-  // Fallback path: lookup by source_url if s param looks like a URL
-  // (handles any legacy links generated before redirect wrapper existed).
+  // ── Resolve supplement -- get source_url and series_id ──────────
+  // supplements table has no book_id -- book relationship is via
+  // supplement_eligibility_map, not a direct column. book_id is
+  // omitted from click_through_log for email-originated clicks.
   const { data: supplement, error: suppErr } = await db
     .from("supplements")
-    .select("supplement_id, source_url, series_id, book_id")
+    .select("supplement_id, source_url, series_id")
     .eq("supplement_id", suppId)
     .single();
 
   if (suppErr || !supplement?.source_url) {
     // Supplement not found or has no destination -- fail open to homepage
     console.error("Supplement lookup failed:", suppErr?.message, "suppId:", suppId);
-    return Response.redirect("https://www.creativenoterest.com", 302);
+    return Response.redirect("https://app.creativenoterest.com", 302);
   }
 
   // ── Decode session ID ─────────────────────────────────────────────
   const sessionId = sidEnc ? decodeSessionId(sidEnc) : null;
-
-  // ── Derive student ID from session (if session ID present) ───────
-  let studentId: string | null = null;
-  if (sessionId) {
-    const { data: sessionRow } = await db
-      .from("sessions")
-      .select("student_id")
-      .eq("session_id", sessionId)
-      .single();
-    studentId = sessionRow?.student_id ?? null;
-  }
 
   // ── Bot detection ─────────────────────────────────────────────────
   const userAgent    = req.headers.get("user-agent") || "";
@@ -131,50 +120,41 @@ Deno.serve(async (req) => {
   const destination = appendUtmParams(supplement.source_url, source);
 
   // ── Log the click (non-blocking -- never delays the redirect) ────
-  // Fire-and-forget: if the insert fails, the 302 still goes out.
-  // suspected_bot = true suppresses the row from commission reports
-  // but retains it as a complete audit record.
-  if (!suspectedBot) {
-    (async () => {
-      try {
-        const { error: logErr } = await db.from("click_through_log").insert({
-          series_id:     supplement.series_id,
-          supplement_id: supplement.supplement_id,
-          book_id:       supplement.book_id ?? null,
-          session_id:    sessionId,
-          student_id:    studentId,
-          source:        source,
-          suspected_bot: false,
-          utm_params:    {
-            utm_source:   "creativenote",
-            utm_medium:   source === "email" ? "email" : "platform",
-            utm_campaign: "supplement-recommendation",
-          },
-        });
-        if (logErr) console.error("click_through_log insert failed (non-blocking):", logErr.message);
-      } catch (e) {
-        console.error("click_through_log unexpected error (non-blocking):", e);
+  // student_id derivation and insert both run after the 302 fires.
+  // Neither is in the critical path -- logging must never delay the user.
+  (async () => {
+    try {
+      // Derive student_id from session -- kept inside async block so
+      // this DB call never delays the redirect.
+      let studentId: string | null = null;
+      if (sessionId) {
+        const { data: sessionRow } = await db
+          .from("sessions")
+          .select("student_id")
+          .eq("session_id", sessionId)
+          .single();
+        studentId = sessionRow?.student_id ?? null;
       }
-    })();
-  } else {
-    // Log bot click with flag -- retained for audit, excluded from reports
-    (async () => {
-      try {
-        await db.from("click_through_log").insert({
-          series_id:     supplement.series_id,
-          supplement_id: supplement.supplement_id,
-          book_id:       supplement.book_id ?? null,
-          session_id:    sessionId,
-          student_id:    studentId,
-          source:        source,
-          suspected_bot: true,
-          utm_params:    null,
-        });
-      } catch {
-        // Non-blocking -- ignore
-      }
-    })();
-  }
+
+      const { error: logErr } = await db.from("click_through_log").insert({
+        series_id:     supplement.series_id,
+        supplement_id: supplement.supplement_id,
+        session_id:    sessionId,
+        student_id:    studentId,
+        source:        source,
+        suspected_bot: suspectedBot,
+        clicked_at:    new Date().toISOString(),
+        utm_params:    suspectedBot ? null : {
+          utm_source:   "creativenote",
+          utm_medium:   source === "email" ? "email" : "platform",
+          utm_campaign: "supplement-recommendation",
+        },
+      });
+      if (logErr) console.error("click_through_log insert failed (non-blocking):", logErr.message);
+    } catch (e) {
+      console.error("click_through_log unexpected error (non-blocking):", e);
+    }
+  })();
 
   // ── Issue redirect ────────────────────────────────────────────────
   // 302 (temporary) rather than 301 (permanent) so clients always
