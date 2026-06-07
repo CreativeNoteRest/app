@@ -20,6 +20,36 @@ function err(body, status = 400) {
   });
 }
 
+// ── Session ID encoding for redirect URLs ─────────────────────────────────────
+// Encodes a UUID to a 22-char Base64url string. Used when building supplement
+// redirect URLs in the PDF so raw session UUIDs are never embedded in links
+// distributed to students / parents via email.
+// Canonical decode lives in the redirect Edge Function.
+
+const SUPABASE_URL_FOR_REDIRECT = Deno.env.get("SUPABASE_URL") || "";
+
+function encodeSessionId(uuid: string): string {
+  const hex = uuid.replace(/-/g, "");
+  const bytes = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
+
+// Builds the redirect wrapper URL for a supplement link in the PDF.
+// supplement_id is plain (public catalogue data).
+// session_id is Base64url encoded (obscures the raw UUID in distributed links).
+// source is always "email" for PDF links.
+function buildRedirectUrl(supplementId: string, sessionId: string): string {
+  const base    = SUPABASE_URL_FOR_REDIRECT.replace(/\/$/, "");
+  const encoded = encodeSessionId(sessionId);
+  return `${base}/functions/v1/redirect?s=${supplementId}&sid=${encoded}&src=email`;
+}
+
 Deno.serve(async (req) => {
 
   if (req.method === "OPTIONS") {
@@ -116,8 +146,13 @@ Deno.serve(async (req) => {
     const thumb = s.thumbnail_url
       ? `<img src="${s.thumbnail_url}" width="44" height="56" style="object-fit:cover;flex-shrink:0;" />`
       : `<div style="width:44px;height:56px;background:#FCE4D6;flex-shrink:0;"></div>`;
-    const titleEl = s.source_url
-      ? `<a href="${s.source_url}" style="font-size:13px;font-weight:600;color:#E26B0A;text-decoration:none;">${s.title || "Untitled"}</a>`
+    // Use redirect wrapper URL when supplement_id is available (all current sessions).
+    // Fall back to direct source_url for any legacy snapshot missing supplement_id.
+    const linkHref = s.supplement_id
+      ? buildRedirectUrl(s.supplement_id, session_id)
+      : s.source_url;
+    const titleEl = linkHref
+      ? `<a href="${linkHref}" style="font-size:13px;font-weight:600;color:#E26B0A;text-decoration:none;">${s.title || "Untitled"}</a>`
       : `<span style="font-size:13px;font-weight:600;color:#1A1A1A;">${s.title || "Untitled"}</span>`;
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #E8E4DF;border-radius:8px;margin-bottom:8px;">
       ${thumb}
@@ -133,8 +168,13 @@ Deno.serve(async (req) => {
     const thumb = a.thumbnail_url
       ? `<img src="${a.thumbnail_url}" width="44" height="56" style="object-fit:cover;flex-shrink:0;" />`
       : `<div style="width:44px;height:56px;background:#FCE4D6;flex-shrink:0;"></div>`;
-    const titleEl = a.source_url
-      ? `<a href="${a.source_url}" style="font-size:13px;font-weight:600;color:#E26B0A;text-decoration:none;">${a.title || "Untitled"}</a>`
+    // Use redirect wrapper URL when supplement_id is available.
+    // active_assignments_data always carries supplement_id per schema spec.
+    const linkHref = a.supplement_id
+      ? buildRedirectUrl(a.supplement_id, session_id)
+      : a.source_url;
+    const titleEl = linkHref
+      ? `<a href="${linkHref}" style="font-size:13px;font-weight:600;color:#E26B0A;text-decoration:none;">${a.title || "Untitled"}</a>`
       : `<span style="font-size:13px;font-weight:600;color:#1A1A1A;">${a.title || "Untitled"}</span>`;
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #E8E4DF;border-radius:8px;margin-bottom:8px;">
       ${thumb}
