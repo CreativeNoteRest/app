@@ -138,7 +138,7 @@ Deno.serve(async (req: Request) => {
     });
 
     if (data.error) {
-      return jsonResponse({ success: false, error: data.error });
+      return jsonResponse({ success: false, error_type: 'system_error', message: data.error });
     }
 
     const {
@@ -164,7 +164,7 @@ Deno.serve(async (req: Request) => {
     ];
     for (const key of requiredPromptKeys) {
       if (!promptMap.has(key)) {
-        return jsonResponse({ success: false, error: `Missing required prompt key: ${key}` });
+        return jsonResponse({ success: false, error_type: 'system_error', message: `Missing required prompt key: ${key}` });
       }
     }
 
@@ -404,11 +404,11 @@ Deno.serve(async (req: Request) => {
     totalCallCount  += 1;
 
     if (!phase1Raw.success) {
-      return jsonResponse({ success: false, failed_phase: 1, error: phase1Raw.error });
+      return jsonResponse({ success: false, error_type: 'system_error', message: phase1Raw.error });
     }
     const phase1Parsed = parsePhase1JSON(phase1Raw.text!);
     if (!phase1Parsed) {
-      return jsonResponse({ success: false, failed_phase: 1, error: 'Phase 1 JSON parse failed after retry.' });
+      return jsonResponse({ success: false, error_type: 'system_error', message: 'Phase 1 JSON parse failed after retry.' });
     }
     const phase1 = validatePhase1Output(phase1Parsed, booksPieces, booksUnits, pieceKeyMap);
     const focusQuery = focusQueryResult.text;
@@ -444,14 +444,26 @@ Deno.serve(async (req: Request) => {
     const pieceBlockWithBook = assemblePieceBlock(phase1, booksPieces, entries, true);
     const phase4Prompt = assemblePhase4Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText);
     const phase4Config = resolvePhaseAIConfig(configMap, 4, resolvedModelOverride, thinking_budget_override);
-    const phase4Result = await callGeminiWithUsage(phase4Prompt, phase4Config);
+    let phase4Result: { text: string; tokens: number };
+    try {
+      phase4Result = await callGeminiWithUsage(phase4Prompt, phase4Config);
+    } catch (err) {
+      const msg = String(err);
+      return jsonResponse({ success: false, error_type: 'ai_unavailable', message: `Phase 4: ${msg}` });
+    }
     totalTokenUsage += phase4Result.tokens;
     totalCallCount  += 1;
 
     // --- Phase 5 ---
     const phase5Prompt = assemblePhase5Prompt(promptMap, student_name, sessionDate, bookName, effectiveLessonPage, pieceBlock, pieceBlockWithBook, entries, activeSuppsText, studentAge);
     const phase5Config = resolvePhaseAIConfig(configMap, 5, resolvedModelOverride, thinking_budget_override);
-    const phase5Result = await callGeminiWithUsage(phase5Prompt, phase5Config);
+    let phase5Result: { text: string; tokens: number };
+    try {
+      phase5Result = await callGeminiWithUsage(phase5Prompt, phase5Config);
+    } catch (err) {
+      const msg = String(err);
+      return jsonResponse({ success: false, error_type: 'ai_unavailable', message: `Phase 5: ${msg}` });
+    }
     totalTokenUsage += phase5Result.tokens;
     totalCallCount  += 1;
 
@@ -473,7 +485,7 @@ Deno.serve(async (req: Request) => {
 
   } catch (err) {
     console.error('session-close unhandled error:', err);
-    return jsonResponse({ success: false, error: String(err) });
+    return jsonResponse({ success: false, error_type: 'system_error', message: String(err) });
   }
 });
 

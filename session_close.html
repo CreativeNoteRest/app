@@ -383,6 +383,73 @@
     }
     .btn-retry:hover { opacity: 0.88; }
 
+    /* ── AI failure and system error states ──────────────────────── */
+    .failure-card {
+      background: var(--warn-light);
+      border: 1px solid var(--warn-border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      margin-bottom: 16px;
+    }
+    .failure-heading {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--warn); margin-bottom: 8px;
+    }
+    .failure-message {
+      font-size: 0.88rem; color: var(--text); line-height: 1.65;
+      margin-bottom: 18px;
+    }
+    .failure-actions { display: flex; flex-direction: column; gap: 10px; }
+    .btn-failure-primary {
+      height: 44px; padding: 0 20px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; align-self: flex-start;
+    }
+    .btn-failure-primary:hover { opacity: 0.88; }
+    .failure-links { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .failure-link {
+      font-size: 0.85rem; color: var(--brand);
+      background: none; border: none; cursor: pointer;
+      padding: 0; text-align: left; text-decoration: underline;
+    }
+    .failure-link:hover { color: var(--brand-dark); }
+
+    /* ── More info modal ─────────────────────────────────────────── */
+    .info-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .info-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%; max-width: 600px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+    .info-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem; color: var(--text);
+      letter-spacing: -0.01em; margin-bottom: 14px;
+    }
+    .info-modal-body {
+      font-size: 0.88rem; color: var(--text-mid);
+      line-height: 1.7; margin-bottom: 20px;
+    }
+    .info-modal-body li { margin-bottom: 6px; margin-left: 16px; }
+    .btn-info-close {
+      height: 44px; padding: 0 24px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-info-close:hover { opacity: 0.88; }
+
     /* ── Sticky footer action bar ────────────────────────────────── */
     .footer-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -547,14 +614,47 @@
       </div>
     </div>
 
-    <!-- ── ERROR STATE ───────────────────────────────────────────── -->
+    <!-- ── ERROR STATE (approve-sequence errors only) ────────────── -->
     <div id="state-error" class="hidden">
       <div class="error-card">
         <div class="error-heading">Something went wrong</div>
         <div class="error-message" id="error-message">
           The lesson could not be processed. Your notes are safe -- tap Retry to try again, or Cancel to return to your lesson.
         </div>
-        <button class="btn-retry" onclick="runEdgeFunction()">Retry</button>
+        <button class="btn-retry" onclick="runSessionClose()">Retry</button>
+      </div>
+    </div>
+
+    <!-- ── AI FAILURE STATE ──────────────────────────────────────── -->
+    <div id="state-ai-failure" class="hidden">
+      <div class="failure-card">
+        <div class="failure-heading">Processing unavailable</div>
+        <div class="failure-message" id="ai-failure-message"></div>
+        <div class="failure-actions">
+          <button class="btn-failure-primary" id="ai-retry-btn" onclick="handleAiRetry()">Try Again</button>
+          <div class="failure-links">
+            <button class="failure-link" id="ai-moreinfo-link" onclick="showMoreInfoModal()">More info</button>
+            <a class="failure-link hidden" id="ai-menu-link" href="/main_menu.html">Return to main menu</a>
+            <a class="failure-link hidden" id="ai-contact-link" href="#">Let us know</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SYSTEM ERROR STATE ────────────────────────────────────── -->
+    <div id="state-system-error" class="hidden">
+      <div class="failure-card">
+        <div class="failure-heading">Something went wrong</div>
+        <div class="failure-message">
+          Something went wrong processing your session. Your notes are safe.<br><br>
+          Try closing and reopening this page — if your connection dropped briefly, this may resolve it.
+        </div>
+        <div class="failure-actions">
+          <button class="btn-failure-primary" id="system-reopen-btn" onclick="handleSystemReopen()">Close and reopen</button>
+          <div class="failure-links">
+            <a class="failure-link hidden" id="system-contact-link" href="#">Let us know</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -676,6 +776,24 @@
     </div>
   </div>
 
+  <!-- More info modal (AI failure) -->
+  <div id="more-info-modal" class="info-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-heading">
+    <div class="info-modal">
+      <div class="info-modal-heading" id="info-modal-heading">About this issue</div>
+      <div class="info-modal-body">
+        <ul>
+          <li>Your lesson notes are safe in our system. Nothing has been lost.</li>
+          <li>AI processing is temporarily unavailable. This is an occasional service event, not an issue with your device or account.</li>
+          <li>You can retry here at any time. If AI recovers, your session will close normally.</li>
+          <li>You can return to main menu and open sessions for other students. Their notes will be collected normally even if AI processing is still unavailable.</li>
+          <li>If you leave this session, it will be processed automatically tonight. The summary will appear in your lesson history.</li>
+          <li>If you return to this session before tonight and AI has recovered, you can close it normally from the session page.</li>
+        </ul>
+      </div>
+      <button class="btn-info-close" onclick="hideMoreInfoModal()">Close</button>
+    </div>
+  </div>
+
 <script type="module">
   import { supabase, requireAuth, applyBranding } from '/assets/app.js';
 
@@ -734,10 +852,13 @@
   (async () => {
     try {
       const [teacherRes, studentRes] = await Promise.all([
-        supabase.from('teachers').select('always_offer_pdf').eq('teacher_id', TEACHER_ID).single(),
+        supabase.from('teachers').select('always_offer_pdf, email').eq('teacher_id', TEACHER_ID).single(),
         supabase.from('students').select('email_primary, email_primary_unsubscribed, email_secondary, email_secondary_unsubscribed, email_tertiary, email_tertiary_unsubscribed').eq('student_id', STUDENT_ID).single()
       ]);
-      if (teacherRes.data) alwaysOfferPdf = teacherRes.data.always_offer_pdf ?? true;
+      if (teacherRes.data) {
+        alwaysOfferPdf = teacherRes.data.always_offer_pdf ?? true;
+        teacherEmail   = teacherRes.data.email || '';
+      }
       if (studentRes.data) {
         studentEmailPrimary        = studentRes.data.email_primary             || '';
         studentEmailPrimaryUnsub   = studentRes.data.email_primary_unsubscribed   || false;
@@ -802,6 +923,8 @@
   function showState(name) {
     document.getElementById('state-loading').classList.add('hidden');
     document.getElementById('state-error').classList.add('hidden');
+    document.getElementById('state-ai-failure').classList.add('hidden');
+    document.getElementById('state-system-error').classList.add('hidden');
     document.getElementById('state-guard').classList.add('hidden');
     document.getElementById('state-results').classList.add('hidden');
     document.getElementById('footer-bar').classList.add('hidden');
@@ -810,6 +933,10 @@
       document.getElementById('state-loading').classList.remove('hidden');
     } else if (name === 'error') {
       document.getElementById('state-error').classList.remove('hidden');
+    } else if (name === 'ai-failure') {
+      document.getElementById('state-ai-failure').classList.remove('hidden');
+    } else if (name === 'system-error') {
+      document.getElementById('state-system-error').classList.remove('hidden');
     } else if (name === 'guard') {
       document.getElementById('state-guard').classList.remove('hidden');
     } else if (name === 'results') {
@@ -854,7 +981,11 @@
   }
 
   // ── 9. Call the Edge Function ─────────────────────────────────────
-  async function runEdgeFunction() {
+  let retryCount      = 0; // ai-failure retry counter — reset on page load only
+  let systemErrorCount = 0; // consecutive system errors
+  let teacherEmail    = ''; // fetched at init for Let us know CC
+
+  async function runSessionClose() {
     // Entry guard — check before calling Edge Function
     const guardPassed = await checkEntryGuard();
     if (!guardPassed) {
@@ -885,20 +1016,21 @@
 
       if (error) {
         console.error('Edge Function error:', error);
-        showError(
-          `The lesson summary could not be generated. Your notes are safe. ` +
-          `Please try again, or cancel to return to your lesson. (${error.message || 'Unknown error'})`
-        );
+        systemErrorCount++;
+        showSystemError(error.message || 'Unknown error');
         return;
       }
 
       if (!data || data.success === false) {
-        const msg = data?.error || 'An unknown error occurred in the summary service.';
-        console.error('Edge Function returned success:false:', msg);
-        showError(
-          `The summary service reported an error. Your notes are safe. ` +
-          `Please try again shortly. (${msg})`
-        );
+        console.error('Edge Function returned success:false:', data);
+        if (data?.error_type === 'ai_unavailable') {
+          retryCount++;
+          updateAiFailureStage();
+          showState('ai-failure');
+        } else {
+          systemErrorCount++;
+          showSystemError(data?.message || 'An unknown error occurred.');
+        }
         return;
       }
 
@@ -933,17 +1065,15 @@
       finishPips();
       stopPips();
       console.error('Unexpected error calling Edge Function:', err);
-      showError(
-        `An unexpected error occurred. Your notes are safe. ` +
-        `Please try again. (${err.message})`
-      );
+      systemErrorCount++;
+      showSystemError(err.message || String(err));
     }
   }
 
   // Close Anyway — teacher acknowledged thin notes, proceed directly
   window.proceedToClose = function() {
     entriesChecked = true; // bypass guard on this run
-    runEdgeFunction();
+    runSessionClose();
   };
   function renderResults(data) {
     document.getElementById('page-subtitle').textContent =
@@ -1221,13 +1351,96 @@
     }
   };
 
-  // ── 13. Error helper ──────────────────────────────────────────────
+  // ── 13. Error helpers ─────────────────────────────────────────────
+
+  // Legacy showError: used only by the approve sequence (Write 1–5 failures).
+  // These are post-AI errors — not AI pipeline failures — so they use the
+  // existing red error card rather than the new failure states.
   function showError(msg) {
     stopPips();
     document.getElementById('error-message').textContent = msg;
     document.getElementById('page-subtitle').textContent = '';
     showState('error');
   }
+
+  // AI failure state — progressive three-stage UX
+  function updateAiFailureStage() {
+    const msgEl      = document.getElementById('ai-failure-message');
+    const menuLink   = document.getElementById('ai-menu-link');
+    const contactLink = document.getElementById('ai-contact-link');
+
+    if (retryCount <= 1) {
+      msgEl.textContent = "We couldn't process your session right now. Your notes are safe — please try again in a few minutes.";
+      menuLink.classList.add('hidden');
+      contactLink.classList.add('hidden');
+    } else if (retryCount === 2) {
+      msgEl.textContent = "Still having trouble. This sometimes takes a few minutes to resolve. Your notes are saved and won't be lost.";
+      menuLink.classList.add('hidden');
+      contactLink.classList.add('hidden');
+    } else {
+      msgEl.textContent = "AI processing is unavailable right now. This can happen during occasional service outages.";
+      menuLink.classList.remove('hidden');
+      contactLink.classList.remove('hidden');
+      buildContactLink(contactLink, 'Session close issue');
+    }
+
+    stopPips();
+    document.getElementById('page-subtitle').textContent = '';
+  }
+
+  // System error state — single stage with escalation on second hit
+  function showSystemError(errorDetail) {
+    const reopenBtn  = document.getElementById('system-reopen-btn');
+    const contactLink = document.getElementById('system-contact-link');
+
+    if (systemErrorCount >= 2) {
+      reopenBtn.classList.add('hidden');
+      contactLink.classList.remove('hidden');
+      buildContactLink(contactLink, 'Session close error');
+    } else {
+      reopenBtn.classList.remove('hidden');
+      contactLink.classList.add('hidden');
+    }
+
+    stopPips();
+    document.getElementById('page-subtitle').textContent = '';
+    showState('system-error');
+  }
+
+  // Build a pre-addressed mailto: href for the Let us know links.
+  // Includes error context in the body for admin triage.
+  function buildContactLink(el, subjectBase) {
+    const date    = new Date().toLocaleDateString('en-CA');
+    const subject = encodeURIComponent(`${subjectBase} -- ${date}`);
+    const bodyLines = [
+      `I'm having trouble closing a lesson session. The AI processing step is not completing.`,
+      `Date: ${date}`,
+      `Session ID: ${SESSION_ID}`,
+      `Retries attempted: ${retryCount}`,
+    ];
+    const body = encodeURIComponent(bodyLines.join('\n'));
+    const cc   = teacherEmail ? `&cc=${encodeURIComponent(teacherEmail)}` : '';
+    el.href = `mailto:support@creativenoterest.com?subject=${subject}${cc}&body=${body}`;
+  }
+
+  // AI retry button handler
+  window.handleAiRetry = function() {
+    showState('loading');
+    runSessionClose();
+  };
+
+  // System error reopen: page reload re-runs the EF from scratch
+  window.handleSystemReopen = function() {
+    window.location.reload();
+  };
+
+  // More info modal
+  window.showMoreInfoModal = function() {
+    document.getElementById('more-info-modal').classList.remove('hidden');
+  };
+  window.hideMoreInfoModal = function() {
+    document.getElementById('more-info-modal').classList.add('hidden');
+  };
 
   // ── 14. Cancel -- return to session_entry with no writes ──────────
   window.cancelAndReturn = function() {
@@ -1470,11 +1683,11 @@
       .replace(/"/g, '&quot;');
   }
 
-  // ── 17. Expose runEdgeFunction to window (used by Retry button) ───
-  window.runEdgeFunction = runEdgeFunction;
+  // ── 17. Expose runSessionClose to window (used by Retry button) ───
+  window.runSessionClose = runSessionClose;
 
   // ── 18. Kick off on page load ─────────────────────────────────────
-  runEdgeFunction();
+  runSessionClose();
 
 </script>
 
