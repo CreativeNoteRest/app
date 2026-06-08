@@ -139,7 +139,6 @@
     .staging-list { display: flex; flex-direction: column; gap: 8px; }
     .staging-row { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; transition: border-color 0.15s; }
     .staging-row:hover { border-color: #CBBFB5; }
-    .staging-row.is-workbook { border-left: 3px solid var(--warn); }
     .row-top { display: flex; align-items: flex-start; gap: 12px; }
     .row-thumb { width: 44px; height: 56px; border-radius: 0; border: 1px solid var(--border); object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-light); overflow: hidden; }
     .row-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
@@ -163,7 +162,6 @@
     .badge-described  { background: var(--success-light); color: var(--success);    border-color: var(--success-border); }
     .badge-hinted     { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
     .badge-promoted   { background: #F3E8FF;              color: #7C3AED;           border-color: #DDD6FE; }
-    .badge-workbook   { background: var(--warn-light);    color: #92400E;           border-color: var(--warn-border); }
     .badge-toolkit    { background: var(--brand-light);   color: var(--brand);      border-color: #F9C4A0; }
     .badge-piano      { background: var(--info-light);    color: var(--info);       border-color: var(--info-border); }
     .badge-free       { background: var(--success-light); color: var(--success);    border-color: var(--success-border); }
@@ -848,7 +846,7 @@ async function loadStagingRows() {
   document.getElementById('list-loading').classList.remove('hidden');
   const { data, error } = await sb
     .from('supplement_staging')
-    .select('staging_id, source_url, source, catalog, wk_categories, wk_level, catalog_section, title, thumbnail_url, pdf_url, is_free, curriculum_hint, search_description, status, is_workbook, scrape_attempted_at, created_at')
+    .select('staging_id, source_url, source, catalog, wk_categories, wk_level, catalog_section, title, thumbnail_url, pdf_url, is_free, curriculum_hint, search_description, status, scrape_attempted_at, created_at')
     .eq('series_id', SERIES_ID)
     .order('catalog', { ascending: true })
     .order('catalog_section', { ascending: true, nullsFirst: false })
@@ -1270,18 +1268,6 @@ window.bulkExtractHints = async function() {
   setBulkDisabled(false); renderStats(); applyFilters();
 };
 
-// ── Workbook toggle ───────────────────────────────────────────────────────────
-window.toggleWorkbook = async function(id, value) {
-  const { error } = await sb.from('supplement_staging')
-    .update({ is_workbook: value || null })
-    .eq('staging_id', id);
-  if (error) { alert(`Update failed: ${error.message}`); return; }
-  const row = state.allRows.find(r => r.staging_id === id);
-  if (row) row.is_workbook = value || null;
-  rerenderRow(id);
-  renderStats();
-};
-
 // ── Inline save ───────────────────────────────────────────────────────────────
 window.saveInlineFields = async function(id) {
   const hint  = document.getElementById(`hint-${id}`)?.value.trim() || null;
@@ -1431,7 +1417,7 @@ async function loadPromoteRows() {
 
   const { data, error } = await sb
     .from('supplement_staging')
-    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, is_workbook, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, season, status')
+    .select('staging_id, source_url, source, catalog, title, thumbnail_url, is_free, search_description, curriculum_hint, wk_categories, wk_topics, wk_level, catalog_section, season, status')
     .eq('series_id', SERIES_ID)
     .in('status', ['described', 'hinted', 'promoted'])
     .order('catalog', { ascending: true })
