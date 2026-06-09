@@ -324,6 +324,10 @@
         <div class="form-grid-full">
           <label class="form-lbl" for="sf-cta">CTA URL (optional — makes banner tappable)</label>
           <input class="form-inp" id="sf-cta" type="url" placeholder="https://…" />
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;font-size:0.82rem;color:var(--text-mid);cursor:pointer;">
+            <input type="checkbox" id="sf-new-tab" style="width:15px;height:15px;accent-color:var(--brand);cursor:pointer;" />
+            Open in new tab
+          </label>
         </div>
         <div class="form-grid-full">
           <div class="preview-wrap">
@@ -400,6 +404,10 @@
         <div class="form-grid-full">
           <label class="form-lbl" for="cf-cta">CTA URL (optional)</label>
           <input class="form-inp" id="cf-cta" type="url" placeholder="https://…" />
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;font-size:0.82rem;color:var(--text-mid);cursor:pointer;">
+            <input type="checkbox" id="cf-new-tab" style="width:15px;height:15px;accent-color:var(--brand);cursor:pointer;" />
+            Open in new tab
+          </label>
         </div>
         <div class="form-grid-full">
           <div class="preview-wrap">
@@ -592,8 +600,6 @@
   }
 
   function renderCtrlCard(c, msgCount) {
-    const fromStr = c.active_from ? c.active_from.slice(0,10) : '';
-    const toStr   = c.active_to   ? c.active_to.slice(0,10)   : '';
     return `
       <div class="ctrl-card ${c.is_active ? 'is-active' : ''}" id="ctrl-card-${c.control_id}">
         <div class="ctrl-card-header">
@@ -615,16 +621,6 @@
               <div class="toggle-thumb"></div>
             </label>
           </div>
-        </div>
-        <div class="ctrl-card-actions">
-          <div class="date-pair">
-            <span class="date-pair-label">From</span>
-            <input class="inp-date" type="date" value="${fromStr}" id="from-${c.control_id}" />
-            <span class="date-pair-label">To</span>
-            <input class="inp-date" type="date" value="${toStr}" id="to-${c.control_id}" />
-            <button class="btn-save-date" onclick="saveDates('${c.control_id}')">Save dates</button>
-          </div>
-          <button class="btn-danger-sm" id="del-btn-${c.control_id}" onclick="confirmDelete('${c.control_id}', '${escHtml(c.control_name)}', ${msgCount})">Delete</button>
         </div>
       </div>
     `;
@@ -853,6 +849,10 @@
             <div class="form-grid-full">
               <label class="form-lbl">CTA URL</label>
               <input class="form-inp" id="se-cta-${c.control_id}" type="url" value="${escHtml(pm?.cta_url || '')}" />
+              <label style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;font-size:0.82rem;color:var(--text-mid);cursor:pointer;">
+                <input type="checkbox" id="se-new-tab-${c.control_id}" ${pm?.cta_new_tab ? 'checked' : ''} style="width:15px;height:15px;accent-color:var(--brand);cursor:pointer;" />
+                Open in new tab
+              </label>
             </div>
             <div class="form-grid-full">
               <div class="preview-wrap">
@@ -917,7 +917,8 @@
     const cond  = document.getElementById(`se-cond-${controlId}`).value;
     const prio  = parseInt(document.getElementById(`se-prio-${controlId}`).value) || 50;
     const text  = document.getElementById(`se-text-${controlId}`).value.trim();
-    const cta   = document.getElementById(`se-cta-${controlId}`).value.trim() || null;
+    const cta    = document.getElementById(`se-cta-${controlId}`).value.trim() || null;
+    const newTab = document.getElementById(`se-new-tab-${controlId}`).checked;
 
     if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control name is required.'; return; }
 
@@ -933,13 +934,13 @@
     if (messageId) {
       const { error: pmErr } = await sb
         .from('platform_messages')
-        .update({ message_text: text, cta_url: cta, last_updated_at: new Date().toISOString() })
+        .update({ message_text: text, cta_url: cta, cta_new_tab: newTab, last_updated_at: new Date().toISOString() })
         .eq('message_id', messageId);
       if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message save failed: ' + pmErr.message; return; }
     } else {
       const { error: pmErr } = await sb
         .from('platform_messages')
-        .insert({ control_id: controlId, teacher_id: null, message_text: text, cta_url: cta });
+        .insert({ control_id: controlId, teacher_id: null, message_text: text, cta_url: cta, cta_new_tab: newTab });
       if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message insert failed: ' + pmErr.message; return; }
     }
 
@@ -981,7 +982,8 @@
     const from  = document.getElementById('sf-from').value || null;
     const to    = document.getElementById('sf-to').value || null;
     const text  = document.getElementById('sf-text').value.trim();
-    const cta   = document.getElementById('sf-cta').value.trim() || null;
+    const cta     = document.getElementById('sf-cta').value.trim() || null;
+    const newTab  = document.getElementById('sf-new-tab').checked;
 
     if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control name is required.'; btn.disabled = false; return; }
     if (!text) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message text is required.'; btn.disabled = false; return; }
@@ -998,7 +1000,7 @@
     // INSERT platform_messages row
     const { error: pmErr } = await sb
       .from('platform_messages')
-      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta });
+      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta, cta_new_tab: newTab });
 
     if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control saved but message insert failed: ' + pmErr.message; btn.disabled = false; return; }
 
@@ -1008,6 +1010,7 @@
 
     // Reset form
     ['sf-name','sf-from','sf-to','sf-text','sf-cta'].forEach(id => { document.getElementById(id).value = id === 'sf-priority' ? '50' : ''; });
+    document.getElementById('sf-new-tab').checked = false;
     document.getElementById('sf-priority').value = '50';
     document.getElementById('sf-type').value = 'announcement';
     document.getElementById('sf-condition').value = 'always';
@@ -1178,6 +1181,7 @@
     const to     = document.getElementById('cf-to').value || null;
     const text   = document.getElementById('cf-text').value.trim();
     const cta    = document.getElementById('cf-cta').value.trim() || null;
+    const newTab = document.getElementById('cf-new-tab').checked;
 
     if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Campaign name is required.'; btn.disabled = false; return; }
     if (!text) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message text is required.'; btn.disabled = false; return; }
@@ -1194,7 +1198,7 @@
     // INSERT one template platform_messages row (teacher_id=null)
     const { error: pmErr } = await sb
       .from('platform_messages')
-      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta });
+      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta, cta_new_tab: newTab });
 
     if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control saved but message row failed: ' + pmErr.message; btn.disabled = false; return; }
 
@@ -1204,6 +1208,7 @@
 
     // Reset form
     ['cf-name','cf-target','cf-sql','cf-from','cf-to','cf-text','cf-cta'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('cf-new-tab').checked = false;
     document.getElementById('cf-type').value = 'promo';
     updateCampaignPreview();
 
