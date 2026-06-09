@@ -164,6 +164,13 @@
     .banner-preview.type-promo        { border-left-color: var(--success); }
     .preview-empty { color: var(--text-light); font-style: italic; }
 
+    /* ── Token chips ── */
+    .token-chips-wrap { margin-top: 6px; }
+    .token-chips-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; }
+    .token-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .token-chip { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; background: var(--info-light); color: var(--info); border: 1px solid var(--info-border); border-radius: 6px; font-size: 0.75rem; font-weight: 600; font-family: monospace; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+    .token-chip:hover { background: #DBEAFE; border-color: var(--info); }
+
     /* ── Expandable targeting SQL ── */
     .targeting-sql-wrap { margin-top: 10px; }
     .btn-expand { background: none; border: none; font-size: 0.78rem; font-weight: 600; color: var(--text-light); cursor: pointer; padding: 0; transition: color 0.15s; }
@@ -268,11 +275,11 @@
 
       <div class="form-grid">
         <div>
-          <label class="form-lbl" for="sf-name">Control name</label>
+          <label class="form-lbl" for="sf-name">Message name</label>
           <input class="form-inp" id="sf-name" type="text" placeholder="e.g. Trial ending warning" />
         </div>
         <div>
-          <label class="form-lbl" for="sf-type">Message type</label>
+          <label class="form-lbl" for="sf-type">Message type <span style="font-weight:400;text-transform:none;letter-spacing:0;">(box style)</span></label>
           <select class="form-sel" id="sf-type" onchange="updateStandingPreview()">
             <option value="announcement">Announcement</option>
             <option value="alert">Alert</option>
@@ -303,6 +310,16 @@
         <div class="form-grid-full">
           <label class="form-lbl" for="sf-text">Message text (HTML inline elements + emoji supported)</label>
           <textarea class="form-textarea" id="sf-text" placeholder="e.g. ⏰ Your trial ends in <strong>3 days</strong> — upgrade to keep access." oninput="updateStandingPreview()"></textarea>
+          <div class="token-chips-wrap">
+            <div class="token-chips-label">Available variables — tap to insert</div>
+            <div class="token-chips">
+              <span class="token-chip" onclick="insertToken('sf-text', '{{seats_used}}')">{{seats_used}}</span>
+              <span class="token-chip" onclick="insertToken('sf-text', '{{seat_limit}}')">{{seat_limit}}</span>
+              <span class="token-chip" onclick="insertToken('sf-text', '{{seats_remaining}}')">{{seats_remaining}}</span>
+              <span class="token-chip" onclick="insertToken('sf-text', '{{days_overdue}}')">{{days_overdue}}</span>
+              <span class="token-chip" onclick="insertToken('sf-text', '{{subscription_tier}}')">{{subscription_tier}}</span>
+            </div>
+          </div>
         </div>
         <div class="form-grid-full">
           <label class="form-lbl" for="sf-cta">CTA URL (optional — makes banner tappable)</label>
@@ -795,11 +812,11 @@
         <div id="se-${c.control_id}" class="hidden" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
           <div class="form-grid">
             <div>
-              <label class="form-lbl">Control name</label>
+              <label class="form-lbl">Message name</label>
               <input class="form-inp" id="se-name-${c.control_id}" type="text" value="${escHtml(c.control_name)}" />
             </div>
             <div>
-              <label class="form-lbl">Message type</label>
+              <label class="form-lbl">Message type <span style="font-weight:400;text-transform:none;letter-spacing:0;">(box style)</span></label>
               <select class="form-sel" id="se-type-${c.control_id}" onchange="updateStandingEditPreview('${c.control_id}')">
                 <option value="announcement" ${c.message_type==='announcement'?'selected':''}>Announcement</option>
                 <option value="alert"        ${c.message_type==='alert'?'selected':''}>Alert</option>
@@ -822,6 +839,16 @@
             <div class="form-grid-full">
               <label class="form-lbl">Message text</label>
               <textarea class="form-textarea" id="se-text-${c.control_id}" oninput="updateStandingEditPreview('${c.control_id}')">${escHtml(pm?.message_text || '')}</textarea>
+              <div class="token-chips-wrap">
+                <div class="token-chips-label">Available variables — tap to insert</div>
+                <div class="token-chips">
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{seats_used}}')">{{seats_used}}</span>
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{seat_limit}}')">{{seat_limit}}</span>
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{seats_remaining}}')">{{seats_remaining}}</span>
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{days_overdue}}')">{{days_overdue}}</span>
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{subscription_tier}}')">{{subscription_tier}}</span>
+                </div>
+              </div>
             </div>
             <div class="form-grid-full">
               <label class="form-lbl">CTA URL</label>
@@ -1181,6 +1208,20 @@
     updateCampaignPreview();
 
     setTimeout(() => loadCampaignsTab(), 1500);
+  };
+
+  // ── Token insert helper ───────────────────────────────────────────────
+  window.insertToken = function(textareaId, token) {
+    const ta  = document.getElementById(textareaId);
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end   = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
+    // Reposition cursor after inserted token
+    ta.selectionStart = ta.selectionEnd = start + token.length;
+    ta.focus();
+    // Fire input event so preview and dirty state update
+    ta.dispatchEvent(new Event('input'));
   };
 
   // ── Shared helpers ────────────────────────────────────────────────────
