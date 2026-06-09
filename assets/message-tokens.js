@@ -47,7 +47,6 @@ export async function resolveTokens(messageText, supabase, teacherId, seriesId) 
         .from('students')
         .select('student_id', { count: 'exact', head: true })
         .eq('teacher_id', teacherId)
-        .eq('series_id', seriesId)
         .eq('student_status', 'active'),
     ]);
 
