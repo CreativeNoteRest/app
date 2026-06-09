@@ -841,139 +841,158 @@
     window.goAccount  = () => { window.location.href = '/account.html'; };
 
     // ── Platform message banner ──────────────────────────────────────
-    // Fetches active platform_messages for this teacher on page load.
-    // Two targeting modes:
-    //   broadcast — target = 'broadcast', teacher_id NULL. Shows to all.
-    //   targeted  — target = 'targeted',  teacher_id set. Shows to that
-    //               teacher only.
-    // Audience enum is Tier B (future). All active messages currently
-    // pass the audience check — store 'all' when inserting for now.
-    // message_text supports inline HTML — platform-authored only,
-    // never user content. Safe to render with innerHTML.
-    // Banner is hidden entirely when no qualifying messages exist.
+    // Reads from active_platform_messages view — a join of
+    // platform_messages + message_control. The view applies is_active
+    // and date window filters. A single fetch returns all candidate
+    // rows; client-side filtering then applies series scope, teacher
+    // targeting, and display_condition evaluation.
+    //
+    // display_condition keys map to JS functions evaluated against the
+    // teacher's current context (from sessionStorage). Campaign rows
+    // use 'campaign' which always passes — cohort was defined at
+    // injection time. message_text supports inline HTML and {{tokens}};
+    // token resolution is a future step (wdn-095). Safe to render with
+    // innerHTML — platform-authored content only, never user input.
+    // Banner is hidden entirely when no qualifying messages remain.
 
     (async function initMessageBanner() {
       if (!TEACHER_ID || !SERIES_ID) return;
 
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
-
-      const baseFilter = (q) => q
-        .eq('is_active', true)
-        .or(`series_id.eq.${SERIES_ID},series_id.is.null`)
-        .or(`active_from.is.null,active_from.lte.${today}`)
-        .or(`active_to.is.null,active_to.gte.${today}`);
-
-      const cols = 'message_id, message_type, message_text, cta_url, priority';
-
-      // Fetch 1: broadcast messages (target = 'broadcast', no teacher filter)
-      const { data: broadcasts, error: bErr } = await baseFilter(
-        supabase.from('platform_messages').select(cols).eq('target', 'broadcast')
-      );
-
-      // Fetch 2: messages targeted to this specific teacher
-      const { data: targeted, error: tErr } = await baseFilter(
-        supabase.from('platform_messages').select(cols)
-          .eq('target', 'targeted')
-          .eq('teacher_id', TEACHER_ID)
-      );
-
-      if (bErr) console.warn('platform_messages broadcast fetch failed:', bErr.message);
-      if (tErr) console.warn('platform_messages targeted fetch failed:', tErr.message);
-
-      // Merge and sort by priority (lower = first)
-      const qualifying = [
-        ...(broadcasts || []),
-        ...(targeted  || [])
-      ].sort((a, b) => a.priority - b.priority);
-
-      if (qualifying.length === 0) return;
-
-      // ── Border colour lookup by message_type ─────────────────────
-      const typeClass = {
-        alert:        'type-alert',
-        announcement: 'type-announcement',
-        promo:        'type-promo'
+      // ── Condition registry ───────────────────────────────────────
+      // Add new conditions here as standing message types are defined.
+      // ctx values come from sessionStorage; extend as richer
+      // subscription context becomes available (Tier B).
+      const CONDITIONS = {
+        always:          ()    => true,
+        campaign:        ()    => true,
+        trial_ending:    (ctx) => typeof ctx.trialDaysRemaining === 'number' && ctx.trialDaysRemaining <= 3,
+        account_overdue: (ctx) => typeof ctx.daysOverdue        === 'number' && ctx.daysOverdue > 0,
+        seats_warning:   (ctx) => typeof ctx.seatsRemaining     === 'number' && ctx.seatsRemaining <= 2,
       };
 
-      // ── Build banner ─────────────────────────────────────────────
-      const banner   = document.getElementById('msg-banner');
-      const textWrap = document.getElementById('msg-text-wrap');
-      const dotsEl   = document.getElementById('msg-dots');
+      // ── Teacher context for condition evaluation ─────────────────
+      // Extend when sessionStorage keys are populated upstream.
+      const ctx = {
+        trialDaysRemaining: parseFloat(sessionStorage.getItem('trial_days_remaining') ?? 'NaN'),
+        daysOverdue:        parseFloat(sessionStorage.getItem('days_overdue')          ?? 'NaN'),
+        seatsRemaining:     parseFloat(sessionStorage.getItem('seats_remaining')       ?? 'NaN'),
+      };
 
-      let currentIdx = 0;
+      try {
+        const cols = 'message_id, message_type, display_condition, message_text, cta_url, priority, teacher_id, series_id';
 
-      function applyMessage(idx) {
-        const msg = qualifying[idx];
+        const { data: rows, error } = await supabase
+          .from('active_platform_messages')
+          .select(cols);
 
-        // Swap type class
-        banner.classList.remove('type-alert', 'type-announcement', 'type-promo');
-        if (typeClass[msg.message_type]) banner.classList.add(typeClass[msg.message_type]);
+        if (error) { console.warn('active_platform_messages fetch failed:', error.message); return; }
+        if (!rows || rows.length === 0) return;
 
-        // CTA behaviour — make banner tappable if cta_url present
-        if (msg.cta_url) {
-          banner.classList.add('has-cta');
-          banner.style.cursor = 'pointer';
-          banner.onclick = () => { window.location.href = msg.cta_url; };
-        } else {
-          banner.classList.remove('has-cta');
-          banner.style.cursor = 'default';
-          banner.onclick = null;
+        // ── Filter: series scope + teacher targeting + condition ───
+        const qualifying = rows
+          .filter(m => {
+            // Series scope: match this series or platform-wide (null)
+            if (m.series_id && m.series_id !== SERIES_ID) return false;
+            // Targeting: broadcast (teacher_id null) or this teacher
+            if (m.teacher_id && m.teacher_id !== TEACHER_ID) return false;
+            // Condition evaluation
+            const fn = CONDITIONS[m.display_condition] ?? CONDITIONS.always;
+            return fn(ctx);
+          })
+          .sort((a, b) => a.priority - b.priority);
+
+        if (qualifying.length === 0) return;
+
+        // ── Border colour lookup by message_type ─────────────────
+        const typeClass = {
+          alert:        'type-alert',
+          announcement: 'type-announcement',
+          promo:        'type-promo'
+        };
+
+        // ── Build banner ─────────────────────────────────────────
+        const banner   = document.getElementById('msg-banner');
+        const textWrap = document.getElementById('msg-text-wrap');
+        const dotsEl   = document.getElementById('msg-dots');
+
+        let currentIdx = 0;
+
+        function applyMessage(idx) {
+          const msg = qualifying[idx];
+
+          // Swap type class
+          banner.classList.remove('type-alert', 'type-announcement', 'type-promo');
+          if (typeClass[msg.message_type]) banner.classList.add(typeClass[msg.message_type]);
+
+          // CTA behaviour — make banner tappable if cta_url present
+          if (msg.cta_url) {
+            banner.classList.add('has-cta');
+            banner.style.cursor = 'pointer';
+            banner.onclick = () => { window.location.href = msg.cta_url; };
+          } else {
+            banner.classList.remove('has-cta');
+            banner.style.cursor = 'default';
+            banner.onclick = null;
+          }
+
+          // Update dots
+          dotsEl.querySelectorAll('.msg-dot').forEach((d, i) => {
+            d.classList.toggle('active', i === idx);
+          });
         }
 
-        // Update dots
-        dotsEl.querySelectorAll('.msg-dot').forEach((d, i) => {
-          d.classList.toggle('active', i === idx);
-        });
-      }
-
-      function showMessage(idx, animate) {
-        if (!animate) {
-          // First render — no fade, just show
-          textWrap.innerHTML = '';
-          const el = document.createElement('div');
-          el.className = 'msg-text visible';
-          el.innerHTML = qualifying[idx].message_text;
-          textWrap.appendChild(el);
-          applyMessage(idx);
-          return;
-        }
-
-        // Fade: fade out current, swap content, fade in
-        const current = textWrap.querySelector('.msg-text.visible');
-        if (current) {
-          current.classList.remove('visible'); // triggers CSS opacity 0 transition
-          setTimeout(() => {
+        function showMessage(idx, animate) {
+          if (!animate) {
+            // First render — no fade, just show
             textWrap.innerHTML = '';
             const el = document.createElement('div');
             el.className = 'msg-text visible';
             el.innerHTML = qualifying[idx].message_text;
             textWrap.appendChild(el);
             applyMessage(idx);
-          }, 520); // slightly past the 0.5s CSS transition
-        } else {
-          showMessage(idx, false);
+            return;
+          }
+
+          // Fade: fade out current, swap content, fade in
+          const current = textWrap.querySelector('.msg-text.visible');
+          if (current) {
+            current.classList.remove('visible'); // triggers CSS opacity 0 transition
+            setTimeout(() => {
+              textWrap.innerHTML = '';
+              const el = document.createElement('div');
+              el.className = 'msg-text visible';
+              el.innerHTML = qualifying[idx].message_text;
+              textWrap.appendChild(el);
+              applyMessage(idx);
+            }, 520); // slightly past the 0.5s CSS transition
+          } else {
+            showMessage(idx, false);
+          }
         }
-      }
 
-      // Build dot indicators (only shown when >1 message)
-      if (qualifying.length > 1) {
-        qualifying.forEach((_, i) => {
-          const dot = document.createElement('div');
-          dot.className = 'msg-dot' + (i === 0 ? ' active' : '');
-          dotsEl.appendChild(dot);
-        });
-      }
+        // Build dot indicators (only shown when >1 message)
+        if (qualifying.length > 1) {
+          qualifying.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'msg-dot' + (i === 0 ? ' active' : '');
+            dotsEl.appendChild(dot);
+          });
+        }
 
-      // Initial render
-      showMessage(0, false);
-      banner.style.display = 'flex';
+        // Initial render
+        showMessage(0, false);
+        banner.style.display = 'flex';
 
-      // Cycle if multiple messages (8 second interval)
-      if (qualifying.length > 1) {
-        setInterval(() => {
-          currentIdx = (currentIdx + 1) % qualifying.length;
-          showMessage(currentIdx, true);
-        }, 8000);
+        // Cycle if multiple messages (8 second interval)
+        if (qualifying.length > 1) {
+          setInterval(() => {
+            currentIdx = (currentIdx + 1) % qualifying.length;
+            showMessage(currentIdx, true);
+          }, 8000);
+        }
+
+      } catch (err) {
+        console.warn('initMessageBanner error:', err.message);
       }
 
     })(); // end initMessageBanner
