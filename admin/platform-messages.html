@@ -788,13 +788,16 @@
               <span class="ctrl-card-detail">priority ${c.priority}</span>
             </div>
           </div>
-          <div class="toggle-wrap">
-            <span class="toggle-label">${c.is_active ? 'On' : 'Off'}</span>
-            <label class="toggle">
-              <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleStanding('${c.control_id}', this.checked, '${c.message_type}')" />
-              <div class="toggle-track"></div>
-              <div class="toggle-thumb"></div>
-            </label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn-secondary" onclick="toggleStandingEdit('${c.control_id}')">Edit</button>
+            <div class="toggle-wrap">
+              <span class="toggle-label">${c.is_active ? 'On' : 'Off'}</span>
+              <label class="toggle">
+                <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleStanding('${c.control_id}', this.checked, '${c.message_type}')" />
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -868,9 +871,6 @@
           </div>
         </div>
 
-        <div class="ctrl-card-actions" style="margin-top:8px;">
-          <button class="btn-secondary" onclick="toggleStandingEdit('${c.control_id}')">Edit</button>
-        </div>
       </div>
     `;
   }
