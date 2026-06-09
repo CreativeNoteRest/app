@@ -102,7 +102,7 @@
 
     /* ── Badges ── */
     .badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
-    .badge-alert        { background: var(--danger-light);  color: var(--danger);  border: 1px solid var(--danger-border); }
+    .badge-neutral { background: var(--card); color: var(--text-mid); border: 1px solid var(--border); }
     .badge-announcement { background: var(--brand-light);   color: var(--brand);   border: 1px solid #F5C9A0; }
     .badge-promo        { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
     .badge-active       { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
@@ -602,9 +602,9 @@
             <div class="ctrl-card-meta">
               <span class="badge badge-${c.message_type}">${c.message_type}</span>
               <span class="badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">${c.is_active ? 'active' : 'inactive'}</span>
-              <span class="ctrl-card-detail">${escHtml(c.display_condition)}</span>
-              <span class="ctrl-card-detail">priority ${c.priority}</span>
-              <span class="ctrl-card-detail">${msgCount} message row${msgCount !== 1 ? 's' : ''}</span>
+              <span class="badge badge-neutral">${escHtml(c.display_condition)}</span>
+              <span class="badge badge-neutral">priority ${c.priority}</span>
+              <span class="badge badge-neutral">${msgCount} message row${msgCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
           <div class="toggle-wrap">
