@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Message Admin — Creative Note</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand:          #E26B0A;
+      --brand-light:    #FCE4D6;
+      --text:           #1A1A1A;
+      --text-mid:       #5A5A5A;
+      --text-light:     #9A9A9A;
+      --surface:        #FAFAF8;
+      --card:           #FFFFFF;
+      --border:         #E8E4DF;
+      --radius:         14px;
+      --shadow:         0 2px 16px rgba(0,0,0,0.07);
+      --danger:         #DC2626;
+      --danger-light:   #FEF2F2;
+      --danger-border:  #FECACA;
+      --success:        #16A34A;
+      --success-light:  #F0FDF4;
+      --success-border: #BBF7D0;
+      --warn:           #F59E0B;
+      --warn-light:     #FFFBEB;
+      --warn-border:    #FDE68A;
+      --info:           #2563EB;
+      --info-light:     #EFF6FF;
+      --info-border:    #BFDBFE;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0.35; }
+    .header-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-light); letter-spacing: 0.04em; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-email { font-size: 0.78rem; color: var(--text-light); }
+    .btn-back { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-decoration: none; margin-right: 4px; transition: color 0.15s; }
+    .btn-back:hover { color: var(--brand); }
+    .btn-signout { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--brand); }
+
+    /* ── Login ── */
+    .login-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+    .login-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 0.82rem; color: var(--text-mid); margin-bottom: 28px; line-height: 1.5; }
+    .field-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+    .field-input { width: 100%; height: 46px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: var(--surface); outline: none; margin-bottom: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226,107,10,0.12); background: #fff; }
+    .btn-login { width: 100%; height: 48px; margin-top: 8px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-family: 'DM Serif Display', serif; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(226,107,10,0.28); transition: opacity 0.15s; }
+    .btn-login:hover { opacity: 0.88; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { margin-top: 14px; padding: 10px 14px; background: var(--danger-light); border: 1px solid var(--danger-border); border-radius: 8px; font-size: 0.82rem; color: var(--danger); }
+
+    /* ── Layout ── */
+    .main { max-width: 960px; margin: 0 auto; padding: 20px 24px 80px; }
+    .page-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 2px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text); letter-spacing: -0.02em; margin-bottom: 2px; }
+    .page-title em { color: var(--brand); font-style: italic; }
+    .page-subtitle { font-size: 0.8rem; color: var(--text-mid); margin-bottom: 14px; line-height: 1.4; }
+
+    /* ── Page tabs ── */
+    .page-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .page-tab { height: 40px; padding: 0 22px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 0.88rem; font-weight: 600; color: var(--text-light); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+    .page-tab:hover { color: var(--text-mid); }
+    .page-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+    .card-tag { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); margin-bottom: 2px; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 10px; }
+
+    /* ── Buttons ── */
+    .btn-primary { height: 36px; padding: 0 20px; background: var(--brand); color: #fff; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-secondary { height: 34px; padding: 0 14px; background: var(--card); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-danger-sm { height: 30px; padding: 0 12px; background: none; color: var(--danger); border: 1px solid var(--danger-border); border-radius: 7px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-danger-sm:hover { background: var(--danger-light); }
+    .btn-danger-sm.confirm { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    /* ── Messages / feedback ── */
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
+    .msg-error   { background: var(--danger-light); border: 1px solid var(--danger-border); color: var(--danger); }
+    .msg-success { background: var(--success-light); border: 1px solid var(--success-border); color: var(--success); }
+    .msg-info    { background: var(--info-light);    border: 1px solid var(--info-border);    color: var(--info); }
+
+    /* ── Spinner ── */
+    .spinner { width: 15px; height: 15px; border: 2.5px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-mid); padding: 20px 0; }
+
+    /* ── Badges ── */
+    .badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+    .badge-alert        { background: var(--danger-light);  color: var(--danger);  border: 1px solid var(--danger-border); }
+    .badge-announcement { background: var(--brand-light);   color: var(--brand);   border: 1px solid #F5C9A0; }
+    .badge-promo        { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-active       { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .badge-inactive     { background: var(--surface);       color: var(--text-light); border: 1px solid var(--border); }
+
+    /* ── Summary pills ── */
+    .summary-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border); background: var(--card); color: var(--text-mid); }
+    .pill-count { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    .pill-alert        { border-color: var(--danger-border);  background: var(--danger-light);  color: var(--danger); }
+    .pill-announcement { border-color: #F5C9A0;              background: var(--brand-light);   color: var(--brand); }
+    .pill-promo        { border-color: var(--success-border); background: var(--success-light); color: var(--success); }
+
+    /* ── Control cards (Panel 1) ── */
+    .ctrl-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s; }
+    .ctrl-card.is-active { border-color: #BBF7D0; }
+    .ctrl-card-header { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .ctrl-card-name { font-weight: 600; font-size: 0.92rem; color: var(--text); flex: 1; min-width: 160px; line-height: 1.3; }
+    .ctrl-card-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+    .ctrl-card-detail { font-size: 0.78rem; color: var(--text-light); }
+    .ctrl-card-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* ── Toggle switch ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 7px; }
+    .toggle-label { font-size: 0.78rem; font-weight: 600; color: var(--text-mid); }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+    .toggle input:checked + .toggle-track { background: var(--success); }
+    .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); pointer-events: none; }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+
+    /* ── Inline date inputs ── */
+    .date-pair { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .date-pair-label { font-size: 0.72rem; color: var(--text-light); white-space: nowrap; }
+    .inp-date { height: 30px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+    .inp-date:focus { border-color: var(--brand); background: #fff; }
+    .btn-save-date { height: 30px; padding: 0 10px; background: var(--brand); color: #fff; border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    .btn-save-date:hover { opacity: 0.85; }
+
+    /* ── Form grid ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid-full { grid-column: 1 / -1; }
+    .form-lbl { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 5px; }
+    .form-inp { width: 100%; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+    .form-inp:focus { border-color: var(--brand); background: #fff; }
+    .form-sel { width: 100%; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; cursor: pointer; }
+    .form-sel:focus { border-color: var(--brand); }
+    .form-textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 80px; transition: border-color 0.15s; line-height: 1.5; }
+    .form-textarea:focus { border-color: var(--brand); background: #fff; }
+    .form-row-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+
+    /* ── Live banner preview ── */
+    .preview-wrap { margin-top: 14px; }
+    .preview-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
+    .banner-preview { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 14px 16px; font-size: 0.82rem; color: var(--text-mid); line-height: 1.55; border-left: 4px solid var(--border); transition: border-left-color 0.2s; min-height: 48px; word-break: break-word; }
+    .banner-preview.type-alert        { border-left-color: var(--danger); }
+    .banner-preview.type-announcement { border-left-color: var(--brand); }
+    .banner-preview.type-promo        { border-left-color: var(--success); }
+    .preview-empty { color: var(--text-light); font-style: italic; }
+
+    /* ── Expandable targeting SQL ── */
+    .targeting-sql-wrap { margin-top: 10px; }
+    .btn-expand { background: none; border: none; font-size: 0.78rem; font-weight: 600; color: var(--text-light); cursor: pointer; padding: 0; transition: color 0.15s; }
+    .btn-expand:hover { color: var(--brand); }
+    .targeting-sql-box { width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-family: monospace; font-size: 0.78rem; color: var(--text-mid); resize: vertical; min-height: 70px; outline: none; }
+
+    /* ── Empty state ── */
+    .empty-state { padding: 40px 0; text-align: center; color: var(--text-light); font-size: 0.88rem; }
+
+    /* ── Section header row ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--text); }
+
+    /* ── Confirm overlay ── */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .confirm-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+    .confirm-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+    .confirm-body { font-size: 0.85rem; color: var(--text-mid); line-height: 1.55; margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    .hidden { display: none !important; }
+    .mt8  { margin-top: 8px; }
+    .mt12 { margin-top: 12px; }
+    .mt16 { margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <a class="btn-back" href="/admin/index.html">← Admin</a>
+    <span class="header-dot"></span>
+    <span class="header-title">Creative Note</span>
+    <span class="header-dot"></span>
+    <span class="header-sub">Message Admin</span>
+  </div>
+  <div class="header-right hidden" id="header-right">
+    <span class="header-email" id="header-email"></span>
+    <button class="btn-signout" id="btn-signout">Sign out</button>
+  </div>
+</header>
+
+<!-- ── Login ── -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin sign in</div>
+    <div class="login-sub">Creative Note administration. Access restricted to approved administrators.</div>
+    <label class="field-label" for="inp-email">Email</label>
+    <input class="field-input" id="inp-email" type="email" autocomplete="email" placeholder="your@email.com" />
+    <label class="field-label" for="inp-password">Password</label>
+    <input class="field-input" id="inp-password" type="password" autocomplete="current-password" placeholder="Password" style="margin-bottom:0" />
+    <div id="login-error" class="login-error hidden"></div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+  </div>
+</div>
+
+<!-- ── Main app ── -->
+<div id="view-app" class="hidden">
+<main class="main">
+
+  <div class="page-label">Administration</div>
+  <h1 class="page-title">Platform <em>messages</em></h1>
+  <p class="page-subtitle">Manage the banner messages shown to teachers on the main menu. Create standing rules-based messages or targeted campaigns.</p>
+
+  <div class="page-tabs">
+    <button class="page-tab active" id="tab-active-btn"   onclick="switchTab('active')">Active Messages</button>
+    <button class="page-tab"        id="tab-standing-btn" onclick="switchTab('standing')">Standing Messages</button>
+    <button class="page-tab"        id="tab-campaigns-btn" onclick="switchTab('campaigns')">Campaigns</button>
+  </div>
+
+  <!-- ══ TAB: Active Messages ══ -->
+  <div id="tab-active">
+
+    <div id="active-msg" class="hidden"></div>
+    <div id="active-loading" class="loading-row hidden"><span class="spinner"></span> Loading…</div>
+
+    <!-- Summary pills -->
+    <div class="summary-pills" id="summary-pills"></div>
+
+    <!-- Control cards list -->
+    <div id="ctrl-list"></div>
+
+  </div>
+
+  <!-- ══ TAB: Standing Messages ══ -->
+  <div id="tab-standing" class="hidden">
+
+    <div id="standing-msg" class="hidden"></div>
+    <div id="standing-loading" class="loading-row hidden"><span class="spinner"></span> Loading…</div>
+
+    <div class="section-header">
+      <div class="section-title">Standing messages</div>
+      <button class="btn-primary" onclick="showStandingForm()">+ New standing message</button>
+    </div>
+
+    <div id="standing-list"></div>
+
+    <!-- New standing message form -->
+    <div id="standing-form" class="card hidden mt16">
+      <div class="card-tag">New standing message</div>
+      <div class="card-title">Create a rules-based message</div>
+
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl" for="sf-name">Control name</label>
+          <input class="form-inp" id="sf-name" type="text" placeholder="e.g. Trial ending warning" />
+        </div>
+        <div>
+          <label class="form-lbl" for="sf-type">Message type</label>
+          <select class="form-sel" id="sf-type" onchange="updateStandingPreview()">
+            <option value="announcement">Announcement</option>
+            <option value="alert">Alert</option>
+            <option value="promo">Promo</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl" for="sf-condition">Display condition</label>
+          <select class="form-sel" id="sf-condition">
+            <option value="always">always — shows to all</option>
+            <option value="trial_ending">trial_ending — ≤3 days left</option>
+            <option value="account_overdue">account_overdue — billing overdue</option>
+            <option value="seats_warning">seats_warning — ≤2 seats left</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl" for="sf-priority">Priority (lower = first)</label>
+          <input class="form-inp" id="sf-priority" type="number" value="50" min="1" max="999" />
+        </div>
+        <div>
+          <label class="form-lbl" for="sf-from">Active from (optional)</label>
+          <input class="form-inp inp-date" id="sf-from" type="date" />
+        </div>
+        <div>
+          <label class="form-lbl" for="sf-to">Active to (optional)</label>
+          <input class="form-inp inp-date" id="sf-to" type="date" />
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="sf-text">Message text (HTML inline elements + emoji supported)</label>
+          <textarea class="form-textarea" id="sf-text" placeholder="e.g. ⏰ Your trial ends in <strong>3 days</strong> — upgrade to keep access." oninput="updateStandingPreview()"></textarea>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="sf-cta">CTA URL (optional — makes banner tappable)</label>
+          <input class="form-inp" id="sf-cta" type="url" placeholder="https://…" />
+        </div>
+        <div class="form-grid-full">
+          <div class="preview-wrap">
+            <div class="preview-label">Live preview</div>
+            <div class="banner-preview type-announcement" id="sf-preview"><span class="preview-empty">Type a message above to preview</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-actions">
+        <button class="btn-primary" id="sf-save-btn" onclick="saveStandingMessage()">Save message</button>
+        <button class="btn-secondary" onclick="hideStandingForm()">Cancel</button>
+        <span id="sf-save-msg" class="hidden" style="font-size:0.82rem;"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ TAB: Campaigns ══ -->
+  <div id="tab-campaigns" class="hidden">
+
+    <div id="campaigns-msg" class="hidden"></div>
+    <div id="campaigns-loading" class="loading-row hidden"><span class="spinner"></span> Loading…</div>
+
+    <div class="section-header">
+      <div class="section-title">Campaigns</div>
+      <button class="btn-primary" onclick="showCampaignForm()">+ New campaign</button>
+    </div>
+
+    <div id="campaigns-list"></div>
+
+    <!-- New campaign form -->
+    <div id="campaign-form" class="card hidden mt16">
+      <div class="card-tag">New campaign</div>
+      <div class="card-title">Create a targeted campaign</div>
+
+      <div class="msg msg-info mt8" style="margin-bottom:14px;">
+        Teacher rows are injected manually via Supabase SQL after creating the campaign shell. The targeting SQL you enter here is recorded for reference only — it is not executed by this UI.
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl" for="cf-name">Campaign name</label>
+          <input class="form-inp" id="cf-name" type="text" placeholder="e.g. Summer upgrade push" />
+        </div>
+        <div>
+          <label class="form-lbl" for="cf-type">Message type</label>
+          <select class="form-sel" id="cf-type" onchange="updateCampaignPreview()">
+            <option value="promo">Promo</option>
+            <option value="announcement">Announcement</option>
+            <option value="alert">Alert</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="cf-target">Target description</label>
+          <input class="form-inp" id="cf-target" type="text" placeholder="e.g. Teachers on free tier with >5 active students" />
+        </div>
+        <div>
+          <label class="form-lbl" for="cf-from">Active from</label>
+          <input class="form-inp inp-date" id="cf-from" type="date" />
+        </div>
+        <div>
+          <label class="form-lbl" for="cf-to">Active to</label>
+          <input class="form-inp inp-date" id="cf-to" type="date" />
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="cf-sql">Targeting SQL (reference only — not executed)</label>
+          <textarea class="form-textarea" id="cf-sql" placeholder="SELECT teacher_id FROM teachers WHERE …" style="font-family:monospace;font-size:0.82rem;"></textarea>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="cf-text">Message text (HTML inline elements + emoji supported)</label>
+          <textarea class="form-textarea" id="cf-text" placeholder="e.g. 🎹 Unlock unlimited students with <strong>Creative Note Pro</strong>." oninput="updateCampaignPreview()"></textarea>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl" for="cf-cta">CTA URL (optional)</label>
+          <input class="form-inp" id="cf-cta" type="url" placeholder="https://…" />
+        </div>
+        <div class="form-grid-full">
+          <div class="preview-wrap">
+            <div class="preview-label">Live preview</div>
+            <div class="banner-preview type-promo" id="cf-preview"><span class="preview-empty">Type a message above to preview</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-actions">
+        <button class="btn-primary" id="cf-save-btn" onclick="saveCampaign()">Save campaign</button>
+        <button class="btn-secondary" onclick="hideCampaignForm()">Cancel</button>
+        <span id="cf-save-msg" class="hidden" style="font-size:0.82rem;"></span>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<!-- ── Delete confirm overlay ── -->
+<div id="delete-overlay" class="confirm-overlay hidden">
+  <div class="confirm-card">
+    <div class="confirm-title">Delete message control?</div>
+    <div class="confirm-body" id="delete-confirm-body">This will permanently delete the control record and all associated platform message rows. This cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn-secondary" onclick="cancelDelete()">Cancel</button>
+      <button class="btn-primary" style="background:var(--danger);" id="delete-confirm-btn" onclick="executeDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL  = 'https://xaayekfrlphyyxenhcjl.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhYXlla2ZybHBoeXl4ZW5oY2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MTYwMjAsImV4cCI6MjA4OTA5MjAyMH0.dNSck8DCC3p-qarBO4afSl4jJnHyv3DKT04AFg67Tgw';
+  const SERIES_ID     = '96c05aaa-0329-4582-a35c-51423afc21dd';
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ── Elements ────────────────────────────────────────────────────────────
+  const elLogin       = document.getElementById('view-login');
+  const elApp         = document.getElementById('view-app');
+  const elHeaderR     = document.getElementById('header-right');
+  const elHeaderEmail = document.getElementById('header-email');
+  const elBtnSignout  = document.getElementById('btn-signout');
+  const elBtnLogin    = document.getElementById('btn-login');
+  const elInpEmail    = document.getElementById('inp-email');
+  const elInpPw       = document.getElementById('inp-password');
+  const elLoginErr    = document.getElementById('login-error');
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let pendingDeleteId   = null;   // control_id queued for deletion
+  let currentTab        = 'active';
+  let allControls       = [];     // cached after active-tab load
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  async function checkSession() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) await showApp(session.user.email);
+  }
+
+  async function showApp(email) {
+    const { data: { user } } = await sb.auth.getUser();
+    const { data, error } = await sb.from('teachers').select('is_admin').eq('auth_user_id', user.id).single();
+    if (error || !data?.is_admin) {
+      await sb.auth.signOut();
+      showLoginErr('This account does not have administrator access.');
+      return;
+    }
+    elLogin.classList.add('hidden');
+    elApp.classList.remove('hidden');
+    elHeaderR.classList.remove('hidden');
+    elHeaderEmail.textContent = email;
+    loadActiveTab();
+  }
+
+  function showLoginErr(msg) {
+    elLoginErr.textContent = msg;
+    elLoginErr.classList.remove('hidden');
+  }
+
+  elBtnLogin.addEventListener('click', async () => {
+    const email = elInpEmail.value.trim();
+    const pw    = elInpPw.value;
+    if (!email || !pw) { showLoginErr('Email and password are required.'); return; }
+    elBtnLogin.disabled = true;
+    elBtnLogin.textContent = 'Signing in…';
+    elLoginErr.classList.add('hidden');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error || !data.session) {
+      elBtnLogin.disabled = false;
+      elBtnLogin.textContent = 'Sign in';
+      showLoginErr(error?.message || 'Sign-in failed.');
+      return;
+    }
+    await showApp(data.user.email);
+    elBtnLogin.disabled = false;
+    elBtnLogin.textContent = 'Sign in';
+  });
+
+  elInpPw.addEventListener('keydown', e => { if (e.key === 'Enter') elBtnLogin.click(); });
+
+  elBtnSignout.addEventListener('click', async () => {
+    await sb.auth.signOut();
+    elApp.classList.add('hidden');
+    elLogin.classList.remove('hidden');
+    elHeaderR.classList.add('hidden');
+    elInpPw.value = '';
+  });
+
+  // ── Tab switching ────────────────────────────────────────────────────────
+  window.switchTab = function(tab) {
+    currentTab = tab;
+    ['active','standing','campaigns'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+      document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === tab);
+    });
+    if (tab === 'active')    loadActiveTab();
+    if (tab === 'standing')  loadStandingTab();
+    if (tab === 'campaigns') loadCampaignsTab();
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PANEL 1: Active Messages
+  // ═══════════════════════════════════════════════════════════════════════
+
+  async function loadActiveTab() {
+    const elList    = document.getElementById('ctrl-list');
+    const elLoading = document.getElementById('active-loading');
+    const elMsg     = document.getElementById('active-msg');
+    const elPills   = document.getElementById('summary-pills');
+
+    elLoading.classList.remove('hidden');
+    elList.innerHTML = '';
+    elPills.innerHTML = '';
+    elMsg.classList.add('hidden');
+
+    // Fetch all message_control rows
+    const { data: controls, error: ctrlErr } = await sb
+      .from('message_control')
+      .select('*')
+      .eq('series_id', SERIES_ID)
+      .order('priority', { ascending: true });
+
+    if (ctrlErr) {
+      elLoading.classList.add('hidden');
+      showTabMsg('active', 'error', 'Failed to load message controls: ' + ctrlErr.message);
+      return;
+    }
+
+    // Fetch platform_messages counts per control_id
+    const { data: pmRows, error: pmErr } = await sb
+      .from('platform_messages')
+      .select('control_id');
+
+    elLoading.classList.add('hidden');
+
+    if (pmErr) {
+      showTabMsg('active', 'error', 'Failed to load message counts: ' + pmErr.message);
+      return;
+    }
+
+    // Build count map
+    const countMap = {};
+    (pmRows || []).forEach(r => { countMap[r.control_id] = (countMap[r.control_id] || 0) + 1; });
+
+    allControls = controls || [];
+
+    // Summary pills
+    const totalActive = allControls.filter(c => c.is_active).length;
+    const byType = { alert: 0, announcement: 0, promo: 0 };
+    allControls.filter(c => c.is_active).forEach(c => { if (byType[c.message_type] !== undefined) byType[c.message_type]++; });
+
+    elPills.innerHTML = `
+      <div class="pill"><span class="pill-count">${totalActive}</span> active</div>
+      ${byType.alert        ? `<div class="pill pill-alert"><span class="pill-count">${byType.alert}</span> alert</div>` : ''}
+      ${byType.announcement ? `<div class="pill pill-announcement"><span class="pill-count">${byType.announcement}</span> announcement</div>` : ''}
+      ${byType.promo        ? `<div class="pill pill-promo"><span class="pill-count">${byType.promo}</span> promo</div>` : ''}
+    `;
+
+    if (allControls.length === 0) {
+      elList.innerHTML = '<div class="empty-state">No message controls found. Create one in Standing Messages or Campaigns.</div>';
+      return;
+    }
+
+    elList.innerHTML = allControls.map(c => renderCtrlCard(c, countMap[c.control_id] || 0)).join('');
+  }
+
+  function renderCtrlCard(c, msgCount) {
+    const fromStr = c.active_from ? c.active_from.slice(0,10) : '';
+    const toStr   = c.active_to   ? c.active_to.slice(0,10)   : '';
+    return `
+      <div class="ctrl-card ${c.is_active ? 'is-active' : ''}" id="ctrl-card-${c.control_id}">
+        <div class="ctrl-card-header">
+          <div style="flex:1;min-width:0;">
+            <div class="ctrl-card-name">${escHtml(c.control_name)}</div>
+            <div class="ctrl-card-meta">
+              <span class="badge badge-${c.message_type}">${c.message_type}</span>
+              <span class="badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">${c.is_active ? 'active' : 'inactive'}</span>
+              <span class="ctrl-card-detail">${escHtml(c.display_condition)}</span>
+              <span class="ctrl-card-detail">priority ${c.priority}</span>
+              <span class="ctrl-card-detail">${msgCount} message row${msgCount !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">${c.is_active ? 'On' : 'Off'}</span>
+            <label class="toggle">
+              <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleActive('${c.control_id}', this.checked)" />
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+        <div class="ctrl-card-actions">
+          <div class="date-pair">
+            <span class="date-pair-label">From</span>
+            <input class="inp-date" type="date" value="${fromStr}" id="from-${c.control_id}" />
+            <span class="date-pair-label">To</span>
+            <input class="inp-date" type="date" value="${toStr}" id="to-${c.control_id}" />
+            <button class="btn-save-date" onclick="saveDates('${c.control_id}')">Save dates</button>
+          </div>
+          <button class="btn-danger-sm" id="del-btn-${c.control_id}" onclick="confirmDelete('${c.control_id}', '${escHtml(c.control_name)}', ${msgCount})">Delete</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.toggleActive = async function(controlId, newValue) {
+    const { error } = await sb
+      .from('message_control')
+      .update({ is_active: newValue, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+
+    if (error) {
+      alert('Failed to update: ' + error.message);
+      // Revert the checkbox
+      loadActiveTab();
+      return;
+    }
+
+    // Update card class and label in-place
+    const card = document.getElementById(`ctrl-card-${controlId}`);
+    if (card) {
+      card.classList.toggle('is-active', newValue);
+      const lbl = card.querySelector('.toggle-label');
+      if (lbl) lbl.textContent = newValue ? 'On' : 'Off';
+    }
+
+    // Refresh pills
+    loadActiveTab();
+  };
+
+  window.saveDates = async function(controlId) {
+    const fromVal = document.getElementById(`from-${controlId}`).value || null;
+    const toVal   = document.getElementById(`to-${controlId}`).value || null;
+
+    const { error } = await sb
+      .from('message_control')
+      .update({ active_from: fromVal, active_to: toVal, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+
+    if (error) { alert('Failed to save dates: ' + error.message); return; }
+
+    const btn = document.querySelector(`#ctrl-card-${controlId} .btn-save-date`);
+    if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => { btn.textContent = 'Save dates'; }, 2000); }
+  };
+
+  // ── Delete flow ──────────────────────────────────────────────────────────
+  window.confirmDelete = function(controlId, name, msgCount) {
+    pendingDeleteId = controlId;
+    document.getElementById('delete-confirm-body').textContent =
+      `"${name}" and its ${msgCount} associated platform message row${msgCount !== 1 ? 's' : ''} will be permanently deleted. This cannot be undone.`;
+    document.getElementById('delete-overlay').classList.remove('hidden');
+  };
+
+  window.cancelDelete = function() {
+    pendingDeleteId = null;
+    document.getElementById('delete-overlay').classList.add('hidden');
+  };
+
+  window.executeDelete = async function() {
+    if (!pendingDeleteId) return;
+    const btn = document.getElementById('delete-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+
+    // Step 1: delete platform_messages rows (FK has NO ACTION — must go first)
+    const { error: pmErr } = await sb
+      .from('platform_messages')
+      .delete()
+      .eq('control_id', pendingDeleteId);
+
+    if (pmErr) {
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+      alert('Failed to delete message rows: ' + pmErr.message);
+      return;
+    }
+
+    // Step 2: delete the message_control row
+    const { error: ctrlErr } = await sb
+      .from('message_control')
+      .delete()
+      .eq('control_id', pendingDeleteId);
+
+    if (ctrlErr) {
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+      alert('Message rows deleted but control delete failed: ' + ctrlErr.message);
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+    pendingDeleteId = null;
+    document.getElementById('delete-overlay').classList.add('hidden');
+    loadActiveTab();
+    // Also refresh whichever content tab is open
+    if (currentTab === 'standing')  loadStandingTab();
+    if (currentTab === 'campaigns') loadCampaignsTab();
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PANEL 2: Standing Messages
+  // ═══════════════════════════════════════════════════════════════════════
+
+  async function loadStandingTab() {
+    const elList    = document.getElementById('standing-list');
+    const elLoading = document.getElementById('standing-loading');
+    const elMsg     = document.getElementById('standing-msg');
+
+    elLoading.classList.remove('hidden');
+    elList.innerHTML = '';
+    elMsg.classList.add('hidden');
+
+    const { data: controls, error: ctrlErr } = await sb
+      .from('message_control')
+      .select('*')
+      .eq('series_id', SERIES_ID)
+      .neq('display_condition', 'campaign')
+      .order('priority', { ascending: true });
+
+    if (ctrlErr) {
+      elLoading.classList.add('hidden');
+      showTabMsg('standing', 'error', 'Failed to load: ' + ctrlErr.message);
+      return;
+    }
+
+    // Fetch linked platform_messages (one per standing control, teacher_id=null)
+    const controlIds = (controls || []).map(c => c.control_id);
+    let pmMap = {};
+    if (controlIds.length > 0) {
+      const { data: pmRows } = await sb
+        .from('platform_messages')
+        .select('*')
+        .in('control_id', controlIds)
+        .is('teacher_id', null);
+      (pmRows || []).forEach(r => { pmMap[r.control_id] = r; });
+    }
+
+    elLoading.classList.add('hidden');
+
+    if (!controls || controls.length === 0) {
+      elList.innerHTML = '<div class="empty-state">No standing messages yet.</div>';
+      return;
+    }
+
+    elList.innerHTML = controls.map(c => renderStandingCard(c, pmMap[c.control_id])).join('');
+  }
+
+  function renderStandingCard(c, pm) {
+    const previewText = pm?.message_text || '';
+    const previewClass = `banner-preview type-${c.message_type}`;
+    const previewContent = previewText
+      ? previewText
+      : '<span style="color:var(--text-light);font-style:italic;">No message text</span>';
+
+    return `
+      <div class="ctrl-card ${c.is_active ? 'is-active' : ''}" id="sc-${c.control_id}">
+        <div class="ctrl-card-header">
+          <div style="flex:1;min-width:0;">
+            <div class="ctrl-card-name">${escHtml(c.control_name)}</div>
+            <div class="ctrl-card-meta">
+              <span class="badge badge-${c.message_type}">${c.message_type}</span>
+              <span class="badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">${c.is_active ? 'active' : 'inactive'}</span>
+              <span class="ctrl-card-detail">${escHtml(c.display_condition)}</span>
+              <span class="ctrl-card-detail">priority ${c.priority}</span>
+            </div>
+          </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">${c.is_active ? 'On' : 'Off'}</span>
+            <label class="toggle">
+              <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleStanding('${c.control_id}', this.checked, '${c.message_type}')" />
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Message preview -->
+        <div style="margin-top:10px;">
+          <div class="${previewClass}">${previewContent}</div>
+          ${pm?.cta_url ? `<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">CTA: ${escHtml(pm.cta_url)}</div>` : ''}
+        </div>
+
+        <!-- Inline edit form (hidden by default) -->
+        <div id="se-${c.control_id}" class="hidden" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div class="form-grid">
+            <div>
+              <label class="form-lbl">Control name</label>
+              <input class="form-inp" id="se-name-${c.control_id}" type="text" value="${escHtml(c.control_name)}" />
+            </div>
+            <div>
+              <label class="form-lbl">Message type</label>
+              <select class="form-sel" id="se-type-${c.control_id}" onchange="updateStandingEditPreview('${c.control_id}')">
+                <option value="announcement" ${c.message_type==='announcement'?'selected':''}>Announcement</option>
+                <option value="alert"        ${c.message_type==='alert'?'selected':''}>Alert</option>
+                <option value="promo"        ${c.message_type==='promo'?'selected':''}>Promo</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-lbl">Display condition</label>
+              <select class="form-sel" id="se-cond-${c.control_id}">
+                <option value="always"          ${c.display_condition==='always'?'selected':''}>always</option>
+                <option value="trial_ending"    ${c.display_condition==='trial_ending'?'selected':''}>trial_ending</option>
+                <option value="account_overdue" ${c.display_condition==='account_overdue'?'selected':''}>account_overdue</option>
+                <option value="seats_warning"   ${c.display_condition==='seats_warning'?'selected':''}>seats_warning</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-lbl">Priority</label>
+              <input class="form-inp" id="se-prio-${c.control_id}" type="number" value="${c.priority}" min="1" max="999" />
+            </div>
+            <div class="form-grid-full">
+              <label class="form-lbl">Message text</label>
+              <textarea class="form-textarea" id="se-text-${c.control_id}" oninput="updateStandingEditPreview('${c.control_id}')">${escHtml(pm?.message_text || '')}</textarea>
+            </div>
+            <div class="form-grid-full">
+              <label class="form-lbl">CTA URL</label>
+              <input class="form-inp" id="se-cta-${c.control_id}" type="url" value="${escHtml(pm?.cta_url || '')}" />
+            </div>
+            <div class="form-grid-full">
+              <div class="preview-wrap">
+                <div class="preview-label">Live preview</div>
+                <div class="banner-preview type-${c.message_type}" id="se-preview-${c.control_id}">${previewContent}</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row-actions">
+            <button class="btn-primary" onclick="saveStandingEdit('${c.control_id}', '${pm?.message_id || ''}')">Save changes</button>
+            <button class="btn-secondary" onclick="closeStandingEdit('${c.control_id}')">Cancel</button>
+            <span id="se-msg-${c.control_id}" class="hidden" style="font-size:0.82rem;"></span>
+          </div>
+        </div>
+
+        <div class="ctrl-card-actions" style="margin-top:8px;">
+          <button class="btn-secondary" onclick="toggleStandingEdit('${c.control_id}')">Edit</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.toggleStanding = async function(controlId, newValue) {
+    const { error } = await sb
+      .from('message_control')
+      .update({ is_active: newValue, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+    if (error) { alert('Failed to update: ' + error.message); loadStandingTab(); return; }
+    const card = document.getElementById(`sc-${controlId}`);
+    if (card) {
+      card.classList.toggle('is-active', newValue);
+      const lbl = card.querySelector('.toggle-label');
+      if (lbl) lbl.textContent = newValue ? 'On' : 'Off';
+    }
+  };
+
+  window.toggleStandingEdit = function(controlId) {
+    const el = document.getElementById(`se-${controlId}`);
+    el.classList.toggle('hidden');
+  };
+
+  window.closeStandingEdit = function(controlId) {
+    document.getElementById(`se-${controlId}`).classList.add('hidden');
+  };
+
+  window.updateStandingEditPreview = function(controlId) {
+    const text = document.getElementById(`se-text-${controlId}`).value;
+    const type = document.getElementById(`se-type-${controlId}`).value;
+    const el   = document.getElementById(`se-preview-${controlId}`);
+    el.className = `banner-preview type-${type}`;
+    el.innerHTML = text || '<span style="color:var(--text-light);font-style:italic;">Type a message to preview</span>';
+  };
+
+  window.saveStandingEdit = async function(controlId, messageId) {
+    const msgEl = document.getElementById(`se-msg-${controlId}`);
+    msgEl.className = '';
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = 'Saving…';
+
+    const name  = document.getElementById(`se-name-${controlId}`).value.trim();
+    const type  = document.getElementById(`se-type-${controlId}`).value;
+    const cond  = document.getElementById(`se-cond-${controlId}`).value;
+    const prio  = parseInt(document.getElementById(`se-prio-${controlId}`).value) || 50;
+    const text  = document.getElementById(`se-text-${controlId}`).value.trim();
+    const cta   = document.getElementById(`se-cta-${controlId}`).value.trim() || null;
+
+    if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control name is required.'; return; }
+
+    // Update message_control
+    const { error: ctrlErr } = await sb
+      .from('message_control')
+      .update({ control_name: name, message_type: type, display_condition: cond, priority: prio, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+
+    if (ctrlErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control save failed: ' + ctrlErr.message; return; }
+
+    // Update or insert platform_messages row
+    if (messageId) {
+      const { error: pmErr } = await sb
+        .from('platform_messages')
+        .update({ message_text: text, cta_url: cta, last_updated_at: new Date().toISOString() })
+        .eq('message_id', messageId);
+      if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message save failed: ' + pmErr.message; return; }
+    } else {
+      const { error: pmErr } = await sb
+        .from('platform_messages')
+        .insert({ control_id: controlId, teacher_id: null, message_text: text, cta_url: cta });
+      if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message insert failed: ' + pmErr.message; return; }
+    }
+
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = 'Saved ✓';
+    setTimeout(() => loadStandingTab(), 1000);
+  };
+
+  // ── New standing message form ─────────────────────────────────────────
+  window.showStandingForm = function() {
+    document.getElementById('standing-form').classList.remove('hidden');
+    document.getElementById('standing-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.hideStandingForm = function() {
+    document.getElementById('standing-form').classList.add('hidden');
+  };
+
+  window.updateStandingPreview = function() {
+    const text = document.getElementById('sf-text').value;
+    const type = document.getElementById('sf-type').value;
+    const el   = document.getElementById('sf-preview');
+    el.className = `banner-preview type-${type}`;
+    el.innerHTML = text || '<span class="preview-empty">Type a message above to preview</span>';
+  };
+
+  window.saveStandingMessage = async function() {
+    const btn   = document.getElementById('sf-save-btn');
+    const msgEl = document.getElementById('sf-save-msg');
+    msgEl.className = '';
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = 'Saving…';
+    btn.disabled = true;
+
+    const name  = document.getElementById('sf-name').value.trim();
+    const type  = document.getElementById('sf-type').value;
+    const cond  = document.getElementById('sf-condition').value;
+    const prio  = parseInt(document.getElementById('sf-priority').value) || 50;
+    const from  = document.getElementById('sf-from').value || null;
+    const to    = document.getElementById('sf-to').value || null;
+    const text  = document.getElementById('sf-text').value.trim();
+    const cta   = document.getElementById('sf-cta').value.trim() || null;
+
+    if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control name is required.'; btn.disabled = false; return; }
+    if (!text) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message text is required.'; btn.disabled = false; return; }
+
+    // INSERT message_control
+    const { data: ctrlData, error: ctrlErr } = await sb
+      .from('message_control')
+      .insert({ series_id: SERIES_ID, control_name: name, message_type: type, display_condition: cond, priority: prio, is_active: false, active_from: from, active_to: to })
+      .select('control_id')
+      .single();
+
+    if (ctrlErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Failed: ' + ctrlErr.message; btn.disabled = false; return; }
+
+    // INSERT platform_messages row
+    const { error: pmErr } = await sb
+      .from('platform_messages')
+      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta });
+
+    if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control saved but message insert failed: ' + pmErr.message; btn.disabled = false; return; }
+
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = 'Saved ✓ — activate it in Active Messages when ready.';
+    btn.disabled = false;
+
+    // Reset form
+    ['sf-name','sf-from','sf-to','sf-text','sf-cta'].forEach(id => { document.getElementById(id).value = id === 'sf-priority' ? '50' : ''; });
+    document.getElementById('sf-priority').value = '50';
+    document.getElementById('sf-type').value = 'announcement';
+    document.getElementById('sf-condition').value = 'always';
+    updateStandingPreview();
+
+    setTimeout(() => loadStandingTab(), 1200);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PANEL 3: Campaigns
+  // ═══════════════════════════════════════════════════════════════════════
+
+  async function loadCampaignsTab() {
+    const elList    = document.getElementById('campaigns-list');
+    const elLoading = document.getElementById('campaigns-loading');
+    const elMsg     = document.getElementById('campaigns-msg');
+
+    elLoading.classList.remove('hidden');
+    elList.innerHTML = '';
+    elMsg.classList.add('hidden');
+
+    const { data: campaigns, error } = await sb
+      .from('message_control')
+      .select('*')
+      .eq('series_id', SERIES_ID)
+      .eq('display_condition', 'campaign')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      elLoading.classList.add('hidden');
+      showTabMsg('campaigns', 'error', 'Failed to load campaigns: ' + error.message);
+      return;
+    }
+
+    // Fetch teacher row counts per campaign
+    const controlIds = (campaigns || []).map(c => c.control_id);
+    let countMap = {};
+    if (controlIds.length > 0) {
+      const { data: pmRows } = await sb
+        .from('platform_messages')
+        .select('control_id')
+        .in('control_id', controlIds)
+        .not('teacher_id', 'is', null);
+      (pmRows || []).forEach(r => { countMap[r.control_id] = (countMap[r.control_id] || 0) + 1; });
+    }
+
+    elLoading.classList.add('hidden');
+
+    if (!campaigns || campaigns.length === 0) {
+      elList.innerHTML = '<div class="empty-state">No campaigns yet.</div>';
+      return;
+    }
+
+    elList.innerHTML = campaigns.map(c => renderCampaignCard(c, countMap[c.control_id] || 0)).join('');
+  }
+
+  function renderCampaignCard(c, teacherCount) {
+    const fromStr = c.active_from ? c.active_from.slice(0,10) : '—';
+    const toStr   = c.active_to   ? c.active_to.slice(0,10)   : '—';
+    const sqlId   = `sql-${c.control_id}`;
+    return `
+      <div class="ctrl-card ${c.is_active ? 'is-active' : ''}" id="camp-${c.control_id}">
+        <div class="ctrl-card-header">
+          <div style="flex:1;min-width:0;">
+            <div class="ctrl-card-name">${escHtml(c.control_name)}</div>
+            <div class="ctrl-card-meta">
+              <span class="badge badge-${c.message_type}">${c.message_type}</span>
+              <span class="badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">${c.is_active ? 'active' : 'inactive'}</span>
+              <span class="ctrl-card-detail">${fromStr} → ${toStr}</span>
+              <span class="ctrl-card-detail">${teacherCount} teacher row${teacherCount !== 1 ? 's' : ''}</span>
+            </div>
+            ${c.target_description ? `<div style="font-size:0.8rem;color:var(--text-mid);margin-top:4px;">${escHtml(c.target_description)}</div>` : ''}
+          </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">${c.is_active ? 'On' : 'Off'}</span>
+            <label class="toggle">
+              <input type="checkbox" ${c.is_active ? 'checked' : ''} onchange="toggleCampaign('${c.control_id}', this.checked)" />
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+
+        ${c.targeting_sql ? `
+          <div class="targeting-sql-wrap">
+            <button class="btn-expand" onclick="toggleSql('${sqlId}')">▶ Targeting SQL</button>
+            <textarea class="targeting-sql-box hidden" id="${sqlId}" readonly>${escHtml(c.targeting_sql)}</textarea>
+          </div>
+        ` : ''}
+
+        <div class="ctrl-card-actions" style="margin-top:8px;">
+          <div class="date-pair">
+            <span class="date-pair-label">From</span>
+            <input class="inp-date" type="date" value="${c.active_from ? c.active_from.slice(0,10) : ''}" id="cfrom-${c.control_id}" />
+            <span class="date-pair-label">To</span>
+            <input class="inp-date" type="date" value="${c.active_to ? c.active_to.slice(0,10) : ''}" id="cto-${c.control_id}" />
+            <button class="btn-save-date" onclick="saveCampaignDates('${c.control_id}')">Save dates</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.toggleCampaign = async function(controlId, newValue) {
+    const { error } = await sb
+      .from('message_control')
+      .update({ is_active: newValue, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+    if (error) { alert('Failed to update: ' + error.message); loadCampaignsTab(); return; }
+    const card = document.getElementById(`camp-${controlId}`);
+    if (card) {
+      card.classList.toggle('is-active', newValue);
+      const lbl = card.querySelector('.toggle-label');
+      if (lbl) lbl.textContent = newValue ? 'On' : 'Off';
+    }
+  };
+
+  window.saveCampaignDates = async function(controlId) {
+    const fromVal = document.getElementById(`cfrom-${controlId}`).value || null;
+    const toVal   = document.getElementById(`cto-${controlId}`).value || null;
+    const { error } = await sb
+      .from('message_control')
+      .update({ active_from: fromVal, active_to: toVal, last_updated_at: new Date().toISOString() })
+      .eq('control_id', controlId);
+    if (error) { alert('Failed to save dates: ' + error.message); return; }
+    const btn = document.querySelector(`#camp-${controlId} .btn-save-date`);
+    if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => { btn.textContent = 'Save dates'; }, 2000); }
+  };
+
+  window.toggleSql = function(sqlId) {
+    const el  = document.getElementById(sqlId);
+    const btn = el.previousElementSibling;
+    const vis = el.classList.toggle('hidden');
+    btn.textContent = (vis ? '▶' : '▼') + ' Targeting SQL';
+  };
+
+  // ── New campaign form ─────────────────────────────────────────────────
+  window.showCampaignForm = function() {
+    document.getElementById('campaign-form').classList.remove('hidden');
+    document.getElementById('campaign-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.hideCampaignForm = function() {
+    document.getElementById('campaign-form').classList.add('hidden');
+  };
+
+  window.updateCampaignPreview = function() {
+    const text = document.getElementById('cf-text').value;
+    const type = document.getElementById('cf-type').value;
+    const el   = document.getElementById('cf-preview');
+    el.className = `banner-preview type-${type}`;
+    el.innerHTML = text || '<span class="preview-empty">Type a message above to preview</span>';
+  };
+
+  window.saveCampaign = async function() {
+    const btn   = document.getElementById('cf-save-btn');
+    const msgEl = document.getElementById('cf-save-msg');
+    msgEl.className = '';
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = 'Saving…';
+    btn.disabled = true;
+
+    const name   = document.getElementById('cf-name').value.trim();
+    const type   = document.getElementById('cf-type').value;
+    const target = document.getElementById('cf-target').value.trim() || null;
+    const sql    = document.getElementById('cf-sql').value.trim() || null;
+    const from   = document.getElementById('cf-from').value || null;
+    const to     = document.getElementById('cf-to').value || null;
+    const text   = document.getElementById('cf-text').value.trim();
+    const cta    = document.getElementById('cf-cta').value.trim() || null;
+
+    if (!name) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Campaign name is required.'; btn.disabled = false; return; }
+    if (!text) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Message text is required.'; btn.disabled = false; return; }
+
+    // INSERT message_control
+    const { data: ctrlData, error: ctrlErr } = await sb
+      .from('message_control')
+      .insert({ series_id: SERIES_ID, control_name: name, message_type: type, display_condition: 'campaign', is_active: false, active_from: from, active_to: to, target_description: target, targeting_sql: sql })
+      .select('control_id')
+      .single();
+
+    if (ctrlErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Failed: ' + ctrlErr.message; btn.disabled = false; return; }
+
+    // INSERT one template platform_messages row (teacher_id=null)
+    const { error: pmErr } = await sb
+      .from('platform_messages')
+      .insert({ control_id: ctrlData.control_id, teacher_id: null, message_text: text, cta_url: cta });
+
+    if (pmErr) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Control saved but message row failed: ' + pmErr.message; btn.disabled = false; return; }
+
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = 'Campaign shell created. Inject teacher rows via Supabase SQL, then activate.';
+    btn.disabled = false;
+
+    // Reset form
+    ['cf-name','cf-target','cf-sql','cf-from','cf-to','cf-text','cf-cta'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('cf-type').value = 'promo';
+    updateCampaignPreview();
+
+    setTimeout(() => loadCampaignsTab(), 1500);
+  };
+
+  // ── Shared helpers ────────────────────────────────────────────────────
+  function showTabMsg(tab, type, text) {
+    const el = document.getElementById(`${tab}-msg`);
+    el.className = `msg msg-${type}`;
+    el.textContent = text;
+    el.classList.remove('hidden');
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  checkSession();
+</script>
+</body>
+</html>
