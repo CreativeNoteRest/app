@@ -430,6 +430,7 @@
 
   <script type="module">
     import { supabase, requireAuth, applyBranding } from '/assets/app.js';
+    import { resolveTokens } from '/assets/message-tokens.js';
 
     // ── Auth + branding ──────────────────────────────────────────────
     await requireAuth();
@@ -983,6 +984,13 @@
             dot.className = 'msg-dot' + (i === 0 ? ' active' : '');
             dotsEl.appendChild(dot);
           });
+        }
+
+        // Resolve {{tokens}} in all qualifying messages before first render
+        for (let i = 0; i < qualifying.length; i++) {
+          qualifying[i].message_text = await resolveTokens(
+            qualifying[i].message_text, supabase, TEACHER_ID, SERIES_ID
+          );
         }
 
         // Initial render
