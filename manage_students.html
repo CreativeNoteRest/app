@@ -499,11 +499,10 @@
 </div>
 
 <script type="module">
-  import { supabase } from '/assets/app.js';
+  import { supabase, requireAuth } from '/assets/app.js';
 
   // ── Auth guard ──────────────────────────────────────────────────────
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { window.location.href = '/wunderkeys/'; throw new Error('Not authenticated'); }
+  await requireAuth();
   const teacherId = sessionStorage.getItem('teacher_id');
   const seriesId  = sessionStorage.getItem('series_id');
   const seriesSlug = sessionStorage.getItem('series_slug') || '';
