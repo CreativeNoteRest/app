@@ -839,6 +839,7 @@
 
   // PDF popup context (loaded at init)
   let alwaysOfferPdf   = true;   // default true; overwritten by init fetch
+  let teacherEmail     = '';     // fetched at init for Let us know CC
   let studentEmailPrimary            = '';
   let studentEmailSecondary          = '';
   let studentEmailTertiary           = '';
@@ -983,7 +984,6 @@
   // ── 9. Call the Edge Function ─────────────────────────────────────
   let retryCount      = 0; // ai-failure retry counter — reset on page load only
   let systemErrorCount = 0; // consecutive system errors
-  let teacherEmail    = ''; // fetched at init for Let us know CC
 
   async function runSessionClose() {
     // Entry guard — check before calling Edge Function
