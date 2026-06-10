@@ -2015,11 +2015,6 @@
       link + '</div>';
   }
 
-  function historyTopThree(text) {
-    if (!text) return '';
-    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 3).join('\n');
-  }
-
   function historyMarkdownLinks(escapedText) {
     return escapedText.replace(
       /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
