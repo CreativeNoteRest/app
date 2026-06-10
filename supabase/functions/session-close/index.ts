@@ -51,16 +51,6 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders() });
   }
 
-  // Shared secret guard — reject unauthenticated callers before any AI work
-  const functionSecret = Deno.env.get('CN_FUNCTION_SECRET');
-  const incomingSecret = req.headers.get('x-function-secret');
-  if (!functionSecret || incomingSecret !== functionSecret) {
-    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
-    });
-  }
-
   try {
     const body = await req.json();
     const {
@@ -126,6 +116,20 @@ Deno.serve(async (req: Request) => {
     const sessionMmdd = `${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Ownership check — verify the session belongs to this teacher before any AI work.
+    // Service role key bypasses RLS, so this explicit check is required.
+    const { data: ownerCheck } = await supabase
+      .from('sessions')
+      .select('session_id')
+      .eq('session_id', session_id)
+      .eq('teacher_id', teacher_id)
+      .eq('session_status', 'active')
+      .single();
+
+    if (!ownerCheck) {
+      return jsonResponse({ success: false, error: 'Session not found or access denied.' }, 403);
+    }
 
     const data = await fetchSessionData({
       supabase,
@@ -1503,7 +1507,7 @@ function delay(ms: number): Promise<void> {
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-function-secret',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
