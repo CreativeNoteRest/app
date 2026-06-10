@@ -113,7 +113,6 @@
 
     /* ── Message banner ─────────────────────────────────────────────── */
     .msg-banner {
-      display: none;                        /* hidden until messages load */
       background: var(--card);
       border: 1px solid var(--border);
       border-left-width: 4px;              /* coloured left indicator */
@@ -435,12 +434,6 @@
     // ── Auth + branding ──────────────────────────────────────────────
     await requireAuth();
     applyBranding();
-
-    // ── Series name in header ────────────────────────────────────────
-    const seriesSlug = sessionStorage.getItem('series_slug') || 'wunderkeys';
-    const nameMap = { wunderkeys: 'WunderKeys' };
-    const seriesEl = document.getElementById('series-name');
-    if (seriesEl && nameMap[seriesSlug]) seriesEl.textContent = nameMap[seriesSlug];
 
     // ── Teacher name — populate immediately from sessionStorage ─────
     const displayName = sessionStorage.getItem('teacher_display_name') || '';
