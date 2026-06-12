@@ -783,7 +783,15 @@
   // ── Utilities ─────────────────────────────────────────────────────────
   function formatDate(iso) {
     if (!iso) return '';
-    return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+    // YYYY-MM-DD strings (session_date) must be parsed as local dates to avoid
+    // UTC-to-local offset shifting the date back by one day for teachers in
+    // negative UTC offsets (e.g. Eastern time, UTC-4).
+    // Full ISO timestamps (pdf_sent_at) include time+offset and parse correctly.
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+    const date = dateOnly
+      ? (() => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); })()
+      : new Date(iso);
+    return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   function escHtml(str) {
