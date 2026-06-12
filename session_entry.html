@@ -1166,12 +1166,32 @@
   // 3. Branding + header
   applyBranding();
 
-  const today = new Date().toLocaleDateString('en-CA', {
+  // Fetch session_date from sessions table to display the lesson's origination date.
+  // Falls back to today if fetch fails -- ensures header always shows something.
+  let sessionDateDisplay = new Date().toLocaleDateString('en-CA', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
+  try {
+    const { data: sessRow } = await supabase
+      .from('sessions')
+      .select('session_date')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (sessRow?.session_date) {
+      // session_date is YYYY-MM-DD -- parse as local date to avoid UTC offset shift
+      const [y, m, d] = sessRow.session_date.split('-').map(Number);
+      sessionDateDisplay = new Date(y, m - 1, d).toLocaleDateString('en-CA', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+  } catch (e) {
+    console.warn('Could not fetch session_date for header:', e);
+  }
+
   document.getElementById('hdr-student').textContent = studentName || 'Student';
-  document.getElementById('hdr-meta').textContent    = today;
+  document.getElementById('hdr-meta').textContent    = sessionDateDisplay;
 
   const nameMap = { wunderkeys: 'Creative Note REST' };
   const seriesSlug = sessionStorage.getItem('series_slug') || '';
@@ -1181,7 +1201,7 @@
   document.getElementById('auth-loading').style.display = 'none';
   document.getElementById('app-shell').style.display    = 'flex';
 
-  // 4. Teacher timezone -- fetched once, used to calculate purge_after on every insert
+  // 4. Teacher timezone -- fetched once, used to format entry timestamps in the log
   let teacherTimezone = 'America/Toronto';
 
   try {
@@ -1198,61 +1218,6 @@
     console.warn('Could not fetch teacher timezone, using fallback:', e);
   }
 
-  function calcPurgeAfter() {
-    // Build "tonight at 02:00" in the teacher's IANA timezone, return as UTC ISO string.
-    // Strategy: find today's date in teacher timezone, construct 02:00 local,
-    // then calculate the UTC equivalent by comparing two Date objects.
-    const now = new Date();
-
-    // Get today's date components in the teacher's timezone
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: teacherTimezone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    }).formatToParts(now);
-
-    const y = parts.find(p => p.type === 'year').value;
-    const m = parts.find(p => p.type === 'month').value;
-    const d = parts.find(p => p.type === 'day').value;
-
-    // Build a UTC Date that represents midnight in the teacher's timezone today,
-    // by finding the difference between local midnight (UTC) and teacher midnight.
-    // Simpler approach: use the timezone-aware formatter to find what UTC time
-    // corresponds to 02:00 in the teacher's timezone today.
-
-    // Format a reference point: what does 02:00 UTC look like in teacher timezone?
-    // We iterate: start from today's date at 02:00 UTC and adjust.
-    // Cleanest reliable approach: construct the date string and use Intl to resolve it.
-
-    // Build candidate: today at 02:00 in teacher local time
-    // We express this as a UTC timestamp by computing the offset directly.
-    // Offset = UTC_time - local_time for the same instant.
-    const localMidnightUTC = Date.UTC(
-      parseInt(y), parseInt(m) - 1, parseInt(d), 0, 0, 0
-    );
-
-    // Find what UTC hour corresponds to 02:00 in teacher timezone on this date.
-    // We do this by checking each UTC hour until the teacher-local hour equals 2.
-    let target = null;
-    for (let h = 0; h < 30; h++) {
-      const candidate = new Date(localMidnightUTC + h * 3600000);
-      const localHour = parseInt(
-        new Intl.DateTimeFormat('en-CA', {
-          timeZone: teacherTimezone,
-          hour: '2-digit', minute: '2-digit', hour12: false
-        }).formatToParts(candidate).find(p => p.type === 'hour').value
-      );
-      if (localHour === 2) { target = candidate; break; }
-    }
-
-    // If 2am today is already in the past, advance to 2am tomorrow.
-    if (target && target <= now) {
-      target = new Date(target.getTime() + 24 * 3600000);
-    }
-
-    return target ? target.toISOString()
-      : new Date(Date.now() + 26 * 3600000).toISOString(); // safe fallback
-  }
 
   // Entry log element -- declared here so loadExistingEntries() can use it
   const entryLog = document.getElementById('entry-log');
@@ -1558,8 +1523,7 @@
       entry_sequence: nextSequence,
       entry_text:     text,
       entry_source:   'teacher',
-      exact_wording:  false,
-      purge_after:    calcPurgeAfter()
+      exact_wording:  false
     };
 
     const { error } = await supabase

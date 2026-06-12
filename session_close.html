@@ -756,7 +756,7 @@
     </div>
   </div>
 
-  <!-- PDF popup modal (shown after Write 5 if always_offer_pdf = true) -->
+  <!-- PDF popup modal (shown after all writes complete if always_offer_pdf = true) -->
   <div id="pdf-modal" class="pdf-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-heading">
     <div class="pdf-modal">
       <div class="pdf-modal-heading" id="pdf-modal-heading">Email the practice plan?</div>
@@ -1542,14 +1542,6 @@
         .eq('session_id', SESSION_ID);
 
       if (w4Err) throw new Error(`Write 4 failed (session_entries delete): ${w4Err.message}`);
-
-      // ── Write 5: Delete active_sessions row ────────────────────
-      const { error: w5Err } = await supabase
-        .from('active_sessions')
-        .delete()
-        .eq('teacher_id', TEACHER_ID);
-
-      if (w5Err) throw new Error(`Write 5 failed (active_sessions delete): ${w5Err.message}`);
 
       // ── All writes complete -- show PDF popup or navigate home ────
       if (alwaysOfferPdf) {

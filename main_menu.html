@@ -512,11 +512,10 @@
       selectedStudent = null;
     };
 
-    // ── Load: orphan fix then student list ───────────────────────────
+    // ── Load student list ────────────────────────────────────────────
     async function loadSheet() {
       showState('state-loading');
       try {
-        await fixOrphans();
         await loadStudents();
       } catch (err) {
         console.error('Sheet load error:', err);
@@ -525,53 +524,7 @@
     }
     window.loadSheet = loadSheet;
 
-    // ── Step 1: Fix orphans silently ─────────────────────────────────
-    // An orphan is an active Sessions row for this teacher with no
-    // corresponding Active_Sessions row. We write the missing row so
-    // the student appears as suspended in the list.
-    async function fixOrphans() {
-      const today = todayDate();
-
-      // Find any active sessions for this teacher today
-      const { data: activeSessions, error: sessErr } = await supabase
-        .from('sessions')
-        .select('session_id, student_id, series_id')
-        .eq('teacher_id', TEACHER_ID)
-        .eq('session_status', 'active')
-        .eq('session_date', today);
-
-      if (sessErr || !activeSessions || activeSessions.length === 0) return;
-
-      // Check what Active_Sessions row exists for this teacher
-      const { data: activeRow } = await supabase
-        .from('active_sessions')
-        .select('session_id')
-        .eq('teacher_id', TEACHER_ID)
-        .maybeSingle();
-
-      const activeSessionId = activeRow?.session_id;
-
-      for (const s of activeSessions) {
-        if (s.session_id !== activeSessionId) {
-          // Orphan -- write missing Active_Sessions row
-          const { error: upsertErr } = await supabase
-            .from('active_sessions')
-            .upsert({
-              teacher_id: TEACHER_ID,
-              session_id: s.session_id,
-              student_id: s.student_id,
-              series_id:  s.series_id || SERIES_ID
-            }, { onConflict: 'teacher_id' });
-
-          if (upsertErr) {
-            // Non-blocking -- log and continue
-            console.warn('Orphan fix failed for session', s.session_id, upsertErr.message);
-          }
-        }
-      }
-    }
-
-    // ── Step 2: Load students ────────────────────────────────────────
+    // ── Load students ────────────────────────────────────────────────
     async function loadStudents() {
 
       // Load teacher timezone (non-blocking -- use default if fails)
@@ -599,19 +552,29 @@
         return;
       }
 
-      // Get suspended student_id from Active_Sessions (one row per teacher)
-      const { data: activeRow } = await supabase
-        .from('active_sessions')
-        .select('student_id')
+      // Find all students with a pending (active) session for this teacher.
+      // Query sessions directly -- supports multiple pending students across any date.
+      const { data: pendingSessions } = await supabase
+        .from('sessions')
+        .select('student_id, session_id, lesson_book_id')
         .eq('teacher_id', TEACHER_ID)
-        .maybeSingle();
+        .eq('session_status', 'active');
 
-      const suspendedStudentId = activeRow?.student_id || null;
+      // Build a map of student_id -> { session_id, lesson_book_id } for quick lookup
+      const pendingMap = new Map();
+      for (const s of (pendingSessions ?? [])) {
+        pendingMap.set(s.student_id, {
+          session_id:     s.session_id,
+          lesson_book_id: s.lesson_book_id
+        });
+      }
 
-      // Mark suspended student and sort to top
+      // Mark pending students and sort to top
       students = rawStudents.map(s => ({
         ...s,
-        suspended: s.student_id === suspendedStudentId
+        suspended: pendingMap.has(s.student_id),
+        pending_session_id:      pendingMap.get(s.student_id)?.session_id     ?? null,
+        pending_lesson_book_id:  pendingMap.get(s.student_id)?.lesson_book_id ?? null
       }));
 
       students.sort((a, b) => {
@@ -630,7 +593,7 @@
       setHeader(
         'Select a Student',
         suspendedCount > 0
-          ? `${suspendedCount} session${suspendedCount > 1 ? 's' : ''} in progress`
+          ? `${suspendedCount} pending lesson${suspendedCount > 1 ? 's' : ''}`
           : ''
       );
 
@@ -655,7 +618,7 @@
           <div class="student-avatar">${initial}</div>
           <div class="student-info">
             <div class="student-name">${s.safe_name}</div>
-            ${s.suspended ? '<div class="student-tag">Session in progress</div>' : ''}
+            ${s.suspended ? '<div class="student-tag">Pending lesson</div>' : ''}
           </div>
           <svg class="student-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M9 18l6-6-6-6"/>
@@ -738,15 +701,15 @@
 
         if (student.suspended) {
           // ── Resume path ──────────────────────────────────────────
-          // Active_Sessions row already exists -- just get session_id
-          const { data: activeRow, error: activeErr } = await supabase
-            .from('active_sessions')
-            .select('session_id')
-            .eq('teacher_id', TEACHER_ID)
-            .maybeSingle();
+          // Pending session already exists in sessions table -- use
+          // session_id and lesson_book_id carried on the student object.
+          sessionId = student.pending_session_id;
+          if (!sessionId) throw new Error('Could not find pending session to resume.');
 
-          if (activeErr || !activeRow) throw new Error('Could not find active session to resume.');
-          sessionId = activeRow.session_id;
+          // Use the pending session's book unless teacher just chose a new one
+          if (!bookJustSelected) {
+            bookId = student.pending_lesson_book_id || bookId;
+          }
 
           // If book was just selected, patch Sessions.lesson_book_id (non-blocking)
           if (bookJustSelected && bookId) {
@@ -787,18 +750,6 @@
             });
 
           if (sessErr) throw new Error(`Session write failed: ${sessErr.message}`);
-
-          // Write Active_Sessions row
-          const { error: activeErr } = await supabase
-            .from('active_sessions')
-            .upsert({
-              teacher_id: TEACHER_ID,
-              session_id: sessionId,
-              student_id: student.student_id,
-              series_id:  SERIES_ID
-            }, { onConflict: 'teacher_id' });
-
-          if (activeErr) throw new Error(`Active session write failed: ${activeErr.message}`);
 
           // If book was just selected, also update Students.current_book (non-blocking)
           if (bookJustSelected && bookId) {
