@@ -75,6 +75,23 @@
       font-size: 13px;
       color: var(--text-mid);
       margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-past-lesson {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--brand-light);
+      color: var(--brand-dark);
+      border: 1px solid #F0C8A0;
+      white-space: nowrap;
     }
 
     /* ── Entry log ────────────────────────────────────────────── */
@@ -1286,6 +1303,9 @@
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
+  // sessionDateStr hoisted to module scope -- used by badge, delete handler, and main menu cleanup
+  let sessionDateStr = null;
+
   try {
     const { data: sessRow } = await supabase
       .from('sessions')
@@ -1294,8 +1314,9 @@
       .single();
 
     if (sessRow?.session_date) {
-      // session_date is YYYY-MM-DD -- parse as local date to avoid UTC offset shift
-      const [y, m, d] = sessRow.session_date.split('-').map(Number);
+      sessionDateStr = sessRow.session_date; // YYYY-MM-DD
+      // Parse as local date to avoid UTC offset shift
+      const [y, m, d] = sessionDateStr.split('-').map(Number);
       sessionDateDisplay = new Date(y, m - 1, d).toLocaleDateString('en-CA', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
@@ -1304,8 +1325,23 @@
     console.warn('Could not fetch session_date for header:', e);
   }
 
-  document.getElementById('hdr-student').textContent = studentName || 'Student';
-  document.getElementById('hdr-meta').textContent    = sessionDateDisplay;
+  // Render date and optional past-lesson badge into header-meta
+  const hdrMeta = document.getElementById('hdr-meta');
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isPastLesson = sessionDateStr && sessionDateStr < todayStr;
+
+  hdrMeta.innerHTML = '';
+  const dateSpan = document.createElement('span');
+  dateSpan.textContent = sessionDateDisplay;
+  hdrMeta.appendChild(dateSpan);
+
+  if (isPastLesson) {
+    const badge = document.createElement('span');
+    badge.className   = 'badge-past-lesson';
+    badge.textContent = 'Past Lesson';
+    hdrMeta.appendChild(badge);
+  }
 
   const nameMap = { wunderkeys: 'Creative Note REST' };
   const seriesSlug = sessionStorage.getItem('series_slug') || '';
@@ -1842,23 +1878,7 @@
 
       if (entriesErr) throw entriesErr;
 
-      // Step 2: Determine today's local date (YYYY-MM-DD) to decide soft vs hard delete
-      const now    = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-      // session_date was fetched at page load; re-read from the header meta as fallback
-      // Retrieve from sessionStorage if stored, otherwise fetch from DB
-      let sessionDateStr = sessionStorage.getItem('session_date') || null;
-
-      if (!sessionDateStr) {
-        const { data: sd } = await supabase
-          .from('sessions')
-          .select('session_date')
-          .eq('session_id', sessionId)
-          .single();
-        sessionDateStr = sd?.session_date || null;
-      }
-
+      // Step 2: Determine soft vs hard delete using module-scope date variables
       const isSameDay = sessionDateStr === todayStr;
 
       if (isSameDay) {
