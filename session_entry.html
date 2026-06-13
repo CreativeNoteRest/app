@@ -1325,6 +1325,8 @@
     console.warn('Could not fetch session_date for header:', e);
   }
 
+  document.getElementById('hdr-student').textContent = studentName || 'Student';
+
   // Render date and optional past-lesson badge into header-meta
   const hdrMeta = document.getElementById('hdr-meta');
   const now = new Date();
