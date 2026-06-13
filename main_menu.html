@@ -785,6 +785,22 @@
     window.goHistory  = () => { window.location.href = '/session_history.html'; };
     window.goAccount  = () => { window.location.href = '/account.html'; };
 
+    // ── Pending session count -- written to sessionStorage for banner ─
+    // Fetched at page load so pendingCount is available when the banner
+    // condition registry evaluates. Lightweight count-only query.
+    if (TEACHER_ID) {
+      try {
+        const { data: pendingSessions } = await supabase
+          .from('sessions')
+          .select('session_id')
+          .eq('teacher_id', TEACHER_ID)
+          .eq('session_status', 'active');
+        sessionStorage.setItem('pending_count', (pendingSessions ?? []).length);
+      } catch (_) {
+        // Non-critical -- banner condition will safely return false
+      }
+    }
+
     // ── Platform message banner ──────────────────────────────────────
     // Reads from active_platform_messages view — a join of
     // platform_messages + message_control. The view applies is_active
@@ -813,6 +829,7 @@
         trial_ending:    (ctx) => typeof ctx.trialDaysRemaining === 'number' && ctx.trialDaysRemaining <= 3,
         account_overdue: (ctx) => typeof ctx.daysOverdue        === 'number' && ctx.daysOverdue > 0,
         seats_warning:   (ctx) => typeof ctx.seatsRemaining     === 'number' && ctx.seatsRemaining <= 2,
+        pending_lessons: (ctx) => typeof ctx.pendingCount       === 'number' && ctx.pendingCount >= 1,
       };
 
       // ── Teacher context for condition evaluation ─────────────────
@@ -821,6 +838,7 @@
         trialDaysRemaining: parseFloat(sessionStorage.getItem('trial_days_remaining') ?? 'NaN'),
         daysOverdue:        parseFloat(sessionStorage.getItem('days_overdue')          ?? 'NaN'),
         seatsRemaining:     parseFloat(sessionStorage.getItem('seats_remaining')       ?? 'NaN'),
+        pendingCount:       parseFloat(sessionStorage.getItem('pending_count')         ?? 'NaN'),
       };
 
       try {
