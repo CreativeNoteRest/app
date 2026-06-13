@@ -1255,11 +1255,17 @@
   }
 
   // 7. Entry log rendering
+  // Normalise Supabase timestamp strings to UTC before parsing.
+  // Supabase may return bare ISO strings (no Z / offset) which JS treats as local time.
+  function parseUtcTimestamp(ts) {
+    if (!ts) return new Date();
+    if (ts.endsWith('Z') || ts.includes('+') || ts.lastIndexOf('-') > 10) return new Date(ts);
+    return new Date(ts + 'Z');
+  }
+
   function appendEntryToLog(text, isoTimestamp, entryId, sequence) {
     const opts = { hour: '2-digit', minute: '2-digit', timeZone: teacherTimezone };
-    const time = isoTimestamp
-      ? new Date(isoTimestamp).toLocaleTimeString('en-CA', opts)
-      : new Date().toLocaleTimeString('en-CA', opts);
+    const time = parseUtcTimestamp(isoTimestamp).toLocaleTimeString('en-CA', opts);
 
     const isIgnored = text.startsWith('[IGNORE] ');
     const displayText = isIgnored ? text.slice(9) : text;
@@ -1540,12 +1546,12 @@
     // Fetch the entry_id of the row we just inserted so the card supports ignore toggle
     const { data: inserted } = await supabase
       .from('session_entries')
-      .select('entry_id')
+      .select('entry_id, created_at')
       .eq('session_id', sessionId)
       .eq('entry_sequence', nextSequence - 1)
       .single();
 
-    appendEntryToLog(text, null, inserted?.entry_id, nextSequence - 1);
+    appendEntryToLog(text, inserted?.created_at, inserted?.entry_id, nextSequence - 1);
     return true;
   }
 
