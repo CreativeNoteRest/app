@@ -318,6 +318,7 @@
               <span class="token-chip" onclick="insertToken('sf-text', '{{seat_limit}}')">{{seat_limit}}</span>
               <span class="token-chip" onclick="insertToken('sf-text', '{{seats_remaining}}')">{{seats_remaining}}</span>
               <span class="token-chip" onclick="insertToken('sf-text', '{{subscription_tier}}')">{{subscription_tier}}</span>
+              <span class="token-chip" onclick="insertToken('sf-text', '{{pending_count}}')">{{pending_count}}</span>
             </div>
           </div>
         </div>
@@ -829,6 +830,7 @@
                 <option value="trial_ending"    ${c.display_condition==='trial_ending'?'selected':''}>trial_ending</option>
                 <option value="account_overdue" ${c.display_condition==='account_overdue'?'selected':''}>account_overdue</option>
                 <option value="seats_warning"   ${c.display_condition==='seats_warning'?'selected':''}>seats_warning</option>
+                <option value="pending_lessons" ${c.display_condition==='pending_lessons'?'selected':''}>pending_lessons</option>
               </select>
             </div>
             <div>
@@ -845,6 +847,7 @@
                   <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{seat_limit}}')">{{seat_limit}}</span>
                   <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{seats_remaining}}')">{{seats_remaining}}</span>
                   <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{subscription_tier}}')">{{subscription_tier}}</span>
+                  <span class="token-chip" onclick="insertToken('se-text-${c.control_id}', '{{pending_count}}')">{{pending_count}}</span>
                 </div>
               </div>
             </div>
