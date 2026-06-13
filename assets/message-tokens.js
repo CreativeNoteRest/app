@@ -14,6 +14,7 @@ export const TOKEN_REGISTRY = [
   { token: '{{seat_limit}}',        label: 'seat_limit',        example: '10'   },
   { token: '{{seats_remaining}}',   label: 'seats_remaining',   example: '7'    },
   { token: '{{subscription_tier}}', label: 'subscription_tier', example: 'pro'  },
+  { token: '{{pending_count}}',     label: 'pending_count',     example: '2'    },
 ];
 
 /**
@@ -64,7 +65,8 @@ export async function resolveTokens(messageText, supabase, teacherId, seriesId) 
       .replaceAll('{{subscription_tier}}', tier)
       .replaceAll('{{seat_limit}}',        String(seatLimit))
       .replaceAll('{{seats_used}}',        String(seatsUsed))
-      .replaceAll('{{seats_remaining}}',   String(seatsLeft));
+      .replaceAll('{{seats_remaining}}',   String(seatsLeft))
+      .replaceAll('{{pending_count}}',      String(parseInt(sessionStorage.getItem('pending_count') ?? '0', 10)));
 
   } catch (err) {
     console.warn('resolveTokens error:', err.message);
