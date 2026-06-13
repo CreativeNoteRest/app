@@ -106,6 +106,18 @@
     }
     .session-row:hover { background: var(--brand-light); border-color: var(--brand); }
     .session-row:active { background: #FFE8D4; }
+    .session-row.deleted { background: #F5F5F5; border-color: #E0E0E0; cursor: default; }
+    .session-row.deleted:hover { background: #F5F5F5; border-color: #E0E0E0; }
+    .session-row.deleted:active { background: #F5F5F5; }
+    .session-row.deleted .session-date { color: var(--text-light); }
+    .session-row.deleted .session-book { color: #BBBBBB; }
+    .session-row.deleted .session-page { color: #CCCCCC; }
+    .session-deleted-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      background: #EEEEEE; color: var(--text-light);
+      border: 1px solid #DDDDDD; border-radius: 4px;
+      padding: 1px 6px; margin-top: 4px; letter-spacing: 0.03em;
+    }
     .session-info { flex: 1; min-width: 0; }
     .session-date { font-size: 15px; font-weight: 600; color: var(--text); }
     .session-book { font-size: 13px; color: var(--text-mid); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -437,10 +449,10 @@
 
     const { data: sessions, error: sessErr } = await supabase
       .from('sessions')
-      .select('session_id, session_date, max_lesson_page, pdf_sent_at, pdf_sent_to, lesson_book_id')
+      .select('session_id, session_date, max_lesson_page, pdf_sent_at, pdf_sent_to, lesson_book_id, session_status')
       .eq('teacher_id', teacherId)
       .eq('student_id', studentId)
-      .eq('session_status', 'approved')
+      .in('session_status', ['approved', 'deleted'])
       .order('session_date', { ascending: false });
 
     if (sessErr) { showErr('Could not load lessons. Please try again.'); sessionList.innerHTML = ''; return; }
@@ -474,18 +486,29 @@
 
     let html = '';
     sessions.forEach(s => {
-      const pdfLine = s.pdf_sent_at ? '<div class="pdf-sent-badge">&#10003; PDF sent ' + formatDate(s.pdf_sent_at) + '</div>' : '';
-      html += '<div class="session-row" data-session-id="' + s.session_id + '" role="button" tabindex="0">' +
-        '<div class="session-info">' +
-        '<div class="session-date">' + escHtml(formatDate(s.session_date)) + '</div>' +
-        '<div class="session-book">' + escHtml(s.bookName) + '</div>' +
-        '<div class="session-page">' + escHtml(s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded') + '</div>' +
-        pdfLine + '</div><span class="chevron">&#8250;</span></div>';
+      const isDeleted = s.session_status === 'deleted';
+      if (isDeleted) {
+        html += '<div class="session-row deleted" data-session-id="' + s.session_id + '">' +
+          '<div class="session-info">' +
+          '<div class="session-date">' + escHtml(formatDate(s.session_date)) + '</div>' +
+          '<div class="session-book">' + escHtml(s.bookName) + '</div>' +
+          '<div class="session-page">' + escHtml(s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded') + '</div>' +
+          '<span class="session-deleted-badge">Deleted</span>' +
+          '</div></div>';
+      } else {
+        const pdfLine = s.pdf_sent_at ? '<div class="pdf-sent-badge">&#10003; PDF sent ' + formatDate(s.pdf_sent_at) + '</div>' : '';
+        html += '<div class="session-row" data-session-id="' + s.session_id + '" role="button" tabindex="0">' +
+          '<div class="session-info">' +
+          '<div class="session-date">' + escHtml(formatDate(s.session_date)) + '</div>' +
+          '<div class="session-book">' + escHtml(s.bookName) + '</div>' +
+          '<div class="session-page">' + escHtml(s.max_lesson_page ? 'Page ' + s.max_lesson_page : 'Page not recorded') + '</div>' +
+          pdfLine + '</div><span class="chevron">&#8250;</span></div>';
+      }
     });
 
     sessionList.innerHTML = html;
 
-    sessionList.querySelectorAll('.session-row').forEach(el => {
+    sessionList.querySelectorAll('.session-row:not(.deleted)').forEach(el => {
       el.addEventListener('click', () => { openDetail(el.dataset.sessionId); });
     });
   }
