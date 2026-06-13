@@ -260,7 +260,7 @@
           <button class="btn-howto" id="btn-howto">ⓘ How to get this JSON</button>
         </div>
         <div class="section-hint">Paste the full JSON output from the Claude extraction session. The JSON must cover exactly one book.</div>
-        <textarea id="json-input" class="json-textarea" placeholder='{ "series_id": "...", "book_display_name": "...", ... }'></textarea>
+        <textarea id="json-input" class="json-textarea" placeholder='{ "series_id": "...", "full_display_name": "...", ... }'></textarea>
         <div class="mt8">
           <button class="btn-secondary" id="btn-parse">Validate JSON</button>
         </div>
@@ -305,9 +305,7 @@
 
         <div class="section-label mb8">Import preview</div>
         <div id="preview-strip" class="preview-strip hidden">
-          <div class="preview-row mb8"><span class="preview-label">Display name</span><span class="preview-value" id="pv-display-name">—</span></div>
-          <div class="preview-row mb8"><span class="preview-label">Full display name</span><span class="preview-value" id="pv-full-name">—</span></div>
-          <div class="preview-row mb8"><span class="preview-label">Edition</span><span class="preview-value" id="pv-edition">—</span></div>
+          <div class="preview-row mb8"><span class="preview-label">Book name</span><span class="preview-value" id="pv-full-name">—</span></div>
           <div class="preview-row mb8"><span class="preview-label">Sequence number</span><span class="preview-value" id="pv-seq">—</span></div>
           <div class="preview-row mb8"><span class="preview-label">Units</span><span class="preview-value" id="pv-units">—</span></div>
           <div class="preview-row"><span class="preview-label">Pieces (rows)</span><span class="preview-value" id="pv-pieces">—</span></div>
@@ -616,7 +614,7 @@ elBtnParse.addEventListener('click', () => {
   const warns  = [];
 
   if (!json.series_id)         errors.push('Missing series_id.');
-  if (!json.book_display_name) errors.push('Missing book_display_name.');
+  if (!json.full_display_name) errors.push('Missing full_display_name.');
   if (!Array.isArray(json.units) || json.units.length === 0) errors.push('Missing or empty units array.');
   if (json.sequence_number === null || json.sequence_number === undefined) {
     errors.push('sequence_number is null. This field is required — check the extraction output.');
@@ -651,9 +649,7 @@ elBtnParse.addEventListener('click', () => {
   if (errors.length) { showParseError(errors); return; }
   if (warns.length)  { showParseWarn(warns); }
 
-  const bookDisplayName = json.book_display_name;
-  const edition         = json.edition || null;
-  const fullDisplayName = edition ? `${bookDisplayName} — ${edition}` : bookDisplayName;
+  const fullDisplayName = json.full_display_name;
   const sequenceNumber  = json.sequence_number;
 
   flatRows = [];
@@ -661,9 +657,7 @@ elBtnParse.addEventListener('click', () => {
     (unit.pieces || []).forEach(piece => {
       flatRows.push({
         series_id:            SERIES_ID,
-        book_display_name:    bookDisplayName,
         full_display_name:    fullDisplayName,
-        edition:              edition,
         sequence_number:      sequenceNumber,
         book_status:          'pending',
         unit_label:           unit.unit_label   || null,
@@ -682,9 +676,7 @@ elBtnParse.addEventListener('click', () => {
 
   parsedBook = json;
 
-  document.getElementById('pv-display-name').textContent = bookDisplayName;
-  document.getElementById('pv-full-name').textContent    = fullDisplayName;
-  document.getElementById('pv-edition').textContent      = edition || '(none)';
+  document.getElementById('pv-full-name').textContent = fullDisplayName;
   document.getElementById('pv-seq').textContent          = sequenceNumber;
   document.getElementById('pv-units').textContent        = json.units.length;
   document.getElementById('pv-pieces').textContent       = pieceCount;
@@ -724,11 +716,7 @@ elModeReplace.addEventListener('click', async () => {
   elModeNew.classList.remove('active');
   elPanelNew.classList.add('hidden');
   elPanelReplace.classList.remove('hidden');
-  elExtractedName.textContent = parsedBook?.book_display_name
-    ? (parsedBook.edition
-        ? `${parsedBook.book_display_name} — ${parsedBook.edition}`
-        : parsedBook.book_display_name)
-    : '—';
+  elExtractedName.textContent = parsedBook?.full_display_name || '—';
   if (!booksLoaded) await loadProductionBooks();
 });
 

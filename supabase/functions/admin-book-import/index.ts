@@ -80,14 +80,12 @@ Deno.serve(async (req) => {
   }
 
   // ── Server-side row validation ────────────────────────────────────────
-  // Belt-and-suspenders: client validates first, but we re-check critical
-  // constraints before touching the database.
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i] as Record<string, unknown>;
     const pos = `Row ${i + 1}`;
 
     if (!row.piece_title)         return respond(400, { error: `${pos}: piece_title is required.` });
-    if (!row.book_display_name)   return respond(400, { error: `${pos}: book_display_name is required.` });
+    if (!row.full_display_name)   return respond(400, { error: `${pos}: full_display_name is required.` });
     if (!row.series_id)           return respond(400, { error: `${pos}: series_id is required.` });
     if (row.sequence_number === null || row.sequence_number === undefined) {
       return respond(400, { error: `${pos}: sequence_number is required (cannot be null).` });

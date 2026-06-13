@@ -655,7 +655,7 @@
 
       const { data: books, error: bookErr } = await supabase
         .from('books')
-        .select('book_id, full_display_name, edition')
+        .select('book_id, full_display_name')
         .eq('series_id', SERIES_ID)
         .eq('is_active', true)
         .order('sequence_number', { ascending: true });
