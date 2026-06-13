@@ -1780,8 +1780,25 @@
 
   // 12. Footer actions: Main Menu, Delete Session, Close Lesson
 
-  // Main Menu — navigate immediately, session remains in-progress
-  document.getElementById('btn-main-menu').addEventListener('click', function() {
+  // Main Menu — silently hard-delete session if no entries exist, then navigate
+  document.getElementById('btn-main-menu').addEventListener('click', async function() {
+    try {
+      const { count, error } = await supabase
+        .from('session_entries')
+        .select('entry_id', { count: 'exact', head: true })
+        .eq('session_id', sessionId);
+
+      if (!error && count === 0) {
+        // No entries -- phantom session, remove it silently
+        await supabase
+          .from('sessions')
+          .delete()
+          .eq('session_id', sessionId)
+          .eq('teacher_id', teacherId);
+      }
+    } catch (e) {
+      console.warn('Main menu cleanup check failed, navigating anyway:', e);
+    }
     window.location.href = '/main_menu.html';
   });
 
