@@ -315,31 +315,128 @@
     .status-msg.error   { background: var(--danger-light); color: var(--danger); }
     .status-msg.success { background: var(--success-light); color: var(--success); }
 
-    /* ── Close lesson button ──────────────────────────────────── */
+    /* ── Footer bar — three-button session actions ───────────── */
     .footer-bar {
       flex-shrink: 0;
       padding: 0 16px 12px;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
+    /* Dominant action — orange fill */
     .btn-close-lesson {
       padding: 10px 18px;
       border-radius: var(--radius);
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--text-mid);
+      border: none;
+      background: var(--brand);
+      color: #fff;
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+
+    .btn-close-lesson:hover  { background: var(--brand-dark); }
+    .btn-close-lesson:active { transform: scale(0.97); }
+
+    /* Ghost secondary — Main Menu */
+    .btn-main-menu {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: #fff;
+      color: var(--text-light);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
       -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
-    .btn-close-lesson:hover {
-      border-color: var(--text-mid);
-      color: var(--text);
+    .btn-main-menu:hover { border-color: var(--text-mid); color: var(--text-mid); }
+
+    /* Ghost danger — Delete */
+    .btn-delete-session {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1.5px solid #FECACA;
+      background: #fff;
+      color: var(--danger);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+
+    .btn-delete-session:hover { border-color: var(--danger); background: var(--danger-light); }
+
+    /* ── Delete confirmation modal ────────────────────────────── */
+    .delete-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .delete-modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%; max-width: 680px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+
+    .delete-modal-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem; color: var(--text);
+      letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+
+    .delete-modal-body {
+      font-size: 0.88rem; color: var(--text-mid);
+      line-height: 1.6; margin-bottom: 20px;
+    }
+
+    .delete-modal-actions { display: flex; gap: 10px; }
+
+    .btn-delete-confirm {
+      flex: 2; height: 50px;
+      background: var(--danger); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem; cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-delete-confirm:hover   { opacity: 0.88; }
+    .btn-delete-confirm:active  { transform: scale(0.97); }
+    .btn-delete-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-delete-cancel {
+      flex: 1; height: 50px;
+      background: var(--card); color: var(--text-mid);
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-delete-cancel:hover { border-color: var(--text-mid); color: var(--text); }
+
+    .delete-modal-error {
+      font-size: 0.82rem; color: var(--danger);
+      margin-top: 12px; display: none; line-height: 1.5;
     }
 
     /* ── Auth guard overlay ───────────────────────────────────── */
@@ -1085,9 +1182,26 @@
     </div>
   </div>
 
-  <!-- Footer: Close Lesson stub -->
+  <!-- Footer: session actions -->
   <div class="footer-bar">
+    <button class="btn-main-menu" id="btn-main-menu">← Main Menu</button>
+    <button class="btn-delete-session" id="btn-delete-session">Delete</button>
     <button class="btn-close-lesson" id="btn-close-lesson">Close Lesson</button>
+  </div>
+
+  <!-- Delete lesson confirmation modal -->
+  <div id="delete-modal" class="delete-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-heading">
+    <div class="delete-modal">
+      <div class="delete-modal-heading" id="delete-modal-heading">Delete this lesson?</div>
+      <div class="delete-modal-body" id="delete-modal-body">
+        This will permanently remove this lesson and all notes recorded during it. This action cannot be undone.
+      </div>
+      <div class="delete-modal-actions">
+        <button class="btn-delete-confirm" id="btn-delete-confirm">Delete Lesson</button>
+        <button class="btn-delete-cancel" id="btn-delete-cancel">Cancel</button>
+      </div>
+      <div class="delete-modal-error" id="delete-modal-error"></div>
+    </div>
   </div>
 
   <!-- Book change modal -->
@@ -1664,9 +1778,108 @@
     };
   }
 
-  // 12. Close Lesson (stub)
+  // 12. Footer actions: Main Menu, Delete Session, Close Lesson
+
+  // Main Menu — navigate immediately, session remains in-progress
+  document.getElementById('btn-main-menu').addEventListener('click', function() {
+    window.location.href = '/main_menu.html';
+  });
+
+  // Close Lesson — navigate to session close flow
   document.getElementById('btn-close-lesson').addEventListener('click', function() {
-      window.location.href = '/session_close.html';
+    window.location.href = '/session_close.html';
+  });
+
+  // Delete Session — open confirmation modal
+  document.getElementById('btn-delete-session').addEventListener('click', function() {
+    document.getElementById('delete-modal-error').style.display = 'none';
+    document.getElementById('delete-modal').classList.remove('hidden');
+  });
+
+  document.getElementById('btn-delete-cancel').addEventListener('click', function() {
+    document.getElementById('delete-modal').classList.add('hidden');
+  });
+
+  // Close delete modal on backdrop tap
+  document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+
+  // Delete confirmed — delete entries then soft/hard delete session
+  document.getElementById('btn-delete-confirm').addEventListener('click', async function() {
+    const confirmBtn = document.getElementById('btn-delete-confirm');
+    const cancelBtn  = document.getElementById('btn-delete-cancel');
+    const errEl      = document.getElementById('delete-modal-error');
+
+    confirmBtn.disabled   = true;
+    cancelBtn.disabled    = true;
+    confirmBtn.textContent = 'Deleting\u2026';
+    errEl.style.display   = 'none';
+
+    try {
+      // Step 1: Delete all session_entries for this session
+      const { error: entriesErr } = await supabase
+        .from('session_entries')
+        .delete()
+        .eq('session_id', sessionId);
+
+      if (entriesErr) throw entriesErr;
+
+      // Step 2: Determine today's local date (YYYY-MM-DD) to decide soft vs hard delete
+      const now    = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      // session_date was fetched at page load; re-read from the header meta as fallback
+      // Retrieve from sessionStorage if stored, otherwise fetch from DB
+      let sessionDateStr = sessionStorage.getItem('session_date') || null;
+
+      if (!sessionDateStr) {
+        const { data: sd } = await supabase
+          .from('sessions')
+          .select('session_date')
+          .eq('session_id', sessionId)
+          .single();
+        sessionDateStr = sd?.session_date || null;
+      }
+
+      const isSameDay = sessionDateStr === todayStr;
+
+      if (isSameDay) {
+        // Hard delete — session is for today, remove the row entirely
+        const { error: delErr } = await supabase
+          .from('sessions')
+          .delete()
+          .eq('session_id', sessionId)
+          .eq('teacher_id', teacherId); // safety guard
+
+        if (delErr) throw delErr;
+
+      } else {
+        // Soft delete — retain row for audit trail
+        const { error: updErr } = await supabase
+          .from('sessions')
+          .update({
+            session_status: 'deleted',
+            deleted_at:     new Date().toISOString(),
+            updated_at:     new Date().toISOString(),
+          })
+          .eq('session_id', sessionId)
+          .eq('teacher_id', teacherId); // safety guard
+
+        if (updErr) throw updErr;
+      }
+
+      // Step 3: Navigate to main menu
+      window.location.href = '/main_menu.html';
+
+    } catch (e) {
+      console.error('Delete session error:', e);
+      confirmBtn.disabled    = false;
+      cancelBtn.disabled     = false;
+      confirmBtn.textContent = 'Delete Lesson';
+      errEl.textContent      = 'Something went wrong. Please try again.';
+      errEl.style.display    = 'block';
+    }
   });
 
   // 13. Book display + change
