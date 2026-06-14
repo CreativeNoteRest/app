@@ -38,33 +38,38 @@
       background: var(--surface);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 16px 48px;
       -webkit-font-smoothing: antialiased;
     }
 
-    .page-card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px 24px;
-      width: 100%;
-      max-width: 480px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    }
-
     /* ── Header ── */
-    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .page-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
     .back-btn {
       background: none; border: none; cursor: pointer;
-      padding: 6px; margin-left: -6px; color: var(--text-mid);
+      padding: 6px; color: var(--text-mid);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; transition: background 0.15s;
     }
     .back-btn:hover { background: var(--brand-light); }
-    .page-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ── Content ── */
+    .content { max-width: 480px; margin: 0 auto; padding: 24px 16px 48px; }
 
     .btn-header-save {
       background: var(--brand); color: #fff; border: none; border-radius: 8px;
@@ -277,22 +282,23 @@
 </head>
 <body>
 
-<div class="page-card">
+<header class="page-header">
+  <button class="back-btn" id="btn-back-menu" aria-label="Back to main menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+  </button>
+  <span class="page-title" id="header-title">Manage Students</span>
+  <button class="btn-header-save" id="btn-save" style="display:none;">Save Student</button>
+  <button class="btn-header-menu" id="btn-menu-from-list">Main Menu</button>
+</header>
+
+<main class="content">
 
   <!-- ══════════════════════════════
        VIEW 1 -- Student List
   ══════════════════════════════ -->
   <div id="view-list">
-
-    <div class="page-header">
-      <button class="back-btn" id="btn-back-menu" aria-label="Back to main menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-      </button>
-      <span class="page-title">Manage Students</span>
-      <button class="btn-header-menu" id="btn-menu-from-list">Main Menu</button>
-    </div>
 
     <div id="list-error-box" class="error-box"></div>
 
@@ -315,17 +321,6 @@
        VIEW 2 -- Edit / Create
   ══════════════════════════════ -->
   <div id="view-edit">
-
-    <div class="page-header">
-      <button class="back-btn" id="btn-back-list" aria-label="Back to student list">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-      </button>
-      <span class="page-title" id="edit-title">Student</span>
-      <button class="btn-header-save" id="btn-save">Save Student</button>
-      <button class="btn-header-menu" id="btn-menu-from-edit">Main Menu</button>
-    </div>
 
     <div id="edit-error-box" class="error-box"></div>
     <div id="edit-warning-box" class="warning-box"></div>
@@ -480,7 +475,7 @@
 
   </div>
 
-</div><!-- end page-card -->
+</main><!-- end content -->
 
 <!-- ══════════════════════════════
      CONFIRMATION OVERLAYS
@@ -556,7 +551,7 @@
   const listStateEl         = document.getElementById('list-state');
   const listErrorBox        = document.getElementById('list-error-box');
   const chkActiveOnly       = document.getElementById('chk-active-only');
-  const editTitle           = document.getElementById('edit-title');
+  const editTitle           = document.getElementById('header-title');
   const editErrorBox        = document.getElementById('edit-error-box');
   const editWarningBox      = document.getElementById('edit-warning-box');
   const contactWarning      = document.getElementById('contact-warning');
@@ -577,6 +572,8 @@
   const ageDisplay          = document.getElementById('age-display');
   const fBook               = document.getElementById('field-book');
   const btnSave             = document.getElementById('btn-save');
+  const btnBack             = document.getElementById('btn-back-menu');
+  const btnHeaderMenu       = document.getElementById('btn-menu-from-list');
 
   // ── Helpers ─────────────────────────────────────────────────────────
   function showListError(msg) { listErrorBox.textContent = msg; listErrorBox.style.display = 'block'; }
@@ -672,6 +669,12 @@
     viewList.style.display = 'block';
     clearEditError();
     contactWarning.style.display = 'none';
+    // Header: list state
+    editTitle.textContent    = 'Manage Students';
+    btnSave.style.display    = 'none';
+    btnBack.onclick          = () => { window.location.href = '/main_menu.html'; };
+    btnBack.setAttribute('aria-label', 'Back to main menu');
+    btnHeaderMenu.style.display = '';
   }
 
   function showEditView(student) {
@@ -682,6 +685,11 @@
     clearEditError();
     clearFieldErrors();
     contactWarning.style.display = 'none';
+    // Header: edit state
+    btnSave.style.display    = '';
+    btnBack.onclick          = showListView;
+    btnBack.setAttribute('aria-label', 'Back to student list');
+    btnHeaderMenu.style.display = 'none';
 
     // Populate fields
     fSafename.value          = student?.safe_name                      || '';
@@ -994,14 +1002,7 @@
   document.getElementById('btn-add-student').addEventListener('click', () => {
     clearListError(); showEditView(null);
   });
-  document.getElementById('btn-back-list').addEventListener('click', showListView);
-  document.getElementById('btn-back-menu').addEventListener('click', () => {
-    window.location.href = '/main_menu.html';
-  });
-  document.getElementById('btn-menu-from-list').addEventListener('click', () => {
-    window.location.href = '/main_menu.html';
-  });
-  document.getElementById('btn-menu-from-edit').addEventListener('click', () => {
+  btnHeaderMenu.addEventListener('click', () => {
     window.location.href = '/main_menu.html';
   });
 
