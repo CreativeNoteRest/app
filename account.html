@@ -841,16 +841,21 @@
       // Email
       document.getElementById('emailCurrentDisplay').textContent = teacher.email || '—';
 
-      // Password row: show change form for email users, support note for OAuth
-      const provider = session.user.app_metadata?.provider || 'email';
-      if (provider === 'email') {
+      // Password row: show change form for pure email users, support note for OAuth.
+      // Uses user.identities (array) rather than app_metadata.provider, which is
+      // unreliable for accounts that have both email and OAuth providers linked.
+      const identities   = session.user.identities || [];
+      const hasOAuth     = identities.some(i => i.provider !== 'email');
+      if (!hasOAuth) {
         document.getElementById('pwChangeLink').style.display = 'block';
         document.getElementById('pwOauthNote').style.display  = 'none';
       } else {
         document.getElementById('pwChangeLink').style.display = 'none';
-        const providerLabel = provider === 'google'  ? 'Google'
-                            : provider === 'azure'   ? 'Microsoft'
-                            : provider;
+        const oauthIdentity  = identities.find(i => i.provider !== 'email');
+        const rawProvider    = oauthIdentity?.provider || 'your account provider';
+        const providerLabel  = rawProvider === 'google'  ? 'Google'
+                             : rawProvider === 'azure'   ? 'Microsoft'
+                             : rawProvider;
         document.getElementById('pwOauthProvider').textContent = providerLabel;
         document.getElementById('pwOauthNote').style.display   = 'block';
       }
