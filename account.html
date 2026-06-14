@@ -402,6 +402,23 @@
       margin-top: 4px;
     }
 
+    /* ── Password change block ── */
+    .pw-change-link { margin-top: 4px; }
+
+    .pw-change-form {
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .pw-oauth-note {
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      margin-top: 4px;
+      display: none;
+    }
+
     /* ── Loading skeleton ── */
     .skeleton {
       background: linear-gradient(90deg, #F0EDE8 25%, #E8E4DF 50%, #F0EDE8 75%);
@@ -591,6 +608,38 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Change password (email users only) -->
+        <div class="field-row" id="passwordRow">
+          <div class="field-label">Password</div>
+
+          <!-- Email user: idle state -->
+          <div class="pw-change-link" id="pwChangeLink">
+            <div style="font-size:0.95rem;color:var(--text);font-weight:500;letter-spacing:0.05em;">••••••••</div>
+            <button class="btn-text" id="changePasswordBtn" style="margin-top:4px;">Change password</button>
+          </div>
+
+          <!-- Email user: change form (hidden until triggered) -->
+          <div class="pw-change-form" id="pwChangeForm">
+            <input type="password" class="field-input" id="currentPasswordInput"
+                   placeholder="Current password" autocomplete="current-password" />
+            <input type="password" class="field-input" id="newPasswordInput"
+                   placeholder="New password (min 8 characters)" autocomplete="new-password" />
+            <input type="password" class="field-input" id="confirmPasswordInput"
+                   placeholder="Confirm new password" autocomplete="new-password" />
+            <div class="field-save-row">
+              <button class="save-btn visible" id="savePasswordBtn">Update password</button>
+              <button class="btn-text" id="cancelPasswordBtn" style="margin-left:4px;">Cancel</button>
+            </div>
+            <div class="error-block" id="passwordChangeError"></div>
+          </div>
+
+          <!-- OAuth user: support note (hidden by default, shown for OAuth) -->
+          <div class="pw-oauth-note" id="pwOauthNote">
+            You sign in with <span id="pwOauthProvider">your account provider</span>. To change your login, contact
+            <a href="mailto:support@creativenoterest.com" style="color:var(--brand);">support@creativenoterest.com</a>.
           </div>
         </div>
 
@@ -859,6 +908,20 @@
 
       // Email
       document.getElementById('emailCurrentDisplay').textContent = teacher.email || '—';
+
+      // Password row: show change form for email users, support note for OAuth
+      const provider = session.user.app_metadata?.provider || 'email';
+      if (provider === 'email') {
+        document.getElementById('pwChangeLink').style.display = 'block';
+        document.getElementById('pwOauthNote').style.display  = 'none';
+      } else {
+        document.getElementById('pwChangeLink').style.display = 'none';
+        const providerLabel = provider === 'google'  ? 'Google'
+                            : provider === 'azure'   ? 'Microsoft'
+                            : provider;
+        document.getElementById('pwOauthProvider').textContent = providerLabel;
+        document.getElementById('pwOauthNote').style.display   = 'block';
+      }
     }
 
     // ── Dirty-save: display name ───────────────────────────────────
@@ -1070,6 +1133,80 @@
         showToast('Email address updated.');
       }
     });
+
+    // ── Change password ────────────────────────────────────────────
+    (function setupPasswordChange() {
+      const changeBtn   = document.getElementById('changePasswordBtn');
+      const cancelBtn   = document.getElementById('cancelPasswordBtn');
+      const saveBtn     = document.getElementById('savePasswordBtn');
+      const form        = document.getElementById('pwChangeForm');
+      const linkEl      = document.getElementById('pwChangeLink');
+      const errorEl     = document.getElementById('passwordChangeError');
+      const currentInput= document.getElementById('currentPasswordInput');
+      const newInput    = document.getElementById('newPasswordInput');
+      const confirmInput= document.getElementById('confirmPasswordInput');
+
+      function showPwError(msg) {
+        errorEl.textContent = msg;
+        errorEl.classList.add('visible');
+      }
+      function clearPwError() {
+        errorEl.classList.remove('visible');
+      }
+      function openForm() {
+        linkEl.style.display  = 'none';
+        form.style.display    = 'flex';
+        currentInput.value    = '';
+        newInput.value        = '';
+        confirmInput.value    = '';
+        clearPwError();
+        currentInput.focus();
+      }
+      function closeForm() {
+        form.style.display   = 'none';
+        linkEl.style.display = 'block';
+        clearPwError();
+      }
+
+      changeBtn.addEventListener('click', openForm);
+      cancelBtn.addEventListener('click', closeForm);
+
+      saveBtn.addEventListener('click', async () => {
+        clearPwError();
+        const current = currentInput.value;
+        const next    = newInput.value;
+        const confirm = confirmInput.value;
+
+        if (!current) { showPwError('Please enter your current password.'); return; }
+        if (next.length < 8) { showPwError('New password must be at least 8 characters.'); return; }
+        if (next !== confirm) { showPwError('Passwords do not match.'); return; }
+        if (next === current) { showPwError('New password must differ from your current password.'); return; }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Updating…';
+
+        const { error } = await supabase.auth.updateUser(
+          { password: next },
+          { nonce: current }   // current password — required by Supabase "Require current password" setting
+        );
+
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Update password';
+
+        if (error) {
+          // Supabase returns a generic message for wrong current password;
+          // surface a clear message regardless.
+          showPwError(
+            error.message?.toLowerCase().includes('same password')
+              ? 'New password must differ from your current password.'
+              : 'Could not update password. Check your current password and try again.'
+          );
+        } else {
+          closeForm();
+          showToast('Password updated.');
+        }
+      });
+    })();
 
     // ── Sign out ───────────────────────────────────────────────────
     document.getElementById('signOutBtn').addEventListener('click', async () => {
