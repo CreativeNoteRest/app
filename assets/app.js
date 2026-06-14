@@ -76,6 +76,33 @@ export async function requireAuth() {
 }
 
 // ------------------------------------------------------------
+// syncEmailIfChanged(session)
+// Call after requireAuth() on pages that write or display the
+// teacher's email. Silently patches Teachers.email if auth.users
+// has a newer confirmed address (e.g. change confirmed on a
+// different device or browser tab).
+// ------------------------------------------------------------
+export async function syncEmailIfChanged(session) {
+  const teacherId = sessionStorage.getItem('teacher_id');
+  if (!session?.user?.email || !teacherId) return;
+
+  const { data, error } = await supabase
+    .from('teachers')
+    .select('email')
+    .eq('teacher_id', teacherId)
+    .single();
+
+  if (error || !data) return;
+
+  if (data.email !== session.user.email) {
+    await supabase
+      .from('teachers')
+      .update({ email: session.user.email })
+      .eq('teacher_id', teacherId);
+  }
+}
+
+// ------------------------------------------------------------
 // applyBranding()
 // Reads series_slug from sessionStorage and applies CSS variables
 // Call on any shared page that needs series branding
