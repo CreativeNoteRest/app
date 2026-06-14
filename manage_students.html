@@ -498,6 +498,21 @@
   </div>
 </div>
 
+<!-- Retire blocked -- pending session -->
+<div class="confirm-overlay" id="confirm-retire-blocked">
+  <div class="confirm-card">
+    <div class="confirm-title">Pending Lesson</div>
+    <div class="confirm-body">
+      <strong id="retire-blocked-student-name"></strong> has a lesson in progress that must be closed or deleted before they can be retired.<br><br>
+      Go to the main menu to resolve the pending lesson first.
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn-primary orange" id="confirm-retire-blocked-go">Go to Pending Lesson</button>
+      <button class="confirm-btn-cancel" id="confirm-retire-blocked-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { supabase, requireAuth } from '/assets/app.js';
 
@@ -968,10 +983,23 @@
 
   btnSave.addEventListener('click', saveStudent);
 
-  btnRetireReactivate.addEventListener('click', () => {
+  btnRetireReactivate.addEventListener('click', async () => {
     if (isActive(currentStudent)) {
-      document.getElementById('retire-student-name').textContent = currentStudent.safe_name;
-      document.getElementById('confirm-retire').classList.add('active');
+      // Check for a pending (active) session before allowing retirement
+      const { data: pendingSession } = await supabase
+        .from('sessions')
+        .select('session_id')
+        .eq('student_id', currentStudent.student_id)
+        .eq('session_status', 'active')
+        .maybeSingle();
+
+      if (pendingSession) {
+        document.getElementById('retire-blocked-student-name').textContent = currentStudent.safe_name;
+        document.getElementById('confirm-retire-blocked').classList.add('active');
+      } else {
+        document.getElementById('retire-student-name').textContent = currentStudent.safe_name;
+        document.getElementById('confirm-retire').classList.add('active');
+      }
     } else if (isRetired(currentStudent)) {
       reactivateStudent();
     }
@@ -988,6 +1016,14 @@
   });
   document.getElementById('confirm-retire-no').addEventListener('click', () => {
     document.getElementById('confirm-retire').classList.remove('active');
+  });
+
+  document.getElementById('confirm-retire-blocked-go').addEventListener('click', () => {
+    document.getElementById('confirm-retire-blocked').classList.remove('active');
+    window.location.href = '/main_menu.html';
+  });
+  document.getElementById('confirm-retire-blocked-cancel').addEventListener('click', () => {
+    document.getElementById('confirm-retire-blocked').classList.remove('active');
   });
 
   document.getElementById('confirm-delete-yes').addEventListener('click', () => {
