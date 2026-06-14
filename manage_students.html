@@ -59,11 +59,29 @@
     .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .back-btn {
       background: none; border: none; cursor: pointer;
-      padding: 4px 8px 4px 0; color: var(--text-mid);
-      font-size: 1.2rem; line-height: 1; flex-shrink: 0;
+      padding: 6px; margin-left: -6px; color: var(--text-mid);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s;
     }
-    .back-btn:hover { color: var(--brand); }
+    .back-btn:hover { background: var(--brand-light); }
     .page-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+
+    .btn-header-save {
+      background: var(--brand); color: #fff; border: none; border-radius: 8px;
+      padding: 6px 14px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      font-weight: 600; cursor: pointer; white-space: nowrap; min-height: 34px;
+      transition: background 0.15s; flex-shrink: 0;
+    }
+    .btn-header-save:hover:not(:disabled) { background: var(--brand-dark); }
+    .btn-header-save:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-header-menu {
+      background: none; border: 1.5px solid var(--brand); border-radius: 6px;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      font-weight: 600; color: var(--brand); padding: 4px 10px; white-space: nowrap;
+      min-height: 34px; transition: background 0.15s; flex-shrink: 0;
+    }
+    .btn-header-menu:hover { background: var(--brand-light); }
 
     /* ── Message boxes ── */
     .error-box {
@@ -198,14 +216,6 @@
     }
 
     /* ── Action buttons ── */
-    .btn-save {
-      width: 100%; height: 50px; background: var(--brand); color: #fff;
-      border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; transition: background 0.2s; font-family: 'DM Sans', sans-serif;
-      margin-bottom: 10px;
-    }
-    .btn-save:hover { background: var(--brand-dark); }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-secondary {
       width: 100%; height: 46px; background: #fff; color: var(--brand);
@@ -275,8 +285,13 @@
   <div id="view-list">
 
     <div class="page-header">
-      <button class="back-btn" id="btn-back-menu">&#8592;</button>
+      <button class="back-btn" id="btn-back-menu" aria-label="Back to main menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+      </button>
       <span class="page-title">Manage Students</span>
+      <button class="btn-header-menu" id="btn-menu-from-list">Main Menu</button>
     </div>
 
     <div id="list-error-box" class="error-box"></div>
@@ -302,8 +317,14 @@
   <div id="view-edit">
 
     <div class="page-header">
-      <button class="back-btn" id="btn-back-list">&#8592;</button>
+      <button class="back-btn" id="btn-back-list" aria-label="Back to student list">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+      </button>
       <span class="page-title" id="edit-title">Student</span>
+      <button class="btn-header-save" id="btn-save">Save Student</button>
+      <button class="btn-header-menu" id="btn-menu-from-edit">Main Menu</button>
     </div>
 
     <div id="edit-error-box" class="error-box"></div>
@@ -449,9 +470,6 @@
     <div id="contact-warning" class="warning-box">
       No alternative contact method is on file. Consider adding a secondary email or phone number before unsubscribing the primary email.
     </div>
-
-    <!-- Save -->
-    <button class="btn-save" id="btn-save">Save Student</button>
 
     <!-- Lifecycle actions (edit mode only) -->
     <div id="lifecycle-section" style="display:none;">
@@ -978,6 +996,12 @@
   });
   document.getElementById('btn-back-list').addEventListener('click', showListView);
   document.getElementById('btn-back-menu').addEventListener('click', () => {
+    window.location.href = '/main_menu.html';
+  });
+  document.getElementById('btn-menu-from-list').addEventListener('click', () => {
+    window.location.href = '/main_menu.html';
+  });
+  document.getElementById('btn-menu-from-edit').addEventListener('click', () => {
     window.location.href = '/main_menu.html';
   });
 
