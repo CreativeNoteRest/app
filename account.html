@@ -623,11 +623,13 @@
   <div id="toast"></div>
 
   <script type="module">
-    import { supabase, requireAuth, applyBranding } from '/assets/app.js';
+    import { supabase, requireAuth, applyBranding, syncEmailIfChanged } from '/assets/app.js';
 
     // ── Boot ───────────────────────────────────────────────────────
     const session = await requireAuth();
     if (!session) throw new Error('requireAuth redirected'); // stops execution
+
+    await syncEmailIfChanged(session);
 
     applyBranding();
 
@@ -1018,6 +1020,8 @@
       }
 
       pendingNewEmail = newEmail;
+      sessionStorage.setItem('email_change_pending', '1');
+      sessionStorage.setItem('email_change_target', newEmail);
       emailChangeInputs.style.display = 'none';
       emailPendingBlock.style.display = 'flex';
       document.getElementById('emailPendingTarget').textContent =
@@ -1043,6 +1047,8 @@
       emailChangeInputs.style.display = 'flex';
       emailPendingBlock.style.display = 'none';
       pendingNewEmail = '';
+      sessionStorage.removeItem('email_change_pending');
+      sessionStorage.removeItem('email_change_target');
       clearEmailError();
     }
     document.getElementById('cancelPendingBtn').addEventListener('click', cancelEmailChange);
@@ -1058,6 +1064,8 @@
         // Update UI
         document.getElementById('emailCurrentDisplay').textContent = confirmedEmail;
         teacher.email = confirmedEmail;
+        sessionStorage.removeItem('email_change_pending');
+        sessionStorage.removeItem('email_change_target');
         cancelEmailChange();
         showToast('Email address updated.');
       }
@@ -1073,6 +1081,19 @@
     // ── Run renders ────────────────────────────────────────────────
     renderSubscription();
     renderProfile();
+
+    // ── Restore pending email change state ─────────────────────────
+    // If the teacher reloads the page while a verification link is
+    // outstanding, restore the pending UI so they know to check their inbox.
+    if (sessionStorage.getItem('email_change_pending') === '1') {
+      const target = sessionStorage.getItem('email_change_target') || '';
+      pendingNewEmail = target;
+      emailChangeForm.style.display = 'flex';
+      emailChangeInputs.style.display = 'none';
+      emailPendingBlock.style.display = 'flex';
+      document.getElementById('emailPendingTarget').textContent =
+        'Verification link sent to ' + target;
+    }
 
   </script>
 </body>
