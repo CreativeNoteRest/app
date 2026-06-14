@@ -1185,10 +1185,10 @@
         saveBtn.disabled = true;
         saveBtn.textContent = 'Updating…';
 
-        const { error } = await supabase.auth.updateUser(
-          { password: next },
-          { nonce: current }   // current password — required by Supabase "Require current password" setting
-        );
+        const { error } = await supabase.auth.updateUser({
+          password: next,
+          current_password: current   // verified server-side by Supabase "Require current password" setting
+        });
 
         saveBtn.disabled = false;
         saveBtn.textContent = 'Update password';
