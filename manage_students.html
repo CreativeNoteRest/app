@@ -290,7 +290,7 @@
   </button>
   <span class="page-title" id="header-title">Manage Students</span>
   <button class="btn-header-save" id="btn-save" style="display:none;">Save Student</button>
-  <button class="btn-header-menu" id="btn-menu-from-list">Main Menu</button>
+  <button class="btn-header-menu" id="btn-menu-from-edit" style="display:none;">Main Menu</button>
 </header>
 
 <main class="content">
@@ -573,7 +573,7 @@
   const fBook               = document.getElementById('field-book');
   const btnSave             = document.getElementById('btn-save');
   const btnBack             = document.getElementById('btn-back-menu');
-  const btnHeaderMenu       = document.getElementById('btn-menu-from-list');
+  const btnHeaderMenu       = document.getElementById('btn-menu-from-edit');
 
   // ── Helpers ─────────────────────────────────────────────────────────
   function showListError(msg) { listErrorBox.textContent = msg; listErrorBox.style.display = 'block'; }
@@ -674,7 +674,7 @@
     btnSave.style.display    = 'none';
     btnBack.onclick          = () => { window.location.href = '/main_menu.html'; };
     btnBack.setAttribute('aria-label', 'Back to main menu');
-    btnHeaderMenu.style.display = '';
+    btnHeaderMenu.style.display = 'none';
   }
 
   function showEditView(student) {
@@ -689,7 +689,7 @@
     btnSave.style.display    = '';
     btnBack.onclick          = showListView;
     btnBack.setAttribute('aria-label', 'Back to student list');
-    btnHeaderMenu.style.display = 'none';
+    btnHeaderMenu.style.display = '';
 
     // Populate fields
     fSafename.value          = student?.safe_name                      || '';
