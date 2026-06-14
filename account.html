@@ -351,55 +351,11 @@
     .toggle-switch input:checked + .toggle-track { background: var(--brand); }
     .toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
 
-    /* ── Email change block ── */
+    /* ── Email display ── */
     .email-current {
       font-size: 0.95rem;
       color: var(--text);
       font-weight: 500;
-    }
-    .email-state-idle .email-change-form { display: none; }
-    .email-state-pending .email-change-link { display: none; }
-    .email-state-pending .email-change-form { display: flex; }
-    .email-state-pending .email-pending-block { display: flex !important; }
-    .email-state-pending .email-change-inputs { display: none; }
-
-    .email-change-link { margin-top: 4px; }
-
-    .email-change-form {
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
-      display: none;
-    }
-
-    .email-change-inputs {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .email-pending-block {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      background: var(--brand-light);
-      border-radius: 8px;
-      padding: 12px 14px;
-    }
-    .email-pending-text {
-      font-size: 0.875rem;
-      color: var(--brand-dark);
-      font-weight: 500;
-    }
-    .email-pending-sub {
-      font-size: 0.8rem;
-      color: var(--text-mid);
-    }
-    .email-pending-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-top: 4px;
     }
 
     /* ── Password change block ── */
@@ -576,49 +532,16 @@
           </label>
         </div>
 
-        <!-- Change email -->
+        <!-- Email address + password change -->
         <div class="field-row" id="emailRow">
           <div class="field-label">Email Address</div>
+          <div class="email-current" id="emailCurrentDisplay">—</div>
 
-          <div class="email-state-idle" id="emailStateContainer">
-            <div class="email-current" id="emailCurrentDisplay">—</div>
-            <div class="email-change-link">
-              <button class="btn-text" id="changeEmailBtn">Change email</button>
-            </div>
-
-            <div class="email-change-form" id="emailChangeForm">
-              <div class="email-change-inputs" id="emailChangeInputs">
-                <input type="email" class="field-input" id="newEmailInput"
-                       placeholder="New email address" autocomplete="email" />
-                <div class="field-save-row">
-                  <button class="save-btn visible" id="sendVerificationBtn">Send verification link</button>
-                  <button class="btn-text" id="cancelEmailChangeBtn" style="margin-left:4px;">Cancel</button>
-                </div>
-                <div class="error-block" id="emailChangeError"></div>
-              </div>
-
-              <div class="email-pending-block" id="emailPendingBlock">
-                <div class="email-pending-text">Verification link sent</div>
-                <div class="email-pending-sub" id="emailPendingTarget"></div>
-                <div class="email-pending-sub">Click the link in your inbox to confirm your new email address.</div>
-                <div class="email-pending-actions">
-                  <button class="btn-text" id="resendVerificationBtn">Resend link</button>
-                  <span style="color:var(--border)">|</span>
-                  <button class="btn-text" id="cancelPendingBtn">Cancel</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Change password (email users only) -->
-        <div class="field-row" id="passwordRow">
-          <!-- Email user: idle state -->
+          <!-- Email user: password change link + form -->
           <div class="pw-change-link" id="pwChangeLink">
-            <button class="btn-text" id="changePasswordBtn">Change password</button>
+            <button class="btn-text" id="changePasswordBtn" style="margin-top:4px;">Change password</button>
           </div>
 
-          <!-- Email user: change form (hidden until triggered) -->
           <div class="pw-change-form" id="pwChangeForm">
             <input type="password" class="field-input" id="currentPasswordInput"
                    placeholder="Current password" autocomplete="current-password" />
@@ -633,14 +556,26 @@
             <div class="error-block" id="passwordChangeError"></div>
           </div>
 
-          <!-- OAuth user: support note (hidden by default, shown for OAuth) -->
-          <div class="pw-oauth-note" id="pwOauthNote">
-            You sign in with <span id="pwOauthProvider">your account provider</span>. To change your login, contact
-            <a href="mailto:support@creativenoterest.com" style="color:var(--brand);">support@creativenoterest.com</a>.
+          <!-- OAuth user: note (hidden by default) -->
+          <div class="pw-oauth-note" id="pwOauthNote" style="margin-top:4px;">
+            Password is managed by <span id="pwOauthProvider">your account provider</span>.
           </div>
         </div>
 
       </div><!-- /profileLoaded -->
+    </div>
+
+    <!-- ── Change login ── -->
+    <div class="section-card">
+      <div class="signout-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+        <p style="font-size: 0.8125rem; color: var(--text-mid); margin: 0;">
+          Need to change your login email?
+        </p>
+        <a href="mailto:support@creativenoterest.com?subject=Change%20Login%20Request"
+           class="btn-text">Contact support
+          <span style="font-weight: 400; color: var(--text-light); margin-left: 6px;">support@creativenoterest.com</span>
+        </a>
+      </div>
     </div>
 
     <!-- ── Feedback ── -->
@@ -1010,127 +945,6 @@
       }
     });
 
-    // ── Email change state machine ─────────────────────────────────
-    // States: idle | pending
-    let emailChangeState   = 'idle';
-    let pendingNewEmail    = '';
-
-    const emailStateEl     = document.getElementById('emailStateContainer');
-    const emailChangeForm  = document.getElementById('emailChangeForm');
-    const emailChangeInputs= document.getElementById('emailChangeInputs');
-    const emailPendingBlock= document.getElementById('emailPendingBlock');
-    const newEmailInput    = document.getElementById('newEmailInput');
-    const emailChangeError = document.getElementById('emailChangeError');
-
-    function setEmailState(state) {
-      emailChangeState = state;
-      emailStateEl.className = 'email-state-' + state;
-    }
-
-    function showEmailError(msg) {
-      emailChangeError.textContent = msg;
-      emailChangeError.classList.add('visible');
-    }
-    function clearEmailError() {
-      emailChangeError.classList.remove('visible');
-    }
-
-    document.getElementById('changeEmailBtn').addEventListener('click', () => {
-      setEmailState('idle'); // keeps layout, just shows form
-      emailChangeForm.style.display = 'flex';
-      emailChangeInputs.style.display = 'flex';
-      emailPendingBlock.style.display = 'none';
-      newEmailInput.value = '';
-      clearEmailError();
-      newEmailInput.focus();
-    });
-
-    document.getElementById('cancelEmailChangeBtn').addEventListener('click', () => {
-      emailChangeForm.style.display = 'none';
-      clearEmailError();
-    });
-
-    async function sendVerificationLink() {
-      clearEmailError();
-      const newEmail = newEmailInput.value.trim().toLowerCase();
-      if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-        showEmailError('Please enter a valid email address.');
-        return;
-      }
-      if (newEmail === teacher.email) {
-        showEmailError('This is already your current email address.');
-        return;
-      }
-
-      const sendBtn = document.getElementById('sendVerificationBtn');
-      sendBtn.disabled = true;
-      sendBtn.textContent = 'Sending…';
-
-      // Supabase updateUser sends a confirmation link to the NEW address.
-      // On click, Supabase updates auth.users automatically.
-      // We catch USER_UPDATED via onAuthStateChange and sync Teachers.email.
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
-
-      sendBtn.disabled = false;
-      sendBtn.textContent = 'Send verification link';
-
-      if (error) {
-        showEmailError('Could not send verification link. ' + (error.message || 'Please try again.'));
-        return;
-      }
-
-      pendingNewEmail = newEmail;
-      sessionStorage.setItem('email_change_pending', '1');
-      sessionStorage.setItem('email_change_target', newEmail);
-      emailChangeInputs.style.display = 'none';
-      emailPendingBlock.style.display = 'flex';
-      document.getElementById('emailPendingTarget').textContent =
-        'Verification link sent to ' + newEmail;
-    }
-
-    document.getElementById('sendVerificationBtn').addEventListener('click', sendVerificationLink);
-
-    document.getElementById('resendVerificationBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('resendVerificationBtn');
-      btn.disabled = true;
-      const { error } = await supabase.auth.updateUser({ email: pendingNewEmail });
-      btn.disabled = false;
-      if (error) {
-        showToast('Could not resend. Please try again.', true);
-      } else {
-        showToast('Verification link resent.');
-      }
-    });
-
-    function cancelEmailChange() {
-      emailChangeForm.style.display = 'none';
-      emailChangeInputs.style.display = 'flex';
-      emailPendingBlock.style.display = 'none';
-      pendingNewEmail = '';
-      sessionStorage.removeItem('email_change_pending');
-      sessionStorage.removeItem('email_change_target');
-      clearEmailError();
-    }
-    document.getElementById('cancelPendingBtn').addEventListener('click', cancelEmailChange);
-
-    // Listen for Supabase confirming the email change
-    supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (event === 'USER_UPDATED' && newSession?.user?.email) {
-        const confirmedEmail = newSession.user.email;
-        // Sync Teachers.email
-        await supabase.from('teachers')
-          .update({ email: confirmedEmail })
-          .eq('teacher_id', teacherId);
-        // Update UI
-        document.getElementById('emailCurrentDisplay').textContent = confirmedEmail;
-        teacher.email = confirmedEmail;
-        sessionStorage.removeItem('email_change_pending');
-        sessionStorage.removeItem('email_change_target');
-        cancelEmailChange();
-        showToast('Email address updated.');
-      }
-    });
-
     // ── Change password ────────────────────────────────────────────
     (function setupPasswordChange() {
       const changeBtn   = document.getElementById('changePasswordBtn');
@@ -1215,19 +1029,6 @@
     // ── Run renders ────────────────────────────────────────────────
     renderSubscription();
     renderProfile();
-
-    // ── Restore pending email change state ─────────────────────────
-    // If the teacher reloads the page while a verification link is
-    // outstanding, restore the pending UI so they know to check their inbox.
-    if (sessionStorage.getItem('email_change_pending') === '1') {
-      const target = sessionStorage.getItem('email_change_target') || '';
-      pendingNewEmail = target;
-      emailChangeForm.style.display = 'flex';
-      emailChangeInputs.style.display = 'none';
-      emailPendingBlock.style.display = 'flex';
-      document.getElementById('emailPendingTarget').textContent =
-        'Verification link sent to ' + target;
-    }
 
   </script>
 </body>
