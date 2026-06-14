@@ -351,35 +351,54 @@
     .toggle-switch input:checked + .toggle-track { background: var(--brand); }
     .toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
 
-    /* ── Login identity block ── */
+    /* ── Email change block ── */
     .email-current {
       font-size: 0.95rem;
       color: var(--text);
       font-weight: 500;
     }
-    .email-support-hint {
-      font-size: 0.78rem;
-      color: var(--text-light);
-      margin-top: 4px;
-      line-height: 1.4;
-    }
-    .email-support-hint a {
-      color: var(--brand);
-      text-decoration: none;
-    }
-    .email-support-hint a:hover { text-decoration: underline; }
+    .email-state-idle .email-change-form { display: none; }
+    .email-state-pending .email-change-link { display: none; }
+    .email-state-pending .email-change-form { display: flex; }
+    .email-state-pending .email-pending-block { display: flex !important; }
+    .email-state-pending .email-change-inputs { display: none; }
 
-    .provider-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.75rem;
-      font-weight: 600;
+    .email-change-link { margin-top: 4px; }
+
+    .email-change-form {
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .email-change-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .email-pending-block {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--brand-light);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .email-pending-text {
+      font-size: 0.875rem;
+      color: var(--brand-dark);
+      font-weight: 500;
+    }
+    .email-pending-sub {
+      font-size: 0.8rem;
       color: var(--text-mid);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 3px 9px;
+    }
+    .email-pending-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
       margin-top: 4px;
     }
 
@@ -540,32 +559,39 @@
           </label>
         </div>
 
-        <!-- Login identity (read-only) -->
+        <!-- Change email -->
         <div class="field-row" id="emailRow">
-          <div class="field-label">Login Email</div>
-          <div class="email-current" id="emailCurrentDisplay">—</div>
-          <div id="providerBadge" style="display:none;" class="provider-badge"></div>
-          <div class="email-support-hint">
-            To change your login email or switch login method,
-            <a href="mailto:support@creativenoterest.com?subject=Login%20Change%20Request">contact us</a>.
-          </div>
-        </div>
+          <div class="field-label">Email Address</div>
 
-        <!-- Change password (email+password teachers only — shown by JS) -->
-        <div class="field-row hidden" id="passwordRow">
-          <div class="field-label">Password</div>
-          <input type="password" class="field-input" id="currentPasswordInput"
-                 placeholder="Current password" autocomplete="current-password" />
-          <input type="password" class="field-input" id="newPasswordInput"
-                 placeholder="New password (min 8 characters)" autocomplete="new-password"
-                 style="margin-top:6px;" />
-          <input type="password" class="field-input" id="confirmPasswordInput"
-                 placeholder="Confirm new password" autocomplete="new-password"
-                 style="margin-top:6px;" />
-          <div class="field-save-row" style="margin-top:4px;">
-            <button class="save-btn visible" id="changePasswordBtn">Update password</button>
+          <div class="email-state-idle" id="emailStateContainer">
+            <div class="email-current" id="emailCurrentDisplay">—</div>
+            <div class="email-change-link">
+              <button class="btn-text" id="changeEmailBtn">Change email</button>
+            </div>
+
+            <div class="email-change-form" id="emailChangeForm">
+              <div class="email-change-inputs" id="emailChangeInputs">
+                <input type="email" class="field-input" id="newEmailInput"
+                       placeholder="New email address" autocomplete="email" />
+                <div class="field-save-row">
+                  <button class="save-btn visible" id="sendVerificationBtn">Send verification link</button>
+                  <button class="btn-text" id="cancelEmailChangeBtn" style="margin-left:4px;">Cancel</button>
+                </div>
+                <div class="error-block" id="emailChangeError"></div>
+              </div>
+
+              <div class="email-pending-block" id="emailPendingBlock">
+                <div class="email-pending-text">Verification link sent</div>
+                <div class="email-pending-sub" id="emailPendingTarget"></div>
+                <div class="email-pending-sub">Click the link in your inbox to confirm your new email address.</div>
+                <div class="email-pending-actions">
+                  <button class="btn-text" id="resendVerificationBtn">Resend link</button>
+                  <span style="color:var(--border)">|</span>
+                  <button class="btn-text" id="cancelPendingBtn">Cancel</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <span class="field-status" id="passwordStatus"></span>
         </div>
 
       </div><!-- /profileLoaded -->
@@ -597,11 +623,13 @@
   <div id="toast"></div>
 
   <script type="module">
-    import { supabase, requireAuth, applyBranding } from '/assets/app.js';
+    import { supabase, requireAuth, applyBranding, syncEmailIfChanged } from '/assets/app.js';
 
     // ── Boot ───────────────────────────────────────────────────────
     const session = await requireAuth();
     if (!session) throw new Error('requireAuth redirected'); // stops execution
+
+    await syncEmailIfChanged(session);
 
     applyBranding();
 
@@ -922,116 +950,124 @@
       }
     });
 
-    // ── Login identity detection ───────────────────────────────────
-    // Determine auth method from session identities.
-    // isPasswordUser = true  → show password change section
-    // isPasswordUser = false → OAuth teacher, show provider badge only
-    const identities      = session.user.identities || [];
-    const isPasswordUser  = identities.some(i => i.provider === 'email');
-    const oauthIdentity   = identities.find(i => i.provider !== 'email');
+    // ── Email change state machine ─────────────────────────────────
+    // States: idle | pending
+    let emailChangeState   = 'idle';
+    let pendingNewEmail    = '';
 
-    if (!isPasswordUser && oauthIdentity) {
-      const providerName = oauthIdentity.provider === 'azure' ? 'Microsoft'
-        : oauthIdentity.provider.charAt(0).toUpperCase() + oauthIdentity.provider.slice(1);
-      const badge = document.getElementById('providerBadge');
-      badge.textContent = providerName;
-      badge.style.display = 'inline-flex';
+    const emailStateEl     = document.getElementById('emailStateContainer');
+    const emailChangeForm  = document.getElementById('emailChangeForm');
+    const emailChangeInputs= document.getElementById('emailChangeInputs');
+    const emailPendingBlock= document.getElementById('emailPendingBlock');
+    const newEmailInput    = document.getElementById('newEmailInput');
+    const emailChangeError = document.getElementById('emailChangeError');
+
+    function setEmailState(state) {
+      emailChangeState = state;
+      emailStateEl.className = 'email-state-' + state;
     }
 
-    if (isPasswordUser) {
-      document.getElementById('passwordRow').classList.remove('hidden');
+    function showEmailError(msg) {
+      emailChangeError.textContent = msg;
+      emailChangeError.classList.add('visible');
+    }
+    function clearEmailError() {
+      emailChangeError.classList.remove('visible');
     }
 
-    // ── Change password (email+password teachers only) ─────────────
-    (function setupPasswordChange() {
-      const currentInput  = document.getElementById('currentPasswordInput');
-      const newInput      = document.getElementById('newPasswordInput');
-      const confirmInput  = document.getElementById('confirmPasswordInput');
-      const saveBtn       = document.getElementById('changePasswordBtn');
-      const status        = document.getElementById('passwordStatus');
+    document.getElementById('changeEmailBtn').addEventListener('click', () => {
+      setEmailState('idle'); // keeps layout, just shows form
+      emailChangeForm.style.display = 'flex';
+      emailChangeInputs.style.display = 'flex';
+      emailPendingBlock.style.display = 'none';
+      newEmailInput.value = '';
+      clearEmailError();
+      newEmailInput.focus();
+    });
 
-      function validatePassword(pwd) {
-        if (pwd.length < 8)            return 'Password must be at least 8 characters.';
-        if (!/[a-z]/.test(pwd))        return 'Password must include a lowercase letter.';
-        if (!/[A-Z]/.test(pwd))        return 'Password must include an uppercase letter.';
-        if (!/[0-9]/.test(pwd))        return 'Password must include a number.';
-        if (!/[^a-zA-Z0-9]/.test(pwd)) return 'Password must include a symbol.';
-        return null;
+    document.getElementById('cancelEmailChangeBtn').addEventListener('click', () => {
+      emailChangeForm.style.display = 'none';
+      clearEmailError();
+    });
+
+    async function sendVerificationLink() {
+      clearEmailError();
+      const newEmail = newEmailInput.value.trim().toLowerCase();
+      if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        showEmailError('Please enter a valid email address.');
+        return;
+      }
+      if (newEmail === teacher.email) {
+        showEmailError('This is already your current email address.');
+        return;
       }
 
-      saveBtn.addEventListener('click', async () => {
-        status.textContent = '';
-        status.className   = 'field-status';
+      const sendBtn = document.getElementById('sendVerificationBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
 
-        const current = currentInput.value;
-        const next    = newInput.value;
-        const confirm = confirmInput.value;
+      // Supabase updateUser sends a confirmation link to the NEW address.
+      // On click, Supabase updates auth.users automatically.
+      // We catch USER_UPDATED via onAuthStateChange and sync Teachers.email.
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
 
-        if (!current) {
-          status.textContent = 'Please enter your current password.';
-          status.className   = 'field-status err';
-          return;
-        }
-        const validationError = validatePassword(next);
-        if (validationError) {
-          status.textContent = validationError;
-          status.className   = 'field-status err';
-          return;
-        }
-        if (next !== confirm) {
-          status.textContent = 'Passwords do not match.';
-          status.className   = 'field-status err';
-          return;
-        }
-        if (next === current) {
-          status.textContent = 'New password must be different from your current password.';
-          status.className   = 'field-status err';
-          return;
-        }
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send verification link';
 
-        saveBtn.disabled    = true;
-        saveBtn.textContent = 'Updating…';
+      if (error) {
+        showEmailError('Could not send verification link. ' + (error.message || 'Please try again.'));
+        return;
+      }
 
-        const { error } = await supabase.auth.updateUser({
-          password: next,
-          currentPassword: current
-        });
+      pendingNewEmail = newEmail;
+      sessionStorage.setItem('email_change_pending', '1');
+      sessionStorage.setItem('email_change_target', newEmail);
+      emailChangeInputs.style.display = 'none';
+      emailPendingBlock.style.display = 'flex';
+      document.getElementById('emailPendingTarget').textContent =
+        'Verification link sent to ' + newEmail;
+    }
 
-        saveBtn.disabled    = false;
-        saveBtn.textContent = 'Update password';
+    document.getElementById('sendVerificationBtn').addEventListener('click', sendVerificationLink);
 
-        if (error) {
-          const msg = error.message?.toLowerCase().includes('same password')
-            ? 'New password must be different from your current password.'
-            : error.message?.toLowerCase().includes('invalid')
-              ? 'Current password is incorrect.'
-              : 'Could not update password. Please try again.';
-          status.textContent = msg;
-          status.className   = 'field-status err';
-          return;
-        }
+    document.getElementById('resendVerificationBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('resendVerificationBtn');
+      btn.disabled = true;
+      const { error } = await supabase.auth.updateUser({ email: pendingNewEmail });
+      btn.disabled = false;
+      if (error) {
+        showToast('Could not resend. Please try again.', true);
+      } else {
+        showToast('Verification link resent.');
+      }
+    });
 
-        currentInput.value = '';
-        newInput.value     = '';
-        confirmInput.value = '';
-        status.textContent = 'Password updated.';
-        status.className   = 'field-status ok';
-        setTimeout(() => {
-          status.textContent = '';
-          status.className   = 'field-status';
-        }, 3000);
-      });
-    })();
+    function cancelEmailChange() {
+      emailChangeForm.style.display = 'none';
+      emailChangeInputs.style.display = 'flex';
+      emailPendingBlock.style.display = 'none';
+      pendingNewEmail = '';
+      sessionStorage.removeItem('email_change_pending');
+      sessionStorage.removeItem('email_change_target');
+      clearEmailError();
+    }
+    document.getElementById('cancelPendingBtn').addEventListener('click', cancelEmailChange);
 
-    // ── Auth state listener (email sync only) ──────────────────────
+    // Listen for Supabase confirming the email change
     supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'USER_UPDATED' && newSession?.user?.email) {
         const confirmedEmail = newSession.user.email;
+        // Sync Teachers.email
         await supabase.from('teachers')
           .update({ email: confirmedEmail })
           .eq('teacher_id', teacherId);
+        // Update UI
         document.getElementById('emailCurrentDisplay').textContent = confirmedEmail;
         teacher.email = confirmedEmail;
+        sessionStorage.removeItem('email_change_pending');
+        sessionStorage.removeItem('email_change_target');
+        cancelEmailChange();
+        showToast('Email address updated.');
       }
     });
 
@@ -1045,6 +1081,19 @@
     // ── Run renders ────────────────────────────────────────────────
     renderSubscription();
     renderProfile();
+
+    // ── Restore pending email change state ─────────────────────────
+    // If the teacher reloads the page while a verification link is
+    // outstanding, restore the pending UI so they know to check their inbox.
+    if (sessionStorage.getItem('email_change_pending') === '1') {
+      const target = sessionStorage.getItem('email_change_target') || '';
+      pendingNewEmail = target;
+      emailChangeForm.style.display = 'flex';
+      emailChangeInputs.style.display = 'none';
+      emailPendingBlock.style.display = 'flex';
+      document.getElementById('emailPendingTarget').textContent =
+        'Verification link sent to ' + target;
+    }
 
   </script>
 </body>
