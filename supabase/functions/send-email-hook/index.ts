@@ -116,79 +116,135 @@ function buildPasswordResetEmail(
   return { subject, html };
 }
 
+function buildEmailChangeEmail(
+  seriesName: string,
+  changeUrl: string,
+  newEmail: string
+): { subject: string; html: string } {
+  const subject = `${seriesName} — Confirm your new email address`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><style>${BASE_STYLES}</style></head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>${seriesName}</h1>
+    <p>Powered by Creative Note</p>
+  </div>
+  <div class="body">
+    <h2>Confirm your new email address</h2>
+    <p>We received a request to change your login email address to <strong>${newEmail}</strong>. Click the button below to confirm this change.</p>
+
+    <a href="${changeUrl}" class="cta-btn">Confirm new email address</a>
+
+    <p class="note">If you did not request this change, you can safely ignore this email — your email address has not been changed.</p>
+  </div>
+  <div class="footer">
+    Creative Note &nbsp;·&nbsp; noreply@mail.creativenoterest.com<br>
+    Having trouble? Contact your series administrator.
+  </div>
+</div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
 // ── Main handler ───────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
-  // Supabase Auth calls this hook without a user JWT — no auth check needed.
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200 });
   }
 
+  // ── Guard: RESEND_API_KEY must be set ──
   if (!RESEND_API_KEY) {
-    console.error("RESEND_API_KEY secret is not set.");
-    return new Response(
-      JSON.stringify({ error: "Email service not configured." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error("send-email-hook: RESEND_API_KEY secret is not set.");
+    return new Response(JSON.stringify({ error: "Email service not configured." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
+  // ── Parse payload ──
   let payload: Record<string, unknown>;
   try {
     payload = await req.json();
   } catch {
-    return new Response(
-      JSON.stringify({ error: "Invalid request body." }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    console.error("send-email-hook: could not parse request body.");
+    return new Response(JSON.stringify({ error: "Invalid request body." }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // ── Extract fields from Supabase Auth hook payload ──
-  const email      = (payload?.user as Record<string, unknown>)?.email as string;
-  const metadata   = (payload?.user as Record<string, unknown>)?.user_metadata as Record<string, unknown> ?? {};
-  const emailData  = payload?.email_data as Record<string, unknown> ?? {};
-  const actionType = emailData?.email_action_type as string;
+  // ── Extract fields ──
+  const user       = payload?.user       as Record<string, unknown> ?? {};
+  const email_data = payload?.email_data as Record<string, unknown> ?? {};
+
+  const email           = user?.email           as string ?? "";
+  const new_email       = user?.new_email        as string ?? "";
+  const user_metadata   = user?.user_metadata    as Record<string, unknown> ?? {};
+  const action_type     = email_data?.email_action_type as string ?? "";
+  const token_hash      = email_data?.token_hash      as string ?? "";
+  const token_hash_new  = email_data?.token_hash_new  as string ?? "";
+  const redirect_to     = email_data?.redirect_to     as string ?? "";
+  const site_url        = email_data?.site_url        as string ?? "";
 
   if (!email) {
-    return new Response(
-      JSON.stringify({ error: "Missing email in payload." }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    console.error("send-email-hook: missing email in payload.");
+    return new Response(JSON.stringify({ error: "Missing email in payload." }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // ── Resolve series name from metadata ──
-  const seriesId   = metadata?.series_id as string ?? "";
+  // ── Resolve series name ──
+  const seriesId   = (user_metadata?.series_id as string) ?? "";
   const seriesName = SERIES_NAMES[seriesId] ?? "Creative Note";
 
+  // ── Build confirmation URL from token_hash ──
+  // confirmation_url is not reliably present in the Supabase payload.
+  // Construct from token_hash + redirect_to instead.
+  function buildUrl(hash: string, type: string): string {
+    const base = site_url || "https://xaayekfrlphyyxenhcjl.supabase.co";
+    return `${base}/auth/v1/verify?token=${hash}&type=${type}&redirect_to=${encodeURIComponent(redirect_to)}`;
+  }
+
   // ── Route by action type ──
+  let to: string;
   let emailContent: { subject: string; html: string };
 
-  if (actionType === "signup") {
-    const confirmationUrl = emailData?.confirmation_url as string;
-    if (!confirmationUrl) {
-      return new Response(
-        JSON.stringify({ error: "Missing confirmation_url in payload." }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    emailContent = buildConfirmationEmail(seriesName, confirmationUrl);
+  if (action_type === "signup") {
+    to = email;
+    emailContent = buildConfirmationEmail(seriesName, buildUrl(token_hash, "signup"));
 
-  } else if (actionType === "recovery") {
-    const resetUrl = emailData?.confirmation_url as string;
-    if (!resetUrl) {
-      return new Response(
-        JSON.stringify({ error: "Missing confirmation_url for recovery in payload." }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    emailContent = buildPasswordResetEmail(seriesName, resetUrl);
+  } else if (action_type === "recovery") {
+    to = email;
+    emailContent = buildPasswordResetEmail(seriesName, buildUrl(token_hash, "recovery"));
+
+  } else if (action_type === "email_change") {
+    // Send to new email to confirm ownership of the new address
+    to = new_email || email;
+    emailContent = buildEmailChangeEmail(
+      seriesName,
+      buildUrl(token_hash, "email_change"),
+      new_email
+    );
+
+  } else if (action_type === "email_change_new") {
+    // Secure Email Change ON: also send to current email to authorise the change
+    to = email;
+    emailContent = buildEmailChangeEmail(
+      seriesName,
+      buildUrl(token_hash_new, "email_change_new"),
+      new_email
+    );
 
   } else {
-    // Unknown or unhandled action type — log and return success so Supabase
-    // Auth does not retry. Do not send an email for unknown types.
-    console.warn(`send-email-hook: unhandled action type "${actionType}" for ${email}. No email sent.`);
-    return new Response(
-      JSON.stringify({ success: true, note: "No email sent for this action type." }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    // Unknown action type — return 200 so Supabase does not retry.
+    console.warn(`send-email-hook: unhandled action type "${action_type}" for ${email}. No email sent.`);
+    return new Response(null, { status: 200 });
   }
 
   // ── Send via Resend ──
@@ -200,7 +256,7 @@ Deno.serve(async (req: Request) => {
     },
     body: JSON.stringify({
       from: "Creative Note <noreply@mail.creativenoterest.com>",
-      to: [email],
+      to: [to],
       subject: emailContent.subject,
       html: emailContent.html,
     }),
@@ -208,15 +264,13 @@ Deno.serve(async (req: Request) => {
 
   if (!resendRes.ok) {
     const detail = await resendRes.text();
-    console.error("Resend error:", detail);
-    return new Response(
-      JSON.stringify({ error: "Email delivery failed.", detail }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error("send-email-hook: Resend error:", detail);
+    return new Response(JSON.stringify({ error: "Email delivery failed.", detail }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  return new Response(
-    JSON.stringify({ success: true }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
+  // Empty 200 — Supabase Auth requires this to consider the hook successful.
+  return new Response(null, { status: 200 });
 });
