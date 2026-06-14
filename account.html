@@ -556,10 +556,8 @@
             <div class="error-block" id="passwordChangeError"></div>
           </div>
 
-          <!-- OAuth user: note (hidden by default) -->
-          <div class="pw-oauth-note" id="pwOauthNote" style="margin-top:4px;">
-            Password is managed by <span id="pwOauthProvider">your account provider</span>.
-          </div>
+          <!-- OAuth user: empty placeholder (hidden by default; JS toggles visibility) -->
+          <div class="pw-oauth-note" id="pwOauthNote" style="margin-top:4px;"></div>
         </div>
 
       </div><!-- /profileLoaded -->
@@ -569,7 +567,7 @@
     <div class="section-card">
       <div class="signout-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
         <p style="font-size: 0.8125rem; color: var(--text-mid); margin: 0;">
-          Need to change your login email?
+          Need to change your login credentials?
         </p>
         <a href="mailto:support@creativenoterest.com?subject=Change%20Login%20Request"
            class="btn-text">Contact support
@@ -841,23 +839,17 @@
       // Email
       document.getElementById('emailCurrentDisplay').textContent = teacher.email || '—';
 
-      // Password row: show change form for pure email users, support note for OAuth.
+      // Password row: show change form for pure email users only.
       // Uses user.identities (array) rather than app_metadata.provider, which is
       // unreliable for accounts that have both email and OAuth providers linked.
-      const identities   = session.user.identities || [];
-      const hasOAuth     = identities.some(i => i.provider !== 'email');
+      const identities = session.user.identities || [];
+      const hasOAuth   = identities.some(i => i.provider !== 'email');
       if (!hasOAuth) {
         document.getElementById('pwChangeLink').style.display = 'block';
         document.getElementById('pwOauthNote').style.display  = 'none';
       } else {
         document.getElementById('pwChangeLink').style.display = 'none';
-        const oauthIdentity  = identities.find(i => i.provider !== 'email');
-        const rawProvider    = oauthIdentity?.provider || 'your account provider';
-        const providerLabel  = rawProvider === 'google'  ? 'Google'
-                             : rawProvider === 'azure'   ? 'Microsoft'
-                             : rawProvider;
-        document.getElementById('pwOauthProvider').textContent = providerLabel;
-        document.getElementById('pwOauthNote').style.display   = 'block';
+        document.getElementById('pwOauthNote').style.display  = 'block';
       }
     }
 
