@@ -1020,6 +1020,7 @@
 
   document.getElementById('confirm-retire-blocked-go').addEventListener('click', () => {
     document.getElementById('confirm-retire-blocked').classList.remove('active');
+    sessionStorage.setItem('open_lesson_sheet', '1');
     window.location.href = '/main_menu.html';
   });
   document.getElementById('confirm-retire-blocked-cancel').addEventListener('click', () => {

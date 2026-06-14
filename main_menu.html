@@ -801,6 +801,15 @@
       }
     }
 
+    // ── Auto-open lesson sheet on redirect from manage_students ──────
+    // Set by manage_students.html when retirement is blocked due to a
+    // pending session. Opens the student selector immediately so the
+    // teacher sees the pending student sorted to the top.
+    if (sessionStorage.getItem('open_lesson_sheet') === '1') {
+      sessionStorage.removeItem('open_lesson_sheet');
+      openLesson();
+    }
+
     // ── Platform message banner ──────────────────────────────────────
     // Reads from active_platform_messages view — a join of
     // platform_messages + message_control. The view applies is_active
